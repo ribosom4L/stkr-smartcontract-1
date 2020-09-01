@@ -1,10 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.6.8;
 
-import "./Governance.sol";
 import "./lib/SafeMath.sol";
+import "./OwnedByGovernor.sol";
 
-contract MicroPool {
+// TODO: ask burn needed or not?
+abstract contract TokenContract {
+    function mint(address account, uint256 amount) external virtual;
+    function burnFrom(address sender, uint256 amount) external virtual returns (bool);
+}
+
+contract MicroPool is OwnedByGovernor {
     using SafeMath for uint256;
 
     enum PoolStatus {Initialized, Pending, OnGoing, Completed, Canceled}
@@ -33,7 +39,6 @@ contract MicroPool {
 
     Pool[] private _pools;
     bool private _claimable = false; // governors will make it true after ETH 2.0
-    GovernanceContract private _governanceContract;
     TokenContract private _tokenContract;
 
     event PoolCreated(
@@ -53,28 +58,17 @@ contract MicroPool {
         uint256 unstakeAmount
     );
 
-    // TODO: update that function
-    modifier onlyGovernor {
-        require(
-            _governanceContract.isGovernor(msg.sender),
-            "Only a governor can call this function."
-        );
-        _;
-    }
-
     constructor(
-        GovernanceContract governanceContract,
         TokenContract tokenContract
     ) public {
-        _governanceContract = governanceContract;
         _tokenContract = tokenContract;
     }
 
     /**
         Governor can call this function to create a new pool for given provider.
-        @param provider address 
-        @param validator address 
-        @param providerOwe uint256 
+        @param provider address
+        @param validator address
+        @param providerOwe uint256
     */
     function initializePool(
         address payable provider,
@@ -175,17 +169,6 @@ contract MicroPool {
     }
 
     /**
-        Governer calls this function to change Governance Contract address
-        @param governanceContract address
-    */
-    function updateGovernanceContract(GovernanceContract governanceContract)
-        external
-        onlyGovernor
-    {
-        _governanceContract = governanceContract;
-    }
-
-    /**
         Get pool details for given pool array index
 
         @param poolIndex uint256
@@ -219,10 +202,6 @@ contract MicroPool {
         provider = pool.provider;
         validator = pool.validator;
         //members = pool.members;
-    }
-
-    function governanceContract() public view returns (GovernanceContract) {
-        return _governanceContract;
     }
 
     function claimable() public view returns (bool) {

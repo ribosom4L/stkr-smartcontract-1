@@ -149,13 +149,3 @@ library SafeMath {
         return a % b;
     }
 }
-
-abstract contract GovernanceContract {
-    function isGovernor(address governor) external virtual view returns(bool);
-}
-
-// TODO: ask burn needed or not?
-abstract contract TokenContract {
-    function mint(address account, uint256 amount) external virtual;
-    function burnFrom(address sender, uint256 amount) external virtual returns (bool);
-}
