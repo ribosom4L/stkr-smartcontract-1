@@ -4,10 +4,8 @@ pragma solidity ^0.6.8;
 import "./lib/SafeMath.sol";
 import "./OwnedByGovernor.sol";
 
-// TODO: ask burn needed or not?
 abstract contract TokenContract {
     function mint(address account, uint256 amount) external virtual;
-    function burnFrom(address sender, uint256 amount) external virtual returns (bool);
 }
 
 contract MicroPool is OwnedByGovernor {
@@ -138,13 +136,13 @@ contract MicroPool is OwnedByGovernor {
             pool.stakes[msg.sender].amount > 0,
             "You don't have staked balance in this pool"
         );
-        require(
-            _tokenContract.burnFrom(
-                msg.sender,
-                pool.stakes[msg.sender].amount.div(2)
-            ),
-            "You need to approve this contract first."
-        );
+        // require(
+        //     _tokenContract.burnFrom(
+        //         msg.sender,
+        //         pool.stakes[msg.sender].amount.div(2)
+        //     ),
+        //     "You need to approve this contract first."
+        // );
 
         uint256 unstakeAmount = pool.stakes[msg.sender].amount.add(
             pool.stakes[msg.sender].fee

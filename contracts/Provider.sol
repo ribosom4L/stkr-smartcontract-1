@@ -1,4 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.6.8;
 
-contract Provider {}
+
+
+// TODO: update this contract
+contract Provider {
+  // TODO: update this function
+  function isProvider(address addr) public view returns (bool) {
+    return true;
+  }
+}

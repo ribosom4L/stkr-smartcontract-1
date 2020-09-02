@@ -28,7 +28,7 @@ contract AETH is Ownable, IERC20 {
         _microPoolContract = microPoolContract;
     }
 
-    function microPoolContract() external view returns(address) {
+    function microPoolContract() public view returns(address) {
         return _microPoolContract;
     }
 
