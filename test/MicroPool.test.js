@@ -26,7 +26,7 @@ describe("MicroPool", async () => {
     governanceContract = await GovernanceContract.deploy();
     await governanceContract.deployed();
 
-    microPoolContract = await MicroPoolContract.deploy(governanceContract.address, tokenContract.address);
+    microPoolContract = await MicroPoolContract.deploy(tokenContract.address);
     await microPoolContract.deployed();
   });
 
@@ -39,6 +39,10 @@ describe("MicroPool", async () => {
   it("Should add contract addresses to each other", async () => {
     await truffleAssert.passes(
       tokenContract.updateMicroPoolContract(microPoolContract.address)
+    )
+
+    await truffleAssert.passes(
+      microPoolContract.updateGovernanceContract(governanceContract.address)
     )
     assert.equal(await tokenContract.microPoolContract(), microPoolContract.address);
   })
@@ -63,7 +67,7 @@ describe("MicroPool", async () => {
 
   it("Should read a pool details", async () => {
     const details = await microPoolContract.poolDetails(0);
-    assert.equal(details.status, 1, "status");
+    assert.equal(details.status, 0, "status");
     assert.equal(details.provider, providerAddr, "provider address");
     assert.equal(details.validator, validatorAddr, "validator address");
     // assert.equal(details.members.length, 0, "member's length");
@@ -73,7 +77,7 @@ describe("MicroPool", async () => {
     assert.equal(details.totalStakedAmount.toNumber(), 0, "total staked amount");
   });
 
-  it("Should user stake and get aETH amount which is half of his stake amount", async () => {
+  it("Should user stake and get AETH amount which is half of his stake amount", async () => {
     const stakeAmount = helpers.amount(4);
     await truffleAssert.passes(
       microPoolContract.stake(0, {value: stakeAmount})
@@ -83,20 +87,11 @@ describe("MicroPool", async () => {
     assert.equal(details.totalStakedAmount.toString(), stakeAmount, "total staked amount");
   });
 
-  it("Should user cancel his stake with refunding aETH tokens and take his funds back", async () => {
-    const allowanceAmount = helpers.amount(2);
-    await truffleAssert.passes(
-      tokenContract.approve(
-        microPoolContract.address,
-        allowanceAmount
-      )
-    )
-
+  it("Should user be able to unstake if pool status is 'pending'", async () => {
     await truffleAssert.passes(
       microPoolContract.unstake(0)
     );
 
-    assert.equal(0, (await tokenContract.balanceOf(await accounts[0].getAddress())).toString());
     const details = await microPoolContract.poolDetails(0);
     assert.equal(details.totalStakedAmount.toNumber(), 0, "total staked amount");
   });

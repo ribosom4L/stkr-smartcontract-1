@@ -75,7 +75,7 @@ contract MicroPool is OwnedByGovernor {
     ) external onlyGovernor {
         // TODO: validations
         // TODO: _nodeFee usd to eth
-        Pool storage pool;
+        Pool memory pool;
         pool.provider = provider;
         pool.validator = validator;
         pool.providerOwe = providerOwe;
@@ -93,6 +93,7 @@ contract MicroPool is OwnedByGovernor {
         Users can call to stake to given pool
         @param poolIndex uint256
     */
+    // TODO: not mint AETH directly, wait for pool reach 32 eth.
     function stake(uint256 poolIndex) external payable {
         // TODO: validations
 
@@ -101,11 +102,19 @@ contract MicroPool is OwnedByGovernor {
         uint256 stakeAmount = msg.value.sub(fee);
         // TODO: min. stake amount
         require(stakeAmount > 0, "You don't have enough balance.");
+
+        if (pool.status == PoolStatus.Initialized) {
+            pool.status = PoolStatus.Pending;
+        }
+
         uint256 newTotalAmount = stakeAmount.add(pool.totalStakedAmount);
-        if (newTotalAmount > 32 ether) {
+        if (newTotalAmount >= 32 ether) {
+            pool.status = PoolStatus.OnGoing;
             uint256 excessAmount = newTotalAmount.sub(32 ether);
-            stakeAmount = stakeAmount.sub(excessAmount);
-            msg.sender.transfer(excessAmount);
+            if (excessAmount > 0) {
+                stakeAmount = stakeAmount.sub(excessAmount);
+                msg.sender.transfer(excessAmount);
+            }
         }
         pool.totalStakedAmount = pool.totalStakedAmount.add(stakeAmount);
 
@@ -149,7 +158,7 @@ contract MicroPool is OwnedByGovernor {
         );
 
         msg.sender.transfer(unstakeAmount);
-        pool.totalStakedAmount = pool.totalStakedAmount.sub(unstakeAmount);
+        pool.totalStakedAmount = pool.totalStakedAmount.sub(pool.stakes[msg.sender].amount);
         delete pool.stakes[msg.sender];
 
         emit UserStaked(poolIndex, msg.sender, unstakeAmount);

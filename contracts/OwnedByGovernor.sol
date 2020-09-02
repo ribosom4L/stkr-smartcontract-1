@@ -8,7 +8,7 @@ abstract contract GovernanceContract {
 contract OwnedByGovernor {
     GovernanceContract private _governanceContract;
 
-    function setGovernanceContract(address addr) external {
+    function updateGovernanceContract(address addr) external {
         _governanceContract = GovernanceContract(addr);
     }
 

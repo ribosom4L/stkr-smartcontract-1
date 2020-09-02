@@ -16,11 +16,13 @@ abstract contract Context {
 }
 
 abstract contract ProviderContract {
-    function isProvider(address addr) public view returns (bool);
+    function isProvider(address addr) public view virtual returns (bool);
 }
 
 contract Auctions is Context {
     using SafeMath for uint256;
+
+    enum AuctionStatus {OnGoing, Completed}
 
     struct Auction {
         uint256 processingFee; // fee for request an auction
@@ -69,10 +71,32 @@ contract Auctions is Context {
         // TODO: validations
 
         Auction storage auction = _auctions[auctionIndex];
-        auction.bids[_msgSender] = processingFee;
-        if (processingFee < auction.winner.bidAmount) {
-            auction.winner.bidAmount = processingFee;
-            auction.winner.bidder = _msgSender;
+        auction.bids[_msgSender()] = processingFee;
+        require(processingFee <= auction.processingFee, "You need to offer less than or equal to requester's budget.");
+        if (auction.winner.bidAmount > 0) {
+            require(processingFee < auction.winner.bidAmount, "You need to offer less than the lowest bid.");
         }
+        auction.winner.bidAmount = processingFee;
+        auction.winner.bidder = _msgSender();
+    }
+
+    function auctionDetails(uint256 auctionIndex)
+        public
+        view
+        returns (
+            uint256 processingFee,
+            AuctionStatus status,
+            uint256 bestBidAmount,
+            address bestBidder
+        ) {
+            Auction memory auction = _auctions[auctionIndex];
+            processingFee = auction.processingFee;
+            if (block.timestamp > auction.endTime) {
+                status = AuctionStatus.Completed; // completed auction
+            } else {
+                status = AuctionStatus.OnGoing; // ongoing auction
+            }
+            bestBidAmount = auction.winner.bidAmount;
+            bestBidder = auction.winner.bidder;
     }
 }
