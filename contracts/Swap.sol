@@ -3,6 +3,7 @@ pragma solidity ^0.6.8;
 
 import "./lib/SafeMath.sol";
 
+// TODO: move Context to an independent file
 abstract contract Context {
     function _msgSender() internal view virtual returns (address payable) {
         return msg.sender;

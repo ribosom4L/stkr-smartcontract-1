@@ -2,6 +2,7 @@
 pragma solidity ^0.6.8;
 
 // TODO: update this contract
+
 contract Governance {
 
     address payable[] private _governors;

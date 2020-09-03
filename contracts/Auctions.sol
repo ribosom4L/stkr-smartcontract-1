@@ -44,6 +44,8 @@ contract Auctions is Context {
         _;
     }
 
+    // TODO: events
+
     constructor(
       ProviderContract providerContract
     ) public {
@@ -69,7 +71,7 @@ contract Auctions is Context {
     external
     onlyProvider {
         // TODO: validations
-
+        // TODO: if auction is still active
         Auction storage auction = _auctions[auctionIndex];
         auction.bids[_msgSender()] = processingFee;
         require(processingFee <= auction.processingFee, "You need to offer less than or equal to requester's budget.");

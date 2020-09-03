@@ -25,10 +25,13 @@ contract MicroPool is OwnedByGovernor {
         uint256 endTime; // canceled or completed time
         uint256 rewardBalance; // total balance after rewarded
         uint256 claimedBalance; // pool members' claimed amount
+        uint256 compensatedBalance; // TODO: is required?
         uint256 providerOwe; // TODO: who will decide it? governor, this contract, etc.
         uint256 nodeFee; // eth price
         uint256 totalStakedAmount; // total amount of user stakes
         uint256 numberOfSlashing;
+        uint256 totalSlashedAmount;
+        // TODO: last slashing check time (as block number)
         address payable provider; // provider address
         address payable validator; // validator address
         // address payable[] members; // pool members
@@ -162,6 +165,14 @@ contract MicroPool is OwnedByGovernor {
         delete pool.stakes[msg.sender];
 
         emit UserStaked(poolIndex, msg.sender, unstakeAmount);
+    }
+
+    // TODO: only insurance contract can call this
+    function updateSlashingOfAPool(uint256 poolIndex, uint256 compensatedAmount) external {
+        // TODO: validations
+
+        Pool storage pool = _pools[poolIndex];
+        pool.compensatedBalance = pool.compensatedBalance.add(compensatedAmount);
     }
 
     /**
