@@ -129,7 +129,7 @@ contract AETH is Ownable, IERC20 {
     }
 
     // TODO: only micropool and ... contracts can call this
-    function burnFrom(address sender, uint256 amount) external returns (bool) {
+    function burnFrom(address sender, uint256 amount) external virtual returns (bool) {
         _burn(sender, amount);
         _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "ERC20: transfer amount exceeds allowance"));
         return true;
