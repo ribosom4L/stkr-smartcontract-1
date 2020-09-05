@@ -73,11 +73,11 @@ contract Auctions is Context {
         // TODO: validations
         // TODO: if auction is still active
         Auction storage auction = _auctions[auctionIndex];
-        auction.bids[_msgSender()] = processingFee;
         require(processingFee <= auction.processingFee, "You need to offer less than or equal to requester's budget.");
         if (auction.winner.bidAmount > 0) {
             require(processingFee < auction.winner.bidAmount, "You need to offer less than the lowest bid.");
         }
+        auction.bids[_msgSender()] = processingFee;
         auction.winner.bidAmount = processingFee;
         auction.winner.bidder = _msgSender();
     }
