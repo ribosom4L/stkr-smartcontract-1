@@ -2,7 +2,7 @@
 pragma solidity ^0.6.8;
 
 import "./lib/SafeMath.sol";
-import "./OwnedByGovernor.sol";
+import "./core/OwnedByGovernor.sol";
 
 abstract contract TokenContract {
     function mint(address account, uint256 amount) external virtual;
@@ -167,7 +167,7 @@ contract MicroPool is OwnedByGovernor {
         emit UserStaked(poolIndex, msg.sender, unstakeAmount);
     }
 
-    // TODO: only insurance contract can call this
+    // TODO: only ?? contract can call this
     function updateSlashingOfAPool(uint256 poolIndex, uint256 compensatedAmount) external {
         // TODO: validations
 

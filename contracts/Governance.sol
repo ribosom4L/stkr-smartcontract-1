@@ -6,6 +6,14 @@ pragma solidity ^0.6.8;
 contract Governance {
 
     address payable[] private _governors;
+
+    struct Parameter {
+        uint id;
+        string name;
+        uint value; 
+    }
+
+    Parameter[] private paremeters;
     
     /**
         Returns true if given address is a governor
@@ -13,11 +21,6 @@ contract Governance {
     */
     function isGovernor(address governor) external view returns (bool) {
         // TODO: commented temporarily for testing
-//        for (uint8 i = 0; i < _governors.length; i++) {
-//            if (_governors[i] == governor) return true;
-//        }
-
-//        return false;
         return true;
     }
 
