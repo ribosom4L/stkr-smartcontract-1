@@ -21,10 +21,12 @@ contract Staking {
     address private _ankrContract;
     address private _nodeContract;
     address private _providerContract;
+    address private _microPoolContract;
 
     mapping(address => uint256) _stakes;
     mapping(address => uint256) _providerStakes;
     mapping(address => uint256) _nodeStakes;
+    mapping(address => uint256) _poolStakes;
 
     modifier shouldAllowed(uint256 amount) {
         // TODO: Error msg        
@@ -55,5 +57,11 @@ contract Staking {
         return true;
     }
 
-    function poolStake() {}
+    function poolStake(uint256 amount) public shouldAllowed(amount) addressAllowed(_microPoolContract) returns(bool) {
+        _poolStakes[msg.sender] = _providerStakes[msg.sender].add(amount);
+        emit Stake(msg.sender, StakeType.PROVIDER, amount);
+        return true;
+    }
+
+    // TODO: Seperate unstake
 }

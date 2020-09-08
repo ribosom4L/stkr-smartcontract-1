@@ -2,18 +2,7 @@
 pragma solidity ^0.6.8;
 
 import "./lib/SafeMath.sol";
-
-// TODO: move Context to an independent file
-abstract contract Context {
-    function _msgSender() internal view virtual returns (address payable) {
-        return msg.sender;
-    }
-
-    function _msgData() internal view virtual returns (bytes memory) {
-        this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
-        return msg.data;
-    }
-}
+import "./lib/Context.sol";
 
 abstract contract ProviderContract {
     function isProvider(address addr) public view virtual returns (bool);
