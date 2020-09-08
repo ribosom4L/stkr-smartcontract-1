@@ -41,6 +41,7 @@ contract MicroPool is OwnedByGovernor {
     Pool[] private _pools;
     bool private _claimable = false; // governors will make it true after ETH 2.0
     TokenContract private _tokenContract;
+    address _insuranceContract;
 
     event PoolCreated(
         uint256 indexed poolIndex,
@@ -135,6 +136,7 @@ contract MicroPool is OwnedByGovernor {
 
     /**
         Users can call to unstake from given pool
+        until pool start
         @param poolIndex uint256
     */
     function unstake(uint256 poolIndex) external payable {
@@ -167,12 +169,14 @@ contract MicroPool is OwnedByGovernor {
         emit UserStaked(poolIndex, msg.sender, unstakeAmount);
     }
 
-    // TODO: only ?? contract can call this
+    // TODO: only Insurance contract can call this
     function updateSlashingOfAPool(uint256 poolIndex, uint256 compensatedAmount) external {
         // TODO: validations
 
         Pool storage pool = _pools[poolIndex];
         pool.compensatedBalance = pool.compensatedBalance.add(compensatedAmount);
+
+        return true;
     }
 
     /**
@@ -220,6 +224,10 @@ contract MicroPool is OwnedByGovernor {
         provider = pool.provider;
         validator = pool.validator;
         //members = pool.members;
+    }
+
+    function updateInsuranceContract(address addr) public onlyGovernor {
+        _insuranceContract = addr;
     }
 
     function claimable() public view returns (bool) {

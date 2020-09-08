@@ -55,7 +55,5 @@ contract Staking {
         return true;
     }
 
-    // TODO: Unstake re-design
-
-    //
+    function poolStake() {}
 }
