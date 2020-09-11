@@ -19,7 +19,7 @@ contract InsurancePool is Ownable, OwnedByGovernor {
     mapping (uint256 => uint256) private _compensatedSlashings; // poolIndex => amount
     MicroPool private _microPoolContract;
 
-    receive() external payable {}
+    // TODO: receive() external payable {}
 
     function updateSlashings(uint256 poolIndex, uint256 amount) public onlyGovernor {
         require(_microPoolContract.updateSlashingOfAPool{value: amount}(poolIndex, amount), "");
@@ -31,5 +31,9 @@ contract InsurancePool is Ownable, OwnedByGovernor {
 
     function updateMicroPoolContract(address payable addr) public onlyGovernor {
         _microPoolContract = MicroPool(addr);
+    }
+
+    function microPoolContract() external view returns(MicroPool) {
+        return _microPoolContract;
     }
 }

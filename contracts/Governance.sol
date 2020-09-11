@@ -17,7 +17,7 @@ contract Governance {
         @return bool
     */
     function isGovernor(address governor) external view returns (bool) {
-        // TODO: commented temporarily for testing
+        // TODO: returns true temporarily for testing
         return true;
     }
 
