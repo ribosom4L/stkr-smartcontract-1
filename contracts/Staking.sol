@@ -3,10 +3,12 @@ pragma solidity ^0.6.8;
 
 import "./lib/IERC20.sol";
 import "./lib/SafeMath.sol";
+import "./lib/Ownable.sol";
+import "./core/OwnedByGovernor.sol";
 
 // TODO: user can join late (reward will be reduce)
 // TODO: if quit early will not earn reward
-contract Staking {
+contract Staking is Ownable, OwnedByGovernor {
     using SafeMath for uint256;
 
     event Stake(address indexed staker, StakeType indexed stakeType, uint256 value);
@@ -61,6 +63,22 @@ contract Staking {
         _poolStakes[msg.sender] = _providerStakes[msg.sender].add(amount);
         emit Stake(msg.sender, StakeType.PROVIDER, amount);
         return true;
+    }
+
+    function updateAnkrContract(address ankrContract) public onlyGovernor {
+        _ankrContract = ankrContract;
+    }
+
+    function updateNodeContract(address nodeContract) public onlyGovernor {
+        _nodeContract = nodeContract;
+    }
+
+    function updateProviderContract(address providerContract) public onlyGovernor {
+        _providerContract = providerContract;
+    }
+
+    function updateMicroPoolContract(address microPoolContract) public onlyGovernor {
+        _microPoolContract = microPoolContract;
     }
 
     // TODO: Seperate unstake

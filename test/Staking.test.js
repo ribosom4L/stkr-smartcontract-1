@@ -3,7 +3,7 @@ const truffleAssert = require("truffle-assertions");
 const helpers = require("./helpers/helpers");
 const { assert } = require("chai");
 
-describe("Provider", async () => {
+describe("Staking", async () => {
   let microPoolContract;
   let tokenContract;
   let governanceContract;
@@ -12,6 +12,7 @@ describe("Provider", async () => {
   let nodeContract;
   let providerContract;
   let stakingContract;
+  let ankrContract;
   let accounts;
   let validatorAddr;
 
@@ -21,6 +22,7 @@ describe("Provider", async () => {
 
     const MicroPoolContract = await ethers.getContractFactory("MicroPool");
     const TokenContract = await ethers.getContractFactory("AETH");
+    const AnkrContract = await ethers.getContractFactory("ANKR");
     const GovernanceContract = await ethers.getContractFactory("Governance");
     const InsuranceContract = await ethers.getContractFactory("InsurancePool");
     const MarketPlaceContract = await ethers.getContractFactory("MarketPlace");
@@ -51,6 +53,9 @@ describe("Provider", async () => {
 
     stakingContract = await StakingContract.deploy();
     await stakingContract.deployed();
+
+    ankrContract = await AnkrContract.deploy(await accounts[0].getAddress());
+    await ankrContract.deployed();
   });
 
   it("Should validate the contracts deployed", async () => {
@@ -97,10 +102,49 @@ describe("Provider", async () => {
       providerContract.updateStakingContract(stakingContract.address)
     )
 
+    await truffleAssert.passes(
+      stakingContract.updateGovernanceContract(governanceContract.address)
+    )
+
+    await truffleAssert.passes(
+      stakingContract.updateAnkrContract(ankrContract.address)
+    )
+
+    await truffleAssert.passes(
+      stakingContract.updateNodeContract(nodeContract.address)
+    )
+
+    await truffleAssert.passes(
+      stakingContract.updateProviderContract(providerContract.address)
+    )
+
+    await truffleAssert.passes(
+      stakingContract.updateMicroPoolContract(microPoolContract.address)
+    )
+
     assert.equal(await tokenContract.microPoolContract(), microPoolContract.address);
   })
 
   it("Should read Governance contract addresses", async () => {
     assert.equal(await providerContract.governanceContract(), governanceContract.address)
   });
+
+  it("Should user stake", async () => {
+    await truffleAssert.passes(
+      ankrContract.approve(stakingContract.address, helpers.amount(5))
+    )
+    await truffleAssert.passes(
+      stakingContract.stake(helpers.amount(5))
+    )
+  });
+
+  it("Should node stake", async () => {
+    await truffleAssert.passes(
+      ankrContract.approve(stakingContract.address, helpers.amount(5))
+    )
+    await truffleAssert.passes(
+      stakingContract.stake(helpers.amount(5))
+    )
+  });
+
 });
