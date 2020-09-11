@@ -18,7 +18,7 @@ describe("Insurance", async () => {
     validatorAddr = await accounts[9].getAddress();
 
     const MicroPoolContract = await ethers.getContractFactory("MicroPool");
-    const TokenContract = await ethers.getContractFactory("ERC20");
+    const TokenContract = await ethers.getContractFactory("AETH");
     const GovernanceContract = await ethers.getContractFactory("Governance");
     const InsuranceContract = await ethers.getContractFactory("InsurancePool");
 

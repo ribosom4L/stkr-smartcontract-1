@@ -170,7 +170,7 @@ contract MicroPool is OwnedByGovernor {
     }
 
     // TODO: only Insurance contract can call this
-    function updateSlashingOfAPool(uint256 poolIndex, uint256 compensatedAmount) external returns(bool) {
+    function updateSlashingOfAPool(uint256 poolIndex, uint256 compensatedAmount) public returns(bool) {
         // TODO: validations
 
         Pool storage pool = _pools[poolIndex];

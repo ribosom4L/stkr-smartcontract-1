@@ -6,7 +6,7 @@ import "./lib/Ownable.sol";
 import "./core/OwnedByGovernor.sol";
 
 interface MicroPool {
-    function updateSlashingOfAPool(uint256, uint256) external payable returns(bool);
+    function updateSlashingOfAPool(uint256, uint256) external returns(bool);
 }
 
 // TODO: update this contract
@@ -22,7 +22,7 @@ contract InsurancePool is Ownable, OwnedByGovernor {
     // TODO: receive() external payable {}
 
     function updateSlashings(uint256 poolIndex, uint256 amount) public onlyGovernor {
-        require(_microPoolContract.updateSlashingOfAPool{value: amount}(poolIndex, amount), "");
+        require(_microPoolContract.updateSlashingOfAPool(poolIndex, amount), "Cannot updated");
         
         _compensatedSlashings[poolIndex] = _compensatedSlashings[poolIndex].add(amount);
 
