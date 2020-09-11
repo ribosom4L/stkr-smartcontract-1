@@ -5,9 +5,9 @@ import "./lib/SafeMath.sol";
 import "./lib/Ownable.sol";
 import "./core/OwnedByGovernor.sol";
 
-interface Staking {
-    function providerStake(uint256 amount) external;
-    function checkProviderStake(address addr) external returns(bool);
+abstract contract Staking {
+    function providerStake(uint256 amount) external virtual;
+    function checkProviderStake(address addr) external virtual returns(bool);
 }
 
 contract Provider is Ownable, OwnedByGovernor {
@@ -27,11 +27,12 @@ contract Provider is Ownable, OwnedByGovernor {
         ProviderStatus status;
     }
 
-    address payable private _stakingContract;
+    Staking private _stakingContract;
     mapping(address => ProviderInfo) private _providers;
 
     function isProvider(address addr) public view returns (bool) {
-        return _providers[addr].addr == address(0);
+        // return _providers[addr].addr != address(0);
+        return true;
     }
 
     function applyToBeProvider(
@@ -40,7 +41,7 @@ contract Provider is Ownable, OwnedByGovernor {
         bytes memory iconUrl,
         bytes memory email
     ) public payable {
-        require(!isProvider(msg.sender), "You are already a provider");
+        // require(!isProvider(msg.sender), "You are already a provider");
         // TODO: name required
 
         ProviderInfo memory p;
@@ -52,7 +53,7 @@ contract Provider is Ownable, OwnedByGovernor {
 
         _providers[msg.sender] = p;
 
-        Staking(_stakingContract).providerStake(msg.value);
+        _stakingContract.providerStake(msg.value);
         emit Applied(msg.sender);
     }
 
@@ -72,7 +73,7 @@ contract Provider is Ownable, OwnedByGovernor {
     }
 
     // TODO: OnlyGovernor -> Governors by voting
-    function setStakingContract(address payable addr) public onlyGovernor {
+    function updateStakingContract(Staking addr) public onlyGovernor {
         _stakingContract = addr;
     }
 }

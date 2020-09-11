@@ -14,7 +14,7 @@ contract Node is Ownable, OwnedByGovernor {
     event NodeAdded(address indexed provider, address indexed node);
     event StatusChanged(address indexed governor, NodeStatus indexed newStatus);
 
-    enum NodeStatus {PENDING, WORKING, REMOVED}
+    enum NodeStatus {PENDING, WORKING, REJECTED, REMOVED}
 
     struct NodeInfo {
         address addr;
@@ -60,11 +60,13 @@ contract Node is Ownable, OwnedByGovernor {
         emit StatusChanged(msg.sender, _nodes[addr].status);
     }
 
-    function remove(address addr) public onlyGovernor {
+    function reject(address addr) public onlyGovernor {
         require(_nodes[addr].status == NodeStatus.PENDING, "Node not pending");
 
-        _nodes[addr].status = NodeStatus.REMOVED;
+        _nodes[addr].status = NodeStatus.REJECTED;
 
         emit StatusChanged(msg.sender, _nodes[addr].status);
     }
+
+    // TODO: remove a node
 }
