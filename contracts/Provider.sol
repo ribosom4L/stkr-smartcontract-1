@@ -30,9 +30,8 @@ contract Provider is Ownable, OwnedByGovernor {
     address payable private _stakingContract;
     mapping(address => ProviderInfo) private _providers;
 
-    // TODO: update this function
     function isProvider(address addr) public view returns (bool) {
-        return _providers[addr].addr == address(0) ? true : false;
+        return _providers[addr].addr == address(0);
     }
 
     function applyToBeProvider(

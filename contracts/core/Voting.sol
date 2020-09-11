@@ -21,11 +21,14 @@ contract Voting {
     Proposal[] private _proposals;
 
     // TODO only governance contract can call this
-    function propose(bytes32 name) public returns(bool) {
+    function _propose(bytes32 name) internal returns(bool) {
         Proposal memory proposal;
         proposal.name = name;
         proposal.endTime = block.timestamp.add(2 days); // TODO: it can be dynamic.
+        _proposals.push(proposal);
 
         return true;
     }
+
+    function _vote(uint256 index) public {}
 }

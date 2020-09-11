@@ -3,16 +3,17 @@ const truffleAssert = require("truffle-assertions");
 const helpers = require("./helpers/helpers");
 const { assert } = require("chai");
 
-describe("Auction", async () => {
-  let microPoolContract;
-  let tokenContract;
-  let governanceContract;
-  let providerContract;
-  let auctionsContract;
-  let accounts;
-  let providerAddr;
-  let validatorAddr;
+let microPoolContract;
+let tokenContract;
+let governanceContract;
+let providerContract;
+let auctionsContract;
+let accounts;
+let providerAddr;
+let validatorAddr;
 
+describe("Auction", async () => {
+  
   before(async function () {
     accounts = await ethers.getSigners();
     providerAddr = await accounts[8].getAddress();
@@ -99,5 +100,4 @@ describe("Auction", async () => {
     assert.equal(auctionDetails.bestBidAmount.toString(), helpers.amount(2), "best bid amount");
     assert.equal(auctionDetails.bestBidder, await accounts[0].getAddress(), "address");
   });
-
 });

@@ -4,7 +4,6 @@ pragma solidity ^0.6.8;
 // TODO: update this contract
 
 contract Governance {
-
     address payable[] private _governors;
 
     struct Parameter {
@@ -12,8 +11,6 @@ contract Governance {
         string name;
         uint value; 
     }
-
-    Parameter[] private paremeters;
     
     /**
         Returns true if given address is a governor

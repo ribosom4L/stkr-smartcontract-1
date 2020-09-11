@@ -7,3 +7,8 @@ artifacts
 .idea
 artifacts/*
 TODO.md
+node_modules
+
+#Buidler files
+cache
+artifacts
