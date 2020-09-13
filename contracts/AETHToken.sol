@@ -211,7 +211,9 @@ contract AETH is Ownable, IERC20 {
         emit Transfer(address(0), account, amount);
     }
 
-    function mint(address account, uint256 amount) external onlyMicroPoolContract {
+    // TODO: it will be onlyMicroPoolContract modifier.
+    // It is open for testing purposes for now.
+    function mint(address account, uint256 amount) external {
         require(account != address(0), "ERC20: mint to the zero address");
 
         _totalSupply = _totalSupply.add(amount);

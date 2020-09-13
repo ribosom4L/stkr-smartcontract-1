@@ -31,8 +31,7 @@ contract Provider is Ownable, OwnedByGovernor {
     mapping(address => ProviderInfo) private _providers;
 
     function isProvider(address addr) public view returns (bool) {
-        // return _providers[addr].addr != address(0);
-        return true;
+        return _providers[addr].status == ProviderStatus.APPROVED;
     }
 
     function applyToBeProvider(
@@ -41,7 +40,7 @@ contract Provider is Ownable, OwnedByGovernor {
         bytes memory iconUrl,
         bytes memory email
     ) public payable {
-        // require(!isProvider(msg.sender), "You are already a provider");
+        require(!isProvider(msg.sender), "You are already a provider");
         // TODO: name required
 
         ProviderInfo memory p;
@@ -50,6 +49,7 @@ contract Provider is Ownable, OwnedByGovernor {
         p.iconUrl = iconUrl;
         p.email = email;
         p.addr = msg.sender;
+        p.status = ProviderStatus.PENDING;
 
         _providers[msg.sender] = p;
 
@@ -59,7 +59,7 @@ contract Provider is Ownable, OwnedByGovernor {
 
     function approve(address addr) public onlyGovernor {
       require(!isProvider(addr), "Already a provider");
-      require(Staking(_stakingContract).checkProviderStake(addr), "Provider not staked requirements");
+      // TODO: require(_stakingContract.checkProviderStake(addr), "Provider not staked requirements");
 
       _providers[addr].status = ProviderStatus.APPROVED;
       emit StatusChanged(msg.sender, _providers[addr].status);

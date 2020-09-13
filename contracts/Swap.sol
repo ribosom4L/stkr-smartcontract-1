@@ -3,13 +3,14 @@ pragma solidity ^0.6.8;
 
 import "./lib/SafeMath.sol";
 import "./lib/Context.sol";
+import "./core/OwnedByGovernor.sol";
 
 abstract contract TokenContract {
     function mint(address account, uint256 amount) external virtual;
     function burnFrom(address sender, uint256 amount) external virtual returns (bool);
 }
 
-contract Swap is Context {
+contract Swap is Context, OwnedByGovernor {
     using SafeMath for uint256;
 
     TokenContract private _tokenContract;
@@ -19,11 +20,8 @@ contract Swap is Context {
         uint256 amount
     );
 
-    constructor(
-        TokenContract tokenContract
-    ) public {
-        _tokenContract = tokenContract;
-    }
+    // allow to receive ETH payments
+    receive() external payable {}
 
     function swap(uint256 amount) external {
         // TODO: validations
@@ -31,5 +29,9 @@ contract Swap is Context {
         _tokenContract.burnFrom(_msgSender(), amount);
         _msgSender().transfer(amount);
         emit Swapped(_msgSender(), amount);
+    }
+
+    function updateTokenContract(TokenContract tokenContract) external onlyGovernor {
+        _tokenContract = tokenContract;
     }
 }
