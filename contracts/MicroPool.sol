@@ -6,6 +6,7 @@ import "./core/OwnedByGovernor.sol";
 
 abstract contract TokenContract {
     function mint(address account, uint256 amount) external virtual;
+    function updateMicroPoolContract(address microPoolContract) external virtual;
 }
 
 contract MicroPool is OwnedByGovernor {
@@ -64,6 +65,7 @@ contract MicroPool is OwnedByGovernor {
         TokenContract tokenContract
     ) public {
         _tokenContract = tokenContract;
+        tokenContract.updateMicroPoolContract(address(this));
     }
 
     /**
