@@ -11,13 +11,18 @@ import "./core/OwnedByGovernor.sol";
 contract Staking is Ownable, OwnedByGovernor {
     using SafeMath for uint256;
 
-    event Stake(address indexed staker, StakeType indexed stakeType, uint256 value);
+    event Stake(
+        address indexed staker,
+        StakeType indexed stakeType,
+        uint256 value
+    );
+    event Unstake(
+        address indexed staker,
+        StakeType indexed stakeType,
+        uint256 value
+    );
 
-    enum StakeType {
-        STANDART,
-        PROVIDER,
-        NODE
-    }
+    enum StakeType {STANDART, PROVIDER, NODE, POOL_FEE}
 
     // TODO: Set
     address private _ankrContract;
@@ -30,38 +35,72 @@ contract Staking is Ownable, OwnedByGovernor {
     mapping(address => uint256) _nodeStakes;
     mapping(address => uint256) _poolStakes;
 
-    modifier shouldAllowed(uint256 amount) {
-        // TODO: Error msg        
-        require(IERC20(_ankrContract).transferFrom(msg.sender, address(this), amount), "Allowance");
+    modifier shouldAllowed(address addr, uint256 amount) {
+        // TODO: Error msg
+        require(
+            IERC20(_ankrContract).transferFrom(addr, address(this), amount),
+            "Allowance"
+        );
         _;
     }
 
     modifier addressAllowed(address addr) {
-        require(msg.sender == addr, "Allowance");
+        require(msg.sender == addr, "");
         _;
     }
-    
-    function stake(uint256 amount) public shouldAllowed(amount) returns(bool) {
+
+    function stake(address user, uint256 amount)
+        public
+        shouldAllowed(user, amount)
+        returns (bool)
+    {
         _stakes[msg.sender] = _stakes[msg.sender].add(amount);
         emit Stake(msg.sender, StakeType.STANDART, amount);
         return true;
     }
 
-    function nodeStake(uint256 amount) public shouldAllowed(amount) addressAllowed(_nodeContract) returns(bool) {
+    function nodeStake(address user, uint256 amount)
+        public
+        shouldAllowed(user, amount)
+        addressAllowed(_nodeContract)
+        returns (bool)
+    {
         _nodeStakes[msg.sender] = _nodeStakes[msg.sender].add(amount);
         emit Stake(msg.sender, StakeType.NODE, amount);
         return true;
     }
 
-    function providerStake(uint256 amount) public shouldAllowed(amount) addressAllowed(_providerContract) returns(bool) {
+    function providerStake(address user, uint256 amount)
+        public
+        shouldAllowed(user, amount)
+        addressAllowed(_providerContract)
+        returns (bool)
+    {
         _providerStakes[msg.sender] = _providerStakes[msg.sender].add(amount);
         emit Stake(msg.sender, StakeType.PROVIDER, amount);
         return true;
     }
 
-    function poolStake(uint256 amount) public shouldAllowed(amount) addressAllowed(_microPoolContract) returns(bool) {
+    function poolStake(address user, uint256 amount)
+        public
+        shouldAllowed(user, amount)
+        addressAllowed(_microPoolContract)
+        returns (bool)
+    {
         _poolStakes[msg.sender] = _providerStakes[msg.sender].add(amount);
         emit Stake(msg.sender, StakeType.PROVIDER, amount);
+        return true;
+    }
+
+    function poolFeeWithStake(address user, uint256 amount)
+        public
+        returns (bool)
+    {
+        _stakes[user] = _stakes[user].sub(amount, "Insufficient balance");
+        _poolStakes[user] = _poolStakes[user].add(amount);
+
+        emit Stake(msg.sender, StakeType.PROVIDER, amount);
+
         return true;
     }
 
@@ -73,13 +112,81 @@ contract Staking is Ownable, OwnedByGovernor {
         _nodeContract = nodeContract;
     }
 
-    function updateProviderContract(address providerContract) public onlyGovernor {
+    function updateProviderContract(address providerContract)
+        public
+        onlyGovernor
+    {
         _providerContract = providerContract;
     }
 
-    function updateMicroPoolContract(address microPoolContract) public onlyGovernor {
+    function updateMicroPoolContract(address microPoolContract)
+        public
+        onlyGovernor
+    {
         _microPoolContract = microPoolContract;
     }
 
-    // TODO: Seperate unstake
+    function transferToken(address to, uint256 amount) private {
+        require(IERC20(_ankrContract).transfer(to, amount), "Failed");
+    }
+
+    function unstake(uint256 amount) public returns (bool) {
+        _stakes[msg.sender] = _stakes[msg.sender].sub(
+            amount,
+            "Insufficient balance"
+        );
+
+        transferToken(msg.sender, amount);
+
+        emit Unstake(msg.sender, StakeType.STANDART, amount);
+        return true;
+    }
+
+    function nodeUnstake(address addr, uint256 amount)
+        public
+        addressAllowed(_nodeContract)
+        returns (bool)
+    {
+        _nodeStakes[addr] = _nodeStakes[addr].sub(
+            amount,
+            "Insufficient balance"
+        );
+
+        transferToken(addr, amount);
+
+        emit Unstake(addr, StakeType.NODE, amount);
+        return true;
+    }
+
+    function providerUnstake(address addr, uint256 amount)
+        public
+        addressAllowed(_providerContract)
+        returns (bool)
+    {
+        _providerStakes[addr] = _providerStakes[addr].sub(
+            amount,
+            "Insufficient balance"
+        );
+
+        transferToken(addr, amount);
+
+        emit Unstake(addr, StakeType.PROVIDER, amount);
+        return true;
+    }
+
+    function poolUnstake(address addr, uint256 amount)
+        public
+        addressAllowed(_microPoolContract)
+        returns (bool)
+    {
+        _poolStakes[addr] = _poolStakes[addr].sub(
+            amount,
+            "Insufficient balance"
+        );
+
+        transferToken(addr, amount);
+
+        emit Unstake(addr, StakeType.POOL_FEE, amount);
+        return true;
+    }
 }
