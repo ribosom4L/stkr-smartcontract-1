@@ -12,6 +12,7 @@ describe("Provider", async () => {
   let nodeContract;
   let providerContract;
   let stakingContract;
+  let ankrContract;
   let accounts;
   let validatorAddr;
 
@@ -21,6 +22,7 @@ describe("Provider", async () => {
 
     const MicroPoolContract = await ethers.getContractFactory("MicroPool");
     const TokenContract = await ethers.getContractFactory("AETH");
+    const AnkrContract = await ethers.getContractFactory("ANKR");
     const GovernanceContract = await ethers.getContractFactory("Governance");
     const InsuranceContract = await ethers.getContractFactory("InsurancePool");
     const MarketPlaceContract = await ethers.getContractFactory("MarketPlace");
@@ -51,6 +53,9 @@ describe("Provider", async () => {
 
     stakingContract = await StakingContract.deploy();
     await stakingContract.deployed();
+
+    ankrContract = await AnkrContract.deploy(await accounts[0].getAddress());
+    await ankrContract.deployed();
   });
 
   it("Should validate the contracts deployed", async () => {
@@ -97,10 +102,68 @@ describe("Provider", async () => {
       providerContract.updateStakingContract(stakingContract.address)
     )
 
+    await truffleAssert.passes(
+      stakingContract.updateGovernanceContract(governanceContract.address)
+    )
+
+    await truffleAssert.passes(
+      stakingContract.updateAnkrContract(ankrContract.address)
+    )
+
+    await truffleAssert.passes(
+      stakingContract.updateNodeContract(nodeContract.address)
+    )
+
+    await truffleAssert.passes(
+      stakingContract.updateProviderContract(providerContract.address)
+    )
+
+    await truffleAssert.passes(
+      stakingContract.updateMicroPoolContract(microPoolContract.address)
+    )
+
     assert.equal(await tokenContract.microPoolContract(), microPoolContract.address);
   })
 
   it("Should read Governance contract addresses", async () => {
     assert.equal(await providerContract.governanceContract(), governanceContract.address)
   });
+
+  it("Should user apply to be a provider", async () => {
+    await truffleAssert.passes(
+      providerContract.applyToBeProvider(
+        "0x68656c6c6f0000000000000000000000",
+        "0x68656c6c6f0000000000000000000000",
+        "0x68656c6c6f0000000000000000000000",
+        "0x68656c6c6f0000000000000000000000"
+      )
+    )
+
+    await truffleAssert.passes(
+      providerContract.connect(accounts[1]).applyToBeProvider(
+        "0x68656c6c6f0000000000000000000000",
+        "0x68656c6c6f0000000000000000000000",
+        "0x68656c6c6f0000000000000000000000",
+        "0x68656c6c6f0000000000000000000000"
+      )
+    )
+  });
+
+  it("Should governor approve a provider", async () => {
+    await truffleAssert.passes(
+      providerContract.approve(await accounts[0].getAddress())
+    )
+  });
+
+  it("Should governor ban a provider", async () => {
+    await truffleAssert.reverts(
+      providerContract.ban(await accounts[1].getAddress()),
+        "Not a provider"
+    )
+
+    await truffleAssert.passes(
+      providerContract.ban(await accounts[0].getAddress())
+    )
+  });
+
 });
