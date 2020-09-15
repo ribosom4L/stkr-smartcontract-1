@@ -15,7 +15,7 @@ contract Provider is Ownable, OwnedByGovernor {
 
     event Applied(address indexed provider);
     event StatusChanged(address indexed governor, ProviderStatus indexed newStatus);
-    
+
     enum ProviderStatus {PENDING, APPROVED, BANNED, REJECTED}
 
     struct ProviderInfo {
@@ -29,6 +29,10 @@ contract Provider is Ownable, OwnedByGovernor {
 
     Staking private _stakingContract;
     mapping(address => ProviderInfo) private _providers;
+
+    constructor(Staking stakingContract) public {
+        _stakingContract = stakingContract;
+    }
 
     function isProvider(address addr) public view returns (bool) {
         return _providers[addr].status == ProviderStatus.APPROVED;

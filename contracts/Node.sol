@@ -24,6 +24,8 @@ contract Node is Ownable, OwnedByGovernor {
 
     mapping(address => NodeInfo) private _nodes; // node addr => node info
 
+    address private _stakingContract;
+
     function providerNodes(address addr)
         public
         view
@@ -69,4 +71,8 @@ contract Node is Ownable, OwnedByGovernor {
     }
 
     // TODO: remove a node
+
+    function updateStakingContract(address addr) public onlyGovernor {
+        _stakingContract = addr;
+    }
 }

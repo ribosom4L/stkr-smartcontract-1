@@ -12,8 +12,8 @@ contract ANKR is Ownable, IERC20 {
     mapping (address => mapping (address => uint256)) private _allowances;
     uint256 private _totalSupply = 0;
 
-    string private _name = "aETH";
-    string private _symbol = "aETH";
+    string private _name = "ANKR";
+    string private _symbol = "ANKR";
     uint8 private _decimals = 18;
 
     address private _microPoolContract;

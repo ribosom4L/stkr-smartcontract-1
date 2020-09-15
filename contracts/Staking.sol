@@ -35,6 +35,12 @@ contract Staking is Ownable, OwnedByGovernor {
     mapping(address => uint256) _nodeStakes;
     mapping(address => uint256) _poolStakes;
 
+    constructor(address ankrContract, address nodeContract, address microPoolContract) public {
+        _ankrContract = ankrContract;
+        _nodeContract = nodeContract;
+        _microPoolContract = microPoolContract;
+    }
+
     modifier shouldAllowed(address addr, uint256 amount) {
         // TODO: Error msg
         require(
