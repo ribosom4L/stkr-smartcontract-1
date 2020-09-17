@@ -50,28 +50,28 @@ describe("Auction", async () => {
     nodeContract = await NodeContract.deploy();
     await nodeContract.deployed();
 
-    providerContract = await ProviderContract.deploy();
+    ankrContract = await AnkrContract.deploy(await accounts[0].getAddress());
+    await ankrContract.deployed();
+
+    stakingContract = await StakingContract.deploy(ankrContract.address, nodeContract.address, microPoolContract.address);
+    await stakingContract.deployed();
+
+    providerContract = await ProviderContract.deploy(stakingContract.address);
     await providerContract.deployed();
 
     auctionsContract = await AuctionsContract.deploy(providerContract.address);
     await auctionsContract.deployed();
-
-    stakingContract = await StakingContract.deploy();
-    await stakingContract.deployed();
-
-    ankrContract = await AnkrContract.deploy(await accounts[0].getAddress());
-    await ankrContract.deployed();
   });
 
   it("Should validate the contracts deployed", async () => {
-    assert.isTrue(web3.utils.isAddress(microPoolContract.address));
-    assert.isTrue(web3.utils.isAddress(tokenContract.address));
-    assert.isTrue(web3.utils.isAddress(governanceContract.address));
-    assert.isTrue(web3.utils.isAddress(insuranceContract.address));
-    assert.isTrue(web3.utils.isAddress(marketPlaceContract.address));
-    assert.isTrue(web3.utils.isAddress(nodeContract.address));
-    assert.isTrue(web3.utils.isAddress(providerContract.address));
-    assert.isTrue(web3.utils.isAddress(stakingContract.address));
+    assert.isTrue(web3.utils.isAddress(microPoolContract.address), 'micropool');
+    assert.isTrue(web3.utils.isAddress(tokenContract.address), 'token');
+    assert.isTrue(web3.utils.isAddress(governanceContract.address), 'governance');
+    assert.isTrue(web3.utils.isAddress(insuranceContract.address), 'insurance');
+    assert.isTrue(web3.utils.isAddress(marketPlaceContract.address), 'marketplace');
+    assert.isTrue(web3.utils.isAddress(nodeContract.address), 'node');
+    assert.isTrue(web3.utils.isAddress(providerContract.address), 'provider');
+    assert.isTrue(web3.utils.isAddress(stakingContract.address), 'staking');
   });
 
   it("Should add contract addresses to each other", async () => {

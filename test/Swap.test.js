@@ -50,17 +50,18 @@ describe("Swap", async () => {
     nodeContract = await NodeContract.deploy();
     await nodeContract.deployed();
 
-    providerContract = await ProviderContract.deploy();
-    await providerContract.deployed();
-
-    stakingContract = await StakingContract.deploy();
-    await stakingContract.deployed();
-
     ankrContract = await AnkrContract.deploy(await accounts[0].getAddress());
     await ankrContract.deployed();
 
     swapContract = await SwapContract.deploy();
     await swapContract.deployed();
+
+    stakingContract = await StakingContract.deploy(ankrContract.address, nodeContract.address, microPoolContract.address);
+    await stakingContract.deployed();
+
+    providerContract = await ProviderContract.deploy(stakingContract.address);
+    await providerContract.deployed();
+
   });
 
   it("Should validate the contracts deployed", async () => {
