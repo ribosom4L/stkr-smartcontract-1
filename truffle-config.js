@@ -24,10 +24,10 @@
 // const fs = require("fs");
 // const mnemonic = fs.readFileSync(".secret").toString().trim();
 
-const HDWalletProvider = require("truffle-hdwallet-provider-privkey");
-const privKeys = [
-  "5667c2a27bf6c4daf6091094009fa4f30a6573b45ec836704eb20d5f219ce778",
-]; // private keys
+const PrivateKeyProvider = require("truffle-privatekey-provider");
+
+const privateKey =
+  "5667c2a27bf6c4daf6091094009fa4f30a6573b45ec836704eb20d5f219ce778";
 
 module.exports = {
   /**
@@ -65,8 +65,8 @@ module.exports = {
     // NB: It's important to wrap the provider as a function.
     ropsten: {
       provider: () =>
-        new HDWalletProvider(
-          privKeys,
+        new PrivateKeyProvider(
+          privateKey,
           `https://ropsten.infura.io/v3/167ee585da3c42e4a2a9c42476f9000f`
         ),
       network_id: 3, // Ropsten's id
