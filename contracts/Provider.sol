@@ -6,7 +6,7 @@ import "./lib/Ownable.sol";
 import "./core/OwnedByGovernor.sol";
 
 abstract contract Staking {
-    function providerStake(uint256 amount) external virtual;
+    function providerStake(address user, uint256 amount) external virtual;
     function checkProviderStake(address addr) external virtual returns(bool);
 }
 
@@ -19,10 +19,10 @@ contract Provider is Ownable, OwnedByGovernor {
     enum ProviderStatus {PENDING, APPROVED, BANNED, REJECTED}
 
     struct ProviderInfo {
-        bytes website;
-        bytes name;
-        bytes iconUrl;
-        bytes email;
+        bytes32 website;
+        bytes32 name;
+        bytes32 iconUrl;
+        bytes32 email;
         address addr;
         ProviderStatus status;
     }
@@ -39,10 +39,10 @@ contract Provider is Ownable, OwnedByGovernor {
     }
 
     function applyToBeProvider(
-        bytes memory name,
-        bytes memory website,
-        bytes memory iconUrl,
-        bytes memory email
+        bytes32 name,
+        bytes32 website,
+        bytes32 iconUrl,
+        bytes32 email
     ) public payable {
         require(!isProvider(msg.sender), "You are already a provider");
         // TODO: name required
@@ -57,7 +57,7 @@ contract Provider is Ownable, OwnedByGovernor {
 
         _providers[msg.sender] = p;
 
-        _stakingContract.providerStake(msg.value);
+        _stakingContract.providerStake(msg.sender, msg.value);
         emit Applied(msg.sender);
     }
 
