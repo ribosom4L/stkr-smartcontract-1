@@ -55,9 +55,9 @@ contract Staking is Ownable, OwnedByGovernor {
         _;
     }
 
-    function stake(address user, uint256 amount)
+    function stake(uint256 amount)
         public
-        shouldAllowed(user, amount)
+        shouldAllowed(msg.sender, amount)
         returns (bool)
     {
         _stakes[msg.sender] = _stakes[msg.sender].add(amount);
