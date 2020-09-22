@@ -1,20 +1,23 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.6.8;
+pragma experimental ABIEncoderV2;
 
 import "./lib/SafeMath.sol";
 import "./lib/Ownable.sol";
 import "./core/OwnedByGovernor.sol";
 
-abstract contract Staking {
-    function providerStake(address user, uint256 amount) external virtual;
-    function checkProviderStake(address addr) external virtual returns(bool);
+
+interface Staking {
+    function providerStake(address user, uint256 amount) external;
+
+    function checkProviderStake(address addr) external returns (bool);
 }
 
 contract Provider is Ownable, OwnedByGovernor {
     using SafeMath for uint256;
 
     event Applied(address indexed provider);
-    event StatusChanged(address indexed governor, ProviderStatus indexed newStatus);
+    event StatusChanged(address indexed governor, address indexed provider, ProviderStatus indexed newStatus);
 
     enum ProviderStatus {PENDING, APPROVED, BANNED, REJECTED}
 
@@ -27,10 +30,10 @@ contract Provider is Ownable, OwnedByGovernor {
         ProviderStatus status;
     }
 
-    Staking private _stakingContract;
+    address private _stakingContract;
     mapping(address => ProviderInfo) private _providers;
 
-    constructor(Staking stakingContract) public {
+    constructor(address stakingContract) public {
         _stakingContract = stakingContract;
     }
 
@@ -42,8 +45,9 @@ contract Provider is Ownable, OwnedByGovernor {
         bytes32 name,
         bytes32 website,
         bytes32 iconUrl,
-        bytes32 email
-    ) public payable {
+        bytes32 email,
+        uint256 amount
+    ) public {
         require(!isProvider(msg.sender), "You are already a provider");
         // TODO: name required
 
@@ -57,27 +61,31 @@ contract Provider is Ownable, OwnedByGovernor {
 
         _providers[msg.sender] = p;
 
-        _stakingContract.providerStake(msg.sender, msg.value);
+        Staking(_stakingContract).providerStake(msg.sender, amount);
         emit Applied(msg.sender);
     }
 
     function approve(address addr) public onlyGovernor {
-      require(!isProvider(addr), "Already a provider");
-      // TODO: require(_stakingContract.checkProviderStake(addr), "Provider not staked requirements");
+        require(!isProvider(addr), "Already a provider");
+        // TODO: require(_stakingContract.checkProviderStake(addr), "Provider not staked requirements");
 
-      _providers[addr].status = ProviderStatus.APPROVED;
-      emit StatusChanged(msg.sender, _providers[addr].status);
+        _providers[addr].status = ProviderStatus.APPROVED;
+        emit StatusChanged(msg.sender, addr, _providers[addr].status);
     }
 
     function ban(address addr) public onlyGovernor {
-      require(isProvider(addr), "Not a provider");
+        require(isProvider(addr), "Not a provider");
 
-      _providers[addr].status = ProviderStatus.BANNED;
-      emit StatusChanged(msg.sender, _providers[addr].status);
+        _providers[addr].status = ProviderStatus.BANNED;
+        emit StatusChanged(msg.sender, addr, _providers[addr].status);
+    }
+
+    function getProviderInfo(address addr) public view returns (ProviderInfo memory) {
+        return _providers[addr];
     }
 
     // TODO: OnlyGovernor -> Governors by voting
-    function updateStakingContract(Staking addr) public onlyGovernor {
+    function updateStakingContract(address addr) public onlyGovernor {
         _stakingContract = addr;
     }
 }

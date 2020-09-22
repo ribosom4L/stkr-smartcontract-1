@@ -4,7 +4,7 @@ pragma solidity ^0.6.8;
 import "./lib/SafeMath.sol";
 import "./core/OwnedByGovernor.sol";
 
-abstract contract TokenContract {
+interface TokenContract {
     function mint(address account, uint256 amount) external virtual;
     function updateMicroPoolContract(address microPoolContract) external virtual;
 }
@@ -41,7 +41,7 @@ contract MicroPool is OwnedByGovernor {
 
     Pool[] private _pools;
     bool private _claimable = false; // governors will make it true after ETH 2.0
-    TokenContract private _tokenContract;
+    address private _tokenContract;
     address _insuranceContract;
 
     event PoolCreated(
@@ -62,10 +62,10 @@ contract MicroPool is OwnedByGovernor {
     );
 
     constructor(
-        TokenContract tokenContract
+        address tokenContract
     ) public {
         _tokenContract = tokenContract;
-        tokenContract.updateMicroPoolContract(address(this));
+        TokenContract(tokenContract).updateMicroPoolContract(address(this));
     }
 
     /**
@@ -131,7 +131,7 @@ contract MicroPool is OwnedByGovernor {
         pool.stakes[msg.sender] = userStake;
 
         // Mint AEth for user
-        _tokenContract.mint(msg.sender, stakeAmount.div(2));
+        TokenContract(_tokenContract).mint(msg.sender, stakeAmount.div(2));
 
         emit UserStaked(poolIndex, msg.sender, stakeAmount);
     }
@@ -153,7 +153,7 @@ contract MicroPool is OwnedByGovernor {
             "You don't have staked balance in this pool"
         );
         // require(
-        //     _tokenContract.burnFrom(
+        //     TokenContract(_tokenContract).burnFrom(
         //         msg.sender,
         //         pool.stakes[msg.sender].amount.div(2)
         //     ),
@@ -185,7 +185,7 @@ contract MicroPool is OwnedByGovernor {
         Governer calls this function to change aEth token contract address
         @param tokenContract address
     */
-    function updateTokenContract(TokenContract tokenContract)
+    function updateTokenContract(address tokenContract)
         external
         onlyGovernor
     {

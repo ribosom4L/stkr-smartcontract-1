@@ -4,8 +4,8 @@ pragma solidity ^0.6.8;
 import "./lib/SafeMath.sol";
 import "./lib/Context.sol";
 
-abstract contract ProviderContract {
-    function isProvider(address addr) public view virtual returns (bool);
+interface ProviderContract {
+    function isProvider(address addr) external view returns (bool);
 }
 
 contract Auctions is Context {
@@ -26,23 +26,23 @@ contract Auctions is Context {
     }
 
     Auction[] private _auctions;
-    ProviderContract private _providerContract;
+    address private _providerContract;
 
     modifier onlyProvider() {
-        require(_providerContract.isProvider(_msgSender()));
+        require(ProviderContract(_providerContract).isProvider(_msgSender()));
         _;
     }
 
     // TODO: events
 
     constructor(
-      ProviderContract providerContract
+      address providerContract
     ) public {
       _providerContract = providerContract;
     }
 
     function startAuction(
-      uint256 processingFee, 
+      uint256 processingFee,
       uint256 period // that period of time (in days) auction will long
       ) external {
         // TODO: validations

@@ -1,26 +1,26 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.6.8;
 
-abstract contract GovernanceContract {
+interface GovernanceContract {
     function isGovernor(address addr) external virtual returns(bool);
 }
 
 contract OwnedByGovernor {
-    GovernanceContract private _governanceContract;
+    address private _governanceContract;
 
     function updateGovernanceContract(address addr) external {
-        _governanceContract = GovernanceContract(addr);
+        _governanceContract = addr;
     }
 
-    function governanceContract() external view returns(GovernanceContract) {
+    function governanceContract() external view returns(address) {
         return _governanceContract;
     }
 
     modifier onlyGovernor() {
-        require(
-            _governanceContract.isGovernor(msg.sender),
-            "Only a governor can call this function."
-        );
+//        require(
+//            GovernanceContract(_governanceContract).isGovernor(msg.sender),
+//            "Only a governor can call this function."
+//        );
         _;
     }
 }

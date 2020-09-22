@@ -5,7 +5,7 @@ import "./lib/SafeMath.sol";
 import "./lib/Context.sol";
 import "./core/OwnedByGovernor.sol";
 
-abstract contract TokenContract {
+interface TokenContract {
     function mint(address account, uint256 amount) external virtual;
     function burnFrom(address sender, uint256 amount) external virtual returns (bool);
 }
@@ -13,7 +13,7 @@ abstract contract TokenContract {
 contract Swap is Context, OwnedByGovernor {
     using SafeMath for uint256;
 
-    TokenContract private _tokenContract;
+    address private _tokenContract;
 
     event Swapped(
         address indexed user,
@@ -26,12 +26,12 @@ contract Swap is Context, OwnedByGovernor {
     function swap(uint256 amount) external {
         // TODO: validations
 
-        _tokenContract.burnFrom(_msgSender(), amount);
+        TokenContract(_tokenContract).burnFrom(_msgSender(), amount);
         _msgSender().transfer(amount);
         emit Swapped(_msgSender(), amount);
     }
 
-    function updateTokenContract(TokenContract tokenContract) external onlyGovernor {
+    function updateTokenContract(address tokenContract) external onlyGovernor {
         _tokenContract = tokenContract;
     }
 }

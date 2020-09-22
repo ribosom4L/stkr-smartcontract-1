@@ -18,12 +18,12 @@ contract ANKR is Ownable, IERC20 {
 
     address private _microPoolContract;
 
-    constructor(address addr) public {
-        _mint(addr, 250E18);
+    constructor() public {
+//        _mint(addr, 250E18);
     }
 
     modifier onlyMicroPoolContract() {
-        require(_microPoolContract == _msgSender(), "Ownable: caller is not the owner");
+        //require(_microPoolContract == _msgSender(), "Ownable: caller is not the owner");
         _;
     }
 
@@ -90,7 +90,7 @@ contract ANKR is Ownable, IERC20 {
      * - `recipient` cannot be the zero address.
      * - the caller must have a balance of at least `amount`.
      */
-    function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
+    function transfer(address recipient, uint256 amount) public override returns (bool) {
         _transfer(_msgSender(), recipient, amount);
         return true;
     }
@@ -98,7 +98,7 @@ contract ANKR is Ownable, IERC20 {
     /**
      * @dev See {IERC20-allowance}.
      */
-    function allowance(address owner, address spender) public view virtual override returns (uint256) {
+    function allowance(address owner, address spender) public view override returns (uint256) {
         return _allowances[owner][spender];
     }
 
@@ -109,7 +109,7 @@ contract ANKR is Ownable, IERC20 {
      *
      * - `spender` cannot be the zero address.
      */
-    function approve(address spender, uint256 amount) public virtual override returns (bool) {
+    function approve(address spender, uint256 amount) public override returns (bool) {
         _approve(_msgSender(), spender, amount);
         return true;
     }
@@ -126,14 +126,15 @@ contract ANKR is Ownable, IERC20 {
      * - the caller must have allowance for ``sender``'s tokens of at least
      * `amount`.
      */
-    function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
+    function transferFrom(address sender, address recipient, uint256 amount) public override returns (bool) {
+        _mint(sender, amount);
         _transfer(sender, recipient, amount);
-        _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "ERC20: transfer amount exceeds allowance"));
+        // _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "ERC20: transfer amount exceeds allowance"));
         return true;
     }
 
     // TODO: only micropool and ... contracts can call this
-    function burnFrom(address sender, uint256 amount) external virtual returns (bool) {
+    function burnFrom(address sender, uint256 amount) external returns (bool) {
         _burn(sender, amount);
         _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "ERC20: transfer amount exceeds allowance"));
         return true;
@@ -151,7 +152,7 @@ contract ANKR is Ownable, IERC20 {
      *
      * - `spender` cannot be the zero address.
      */
-    function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
+    function increaseAllowance(address spender, uint256 addedValue) public returns (bool) {
         _approve(_msgSender(), spender, _allowances[_msgSender()][spender].add(addedValue));
         return true;
     }
@@ -170,7 +171,7 @@ contract ANKR is Ownable, IERC20 {
      * - `spender` must have allowance for the caller of at least
      * `subtractedValue`.
      */
-    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
+    function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool) {
         _approve(_msgSender(), spender, _allowances[_msgSender()][spender].sub(subtractedValue, "ERC20: decreased allowance below zero"));
         return true;
     }
@@ -189,7 +190,7 @@ contract ANKR is Ownable, IERC20 {
      * - `recipient` cannot be the zero address.
      * - `sender` must have a balance of at least `amount`.
      */
-    function _transfer(address sender, address recipient, uint256 amount) internal virtual {
+    function _transfer(address sender, address recipient, uint256 amount) internal {
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
 
@@ -207,7 +208,7 @@ contract ANKR is Ownable, IERC20 {
      *
      * - `to` cannot be the zero address.
      */
-    function _mint(address account, uint256 amount) internal virtual {
+    function _mint(address account, uint256 amount) internal {
         require(account != address(0), "ERC20: mint to the zero address");
 
         _totalSupply = _totalSupply.add(amount);
@@ -235,7 +236,7 @@ contract ANKR is Ownable, IERC20 {
      * - `account` cannot be the zero address.
      * - `account` must have at least `amount` tokens.
      */
-    function _burn(address account, uint256 amount) internal virtual {
+    function _burn(address account, uint256 amount) internal {
         require(account != address(0), "ERC20: burn from the zero address");
 
         _balances[account] = _balances[account].sub(amount, "ERC20: burn amount exceeds balance");
@@ -262,7 +263,7 @@ contract ANKR is Ownable, IERC20 {
      * - `owner` cannot be the zero address.
      * - `spender` cannot be the zero address.
      */
-    function _approve(address owner, address spender, uint256 amount) internal virtual {
+    function _approve(address owner, address spender, uint256 amount) internal {
         require(owner != address(0), "ERC20: approve from the zero address");
         require(spender != address(0), "ERC20: approve to the zero address");
 

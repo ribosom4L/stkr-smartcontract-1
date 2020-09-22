@@ -25,15 +25,15 @@ contract Staking is Ownable, OwnedByGovernor {
     enum StakeType {STANDART, PROVIDER, NODE, POOL_FEE}
 
     // TODO: Set
-    address private _ankrContract;
-    address private _nodeContract;
-    address private _providerContract;
-    address private _microPoolContract;
+    address public _ankrContract;
+    address public _nodeContract;
+    address public _providerContract;
+    address public _microPoolContract;
 
-    mapping(address => uint256) _stakes;
-    mapping(address => uint256) _providerStakes;
-    mapping(address => uint256) _nodeStakes;
-    mapping(address => uint256) _poolStakes;
+    mapping(address => uint256) public _stakes;
+    mapping(address => uint256) public _providerStakes;
+    mapping(address => uint256) public _nodeStakes;
+    mapping(address => uint256) public _poolStakes;
 
     constructor(address ankrContract, address nodeContract, address microPoolContract) public {
         _ankrContract = ankrContract;
@@ -194,5 +194,13 @@ contract Staking is Ownable, OwnedByGovernor {
 
         emit Unstake(addr, StakeType.POOL_FEE, amount);
         return true;
+    }
+
+    function totalStakes(address staker) public view returns(uint256) {
+        return _stakes[staker] + _providerStakes[staker] + _nodeStakes[staker] + _poolStakes[staker];
+    }
+
+    function totalStakes() public view returns(uint256) {
+        return _stakes[msg.sender] + _providerStakes[msg.sender] + _nodeStakes[msg.sender] + _poolStakes[msg.sender];
     }
 }
