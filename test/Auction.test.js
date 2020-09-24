@@ -145,7 +145,7 @@ describe("Auction", async () => {
 
   it("Should add providers", async () => {
     await truffleAssert.passes(
-      providerContract.applyToBeProvider(
+      providerContract.saveProvider(
         "0x68656c6c6f2d6d792d776f726c64000000000000000000000000000000000000",
         "0x68656c6c6f2d6d792d776f726c64000000000000000000000000000000000000",
         "0x68656c6c6f2d6d792d776f726c64000000000000000000000000000000000000",
@@ -157,7 +157,7 @@ describe("Auction", async () => {
     await truffleAssert.passes(
       providerContract
         .connect(accounts[5])
-        .applyToBeProvider(
+        .saveProvider(
           "0x68656c6c6f2d6d792d776f726c64000000000000000000000000000000000000",
           "0x68656c6c6f2d6d792d776f726c64000000000000000000000000000000000000",
           "0x68656c6c6f2d6d792d776f726c64000000000000000000000000000000000000",
@@ -169,7 +169,7 @@ describe("Auction", async () => {
     await truffleAssert.passes(
       providerContract
         .connect(accounts[6])
-        .applyToBeProvider(
+        .saveProvider(
           "0x68656c6c6f2d6d792d776f726c64000000000000000000000000000000000000",
           "0x68656c6c6f2d6d792d776f726c64000000000000000000000000000000000000",
           "0x68656c6c6f2d6d792d776f726c64000000000000000000000000000000000000",

@@ -19,7 +19,7 @@ contract Provider is Ownable, OwnedByGovernor {
     event Applied(address indexed provider);
     event StatusChanged(address indexed governor, address indexed provider, ProviderStatus indexed newStatus);
 
-    enum ProviderStatus {PENDING, APPROVED, BANNED, REJECTED}
+    enum ProviderStatus {APPROVED, BANNED}
 
     struct ProviderInfo {
         bytes32 website;
@@ -41,15 +41,34 @@ contract Provider is Ownable, OwnedByGovernor {
         return _providers[addr].status == ProviderStatus.APPROVED;
     }
 
-    function applyToBeProvider(
+    function saveProvider(
         bytes32 name,
         bytes32 website,
         bytes32 iconUrl,
         bytes32 email,
         uint256 amount
-    ) public {
+    ) public payable {
         require(!isProvider(msg.sender), "You are already a provider");
-        // TODO: name required
+        uint256 startGas = gasleft();
+        uint256 feeMultiplier = 1;
+        
+        bytes32 zero = bytes32(0);
+
+        if (name != zero) {
+            feeMultiplier++;
+        }
+
+        if (website != zero) {
+            feeMultiplier++;
+        }
+
+        if (iconUrl != zero) {
+            feeMultiplier++;
+        }
+
+        if (email != zero) {
+            feeMultiplier++;
+        }
 
         ProviderInfo memory p;
         p.name = name;
@@ -57,12 +76,16 @@ contract Provider is Ownable, OwnedByGovernor {
         p.iconUrl = iconUrl;
         p.email = email;
         p.addr = msg.sender;
-        p.status = ProviderStatus.PENDING;
+        p.status = ProviderStatus.APPROVED;
 
         _providers[msg.sender] = p;
 
         Staking(_stakingContract).providerStake(msg.sender, amount);
         emit Applied(msg.sender);
+
+        uint gasCost = startGas - gasleft();
+
+        require(msg.value >= feeMultiplier * gasCost, 'Need extra gas to end transaction');
     }
 
     function approve(address addr) public onlyGovernor {
@@ -73,6 +96,25 @@ contract Provider is Ownable, OwnedByGovernor {
         emit StatusChanged(msg.sender, addr, _providers[addr].status);
     }
 
+    function updateProvider(        
+        address provider,
+        bytes32 name,
+        bytes32 website,
+        bytes32 iconUrl,
+        bytes32 email
+    ) public {
+
+        ProviderInfo memory p;
+        p.name = name;
+        p.website = website;
+        p.iconUrl = iconUrl;
+        p.email = email;
+        p.addr = msg.sender;
+        p.status = ProviderStatus.APPROVED;
+
+        _providers[msg.sender] = p;
+    }
+    
     function ban(address addr) public onlyGovernor {
         require(isProvider(addr), "Not a provider");
 

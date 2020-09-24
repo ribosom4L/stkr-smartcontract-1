@@ -141,7 +141,7 @@ describe("Provider", async () => {
 
   it("Should user apply to be a provider", async () => {
     await truffleAssert.passes(
-      providerContract.applyToBeProvider(
+      providerContract.saveProvider(
         "0x68656c6c6f2d6d792d776f726c64000000000000000000000000000000000000",
         "0x68656c6c6f2d6d792d776f726c64000000000000000000000000000000000000",
         "0x68656c6c6f2d6d792d776f726c64000000000000000000000000000000000000",
@@ -152,7 +152,7 @@ describe("Provider", async () => {
     await truffleAssert.passes(
       providerContract
         .connect(accounts[1])
-        .applyToBeProvider(
+        .saveProvider(
           "0x68656c6c6f2d6d792d776f726c64000000000000000000000000000000000000",
           "0x68656c6c6f2d6d792d776f726c64000000000000000000000000000000000000",
           "0x68656c6c6f2d6d792d776f726c64000000000000000000000000000000000000",

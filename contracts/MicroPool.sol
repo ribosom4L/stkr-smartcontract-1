@@ -78,7 +78,7 @@ contract MicroPool is OwnedByGovernor {
         address payable provider,
         address payable validator,
         uint256 providerOwe
-    ) external onlyGovernor {
+    ) external {
         // TODO: validations
         // TODO: _nodeFee usd to eth
         Pool memory pool;
