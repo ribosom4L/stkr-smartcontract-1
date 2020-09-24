@@ -38,21 +38,19 @@ contract Provider is Ownable, OwnedByGovernor {
     }
 
     function isProvider(address addr) public view returns (bool) {
-        return _providers[addr].status == ProviderStatus.APPROVED;
+        return _providers[addr].addr == addr;
     }
 
     function saveProvider(
         bytes32 name,
         bytes32 website,
         bytes32 iconUrl,
-        bytes32 email,
-        uint256 amount
-    ) public payable {
+        bytes32 email
+    ) public payable returns(uint256) {
         require(!isProvider(msg.sender), "You are already a provider");
-        uint256 startGas = gasleft();
-        uint256 feeMultiplier = 1;
+        uint256 feeMultiplier = 0;
         
-        bytes32 zero = bytes32(0);
+        bytes32 zero = 0x0000000000000000000000000000000000000000000000000000000000000000;
 
         if (name != zero) {
             feeMultiplier++;
@@ -80,21 +78,11 @@ contract Provider is Ownable, OwnedByGovernor {
 
         _providers[msg.sender] = p;
 
-        Staking(_stakingContract).providerStake(msg.sender, amount);
+        // Staking(_stakingContract).providerStake(msg.sender, amount);
         emit Applied(msg.sender);
-
-        uint gasCost = startGas - gasleft();
-
-        require(msg.value >= feeMultiplier * gasCost, 'Need extra gas to end transaction');
+        // require(msg.value >= feeMultiplier * 21000, 'Need extra gas to end transaction');
     }
 
-    function approve(address addr) public onlyGovernor {
-        require(!isProvider(addr), "Already a provider");
-        // TODO: require(_stakingContract.checkProviderStake(addr), "Provider not staked requirements");
-
-        _providers[addr].status = ProviderStatus.APPROVED;
-        emit StatusChanged(msg.sender, addr, _providers[addr].status);
-    }
 
     function updateProvider(        
         address provider,
@@ -102,7 +90,8 @@ contract Provider is Ownable, OwnedByGovernor {
         bytes32 website,
         bytes32 iconUrl,
         bytes32 email
-    ) public {
+    ) public onlyGovernor {
+        require(isProvider(provider), "Address is not a provider");
 
         ProviderInfo memory p;
         p.name = name;
@@ -112,7 +101,7 @@ contract Provider is Ownable, OwnedByGovernor {
         p.addr = msg.sender;
         p.status = ProviderStatus.APPROVED;
 
-        _providers[msg.sender] = p;
+        _providers[provider] = p;
     }
     
     function ban(address addr) public onlyGovernor {

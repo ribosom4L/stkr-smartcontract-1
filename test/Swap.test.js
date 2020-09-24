@@ -50,7 +50,7 @@ describe("Swap", async () => {
     nodeContract = await NodeContract.deploy();
     await nodeContract.deployed();
 
-    ankrContract = await AnkrContract.deploy(await accounts[0].getAddress());
+    ankrContract = await AnkrContract.deploy();
     await ankrContract.deployed();
 
     swapContract = await SwapContract.deploy();

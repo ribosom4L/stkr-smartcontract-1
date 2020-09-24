@@ -44,7 +44,6 @@ describe("MarketPlace", async () => {
     assert.isTrue(web3.utils.isAddress(microPoolContract.address));
     assert.isTrue(web3.utils.isAddress(tokenContract.address));
     assert.isTrue(web3.utils.isAddress(governanceContract.address));
-    assert.isTrue(web3.utils.isAddress(insuranceContract.address));
     assert.isTrue(web3.utils.isAddress(marketPlaceContract.address));
   });
 

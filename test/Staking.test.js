@@ -48,7 +48,7 @@ describe("Staking", async () => {
     nodeContract = await NodeContract.deploy();
     await nodeContract.deployed();
 
-    ankrContract = await AnkrContract.deploy(await accounts[0].getAddress());
+    ankrContract = await AnkrContract.deploy();
     await ankrContract.deployed();
 
     stakingContract = await StakingContract.deploy(ankrContract.address, nodeContract.address, microPoolContract.address);

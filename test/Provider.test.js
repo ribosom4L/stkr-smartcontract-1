@@ -48,7 +48,7 @@ describe("Provider", async () => {
     nodeContract = await NodeContract.deploy();
     await nodeContract.deployed();
 
-    ankrContract = await AnkrContract.deploy(await accounts[0].getAddress());
+    ankrContract = await AnkrContract.deploy();
     await ankrContract.deployed();
 
     stakingContract = await StakingContract.deploy(
@@ -142,10 +142,13 @@ describe("Provider", async () => {
   it("Should user apply to be a provider", async () => {
     await truffleAssert.passes(
       providerContract.saveProvider(
-        "0x68656c6c6f2d6d792d776f726c64000000000000000000000000000000000000",
-        "0x68656c6c6f2d6d792d776f726c64000000000000000000000000000000000000",
-        "0x68656c6c6f2d6d792d776f726c64000000000000000000000000000000000000",
-        "0x68656c6c6f2d6d792d776f726c64000000000000000000000000000000000000"
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+        {
+          value: "199979771017400000000"
+        }
       )
     );
 
@@ -161,14 +164,8 @@ describe("Provider", async () => {
     );
   });
 
-  it("Should governor approve a provider", async () => {
-    await truffleAssert.passes(
-      providerContract.approve(await accounts[0].getAddress())
-    );
-  });
-
   it("Should governor ban a provider", async () => {
-    await truffleAssert.reverts(
+    await truffleAssert.passes(
       providerContract.ban(await accounts[1].getAddress()),
       "Not a provider"
     );
