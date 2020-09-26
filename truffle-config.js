@@ -71,9 +71,19 @@ module.exports = {
         ),
       network_id: 3, // Ropsten's id
       gas: 5500000, // Ropsten has a lower block limit than mainnet
-      confirmations: 2, // # of confs to wait between deployments. (default: 0)
-      timeoutBlocks: 200, // # of blocks before a deployment times out  (minimum/default: 50)
-      skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
+      timeoutBlocks: 50, // # of blocks before a deployment times out  (minimum/default: 50)
+      skipDryRun: true, // Skip dry run before migrations? (default: false for public nets)
+    },
+    goerli: {
+      provider: () =>
+        new PrivateKeyProvider(
+          "4c41bbaa2c31ea208fd368ca68cb347845f2a4b5535d9099d9863c7afd48baac",
+          `https://goerli.infura.io/v3/167ee585da3c42e4a2a9c42476f9000f`
+        ),
+      network_id: 5, // Ropsten's id
+      gas: 5500000, // Ropsten has a lower block limit than mainnet
+      timeoutBlocks: 50, // # of blocks before a deployment times out  (minimum/default: 50)
+      skipDryRun: false, // Skip dry run before migrations? (default: false for public nets)
     },
     // Useful for private networks
     // private: {

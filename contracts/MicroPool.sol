@@ -5,14 +5,18 @@ import "./lib/SafeMath.sol";
 import "./core/OwnedByGovernor.sol";
 
 interface TokenContract {
-    function mint(address account, uint256 amount) external virtual;
-    function updateMicroPoolContract(address microPoolContract) external virtual;
+    function mint(address account, uint256 amount) external;
+    function updateMicroPoolContract(address microPoolContract) external;
+}
+
+interface ProviderContract {
+    function isProvider(address addr) external view returns (bool);
 }
 
 contract MicroPool is OwnedByGovernor {
     using SafeMath for uint256;
 
-    enum PoolStatus {Initialized, Pending, OnGoing, Completed, Canceled}
+    enum PoolStatus {Pending, OnGoing, Completed, Canceled}
 
     struct PoolStake {
         uint256 amount;
@@ -70,29 +74,22 @@ contract MicroPool is OwnedByGovernor {
 
     /**
         Governor can call this function to create a new pool for given provider.
-        @param provider address
         @param validator address
-        @param providerOwe uint256
     */
     function initializePool(
-        address payable provider,
         address payable validator,
-        uint256 providerOwe
+        uint256 nodeFee
     ) external {
         // TODO: validations
         // TODO: _nodeFee usd to eth
         Pool memory pool;
-        pool.provider = provider;
+        pool.provider = msg.sender;
         pool.validator = validator;
-        pool.providerOwe = providerOwe;
+        pool.nodeFee = nodeFee;
+        // pool.providerOwe = providerOwe;
         pool.startTime = block.timestamp;
-        if (providerOwe > 0) {
-            pool.status = PoolStatus.Initialized;
-        } else {
-            pool.status = PoolStatus.Pending;
-        }
         _pools.push(pool);
-        emit PoolCreated(_pools.length.sub(1), provider, validator, msg.sender);
+        emit PoolCreated(_pools.length.sub(1), msg.sender, validator, msg.sender);
     }
 
     /**
@@ -101,17 +98,12 @@ contract MicroPool is OwnedByGovernor {
     */
     // TODO: not mint AETH directly, wait for pool reach 32 eth.
     function stake(uint256 poolIndex) external payable {
-        // TODO: validations
 
         Pool storage pool = _pools[poolIndex];
         uint256 fee = msg.value.div(32 ether).mul(pool.nodeFee);
         uint256 stakeAmount = msg.value.sub(fee);
         // TODO: min. stake amount
         require(stakeAmount > 0, "You don't have enough balance.");
-
-        if (pool.status == PoolStatus.Initialized) {
-            pool.status = PoolStatus.Pending;
-        }
 
         uint256 newTotalAmount = stakeAmount.add(pool.totalStakedAmount);
         if (newTotalAmount >= 32 ether) {
@@ -130,10 +122,10 @@ contract MicroPool is OwnedByGovernor {
         userStake.fee = userStake.fee.add(fee);
         pool.stakes[msg.sender] = userStake;
 
-        // Mint AEth for user
-        TokenContract(_tokenContract).mint(msg.sender, stakeAmount.div(2));
-
         emit UserStaked(poolIndex, msg.sender, stakeAmount);
+
+        // Mint AEth for user
+        // TokenContract(_tokenContract).mint(msg.sender, stakeAmount.div(2));
     }
 
     /**

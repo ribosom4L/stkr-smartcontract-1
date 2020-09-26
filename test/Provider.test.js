@@ -9,7 +9,6 @@ describe("Provider", async () => {
   let governanceContract;
   let insuranceContract;
   let marketPlaceContract;
-  let nodeContract;
   let providerContract;
   let stakingContract;
   let ankrContract;
@@ -26,7 +25,6 @@ describe("Provider", async () => {
     const GovernanceContract = await ethers.getContractFactory("Governance");
     const InsuranceContract = await ethers.getContractFactory("InsurancePool");
     const MarketPlaceContract = await ethers.getContractFactory("MarketPlace");
-    const NodeContract = await ethers.getContractFactory("Node");
     const ProviderContract = await ethers.getContractFactory("Provider");
     const StakingContract = await ethers.getContractFactory("Staking");
 
@@ -45,15 +43,11 @@ describe("Provider", async () => {
     marketPlaceContract = await MarketPlaceContract.deploy();
     await marketPlaceContract.deployed();
 
-    nodeContract = await NodeContract.deploy();
-    await nodeContract.deployed();
-
     ankrContract = await AnkrContract.deploy();
     await ankrContract.deployed();
 
     stakingContract = await StakingContract.deploy(
       ankrContract.address,
-      nodeContract.address,
       microPoolContract.address
     );
     await stakingContract.deployed();
@@ -68,7 +62,6 @@ describe("Provider", async () => {
     assert.isTrue(web3.utils.isAddress(governanceContract.address));
     assert.isTrue(web3.utils.isAddress(insuranceContract.address));
     assert.isTrue(web3.utils.isAddress(marketPlaceContract.address));
-    assert.isTrue(web3.utils.isAddress(nodeContract.address));
     assert.isTrue(web3.utils.isAddress(providerContract.address));
     assert.isTrue(web3.utils.isAddress(stakingContract.address));
   });
@@ -95,10 +88,6 @@ describe("Provider", async () => {
     );
 
     await truffleAssert.passes(
-      nodeContract.updateGovernanceContract(governanceContract.address)
-    );
-
-    await truffleAssert.passes(
       providerContract.updateGovernanceContract(governanceContract.address)
     );
 
@@ -112,10 +101,6 @@ describe("Provider", async () => {
 
     await truffleAssert.passes(
       stakingContract.updateAnkrContract(ankrContract.address)
-    );
-
-    await truffleAssert.passes(
-      stakingContract.updateNodeContract(nodeContract.address)
     );
 
     await truffleAssert.passes(

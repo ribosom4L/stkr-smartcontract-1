@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "compile": "npx buidler compile",
+    "contracts:copy": "cp -rf build/contracts client/src/",
+    "contracts:rm": "rm -rf client/src/contracts",
     "test": "npx buidler test"
   },
   "keywords": [],

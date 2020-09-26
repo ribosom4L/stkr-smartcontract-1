@@ -5,10 +5,6 @@ const NodeContract = artifacts.require('Node')
 
 module.exports = async (_deployer) => {
   const ankrContract = await ANKRContract.deployed()
-  const nodeContract = await NodeContract.deployed()
   const micropoolContract = await MicropoolContract.deployed()
-  await _deployer.deploy(StakingContract, ankrContract.address, nodeContract.address, micropoolContract.address)
-  const stakingContract = await StakingContract.deployed();
-
-  nodeContract.updateStakingContract(stakingContract.address)
+  await _deployer.deploy(StakingContract, ankrContract.address, micropoolContract.address)
 }

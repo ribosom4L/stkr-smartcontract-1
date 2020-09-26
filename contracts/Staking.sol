@@ -22,22 +22,21 @@ contract Staking is Ownable, OwnedByGovernor {
         uint256 value
     );
 
-    enum StakeType {STANDART, PROVIDER, NODE, POOL_FEE}
+    enum StakeType {STANDART, PROVIDER, POOL_FEE}
 
     // TODO: Set
     address public _ankrContract;
-    address public _nodeContract;
     address public _providerContract;
     address public _microPoolContract;
 
     mapping(address => uint256) public _stakes;
     mapping(address => uint256) public _providerStakes;
-    mapping(address => uint256) public _nodeStakes;
     mapping(address => uint256) public _poolStakes;
 
-    constructor(address ankrContract, address nodeContract, address microPoolContract) public {
+    uint256 private providerStakingAmount = 1e3;
+
+    constructor(address ankrContract, address microPoolContract) public {
         _ankrContract = ankrContract;
-        _nodeContract = nodeContract;
         _microPoolContract = microPoolContract;
     }
 
@@ -65,25 +64,14 @@ contract Staking is Ownable, OwnedByGovernor {
         return true;
     }
 
-    function nodeStake(address user, uint256 amount)
+    function providerStake(address user)
         public
-        shouldAllowed(user, amount)
-        addressAllowed(_nodeContract)
-        returns (bool)
-    {
-        _nodeStakes[msg.sender] = _nodeStakes[msg.sender].add(amount);
-        emit Stake(msg.sender, StakeType.NODE, amount);
-        return true;
-    }
-
-    function providerStake(address user, uint256 amount)
-        public
-        shouldAllowed(user, amount)
+        shouldAllowed(user, providerStakingAmount)
         addressAllowed(_providerContract)
         returns (bool)
     {
-        _providerStakes[msg.sender] = _providerStakes[msg.sender].add(amount);
-        emit Stake(msg.sender, StakeType.PROVIDER, amount);
+        _providerStakes[msg.sender] = _providerStakes[msg.sender].add(providerStakingAmount);
+        emit Stake(msg.sender, StakeType.PROVIDER, providerStakingAmount);
         return true;
     }
 
@@ -114,10 +102,6 @@ contract Staking is Ownable, OwnedByGovernor {
         _ankrContract = ankrContract;
     }
 
-    function updateNodeContract(address nodeContract) public onlyGovernor {
-        _nodeContract = nodeContract;
-    }
-
     function updateProviderContract(address providerContract)
         public
         onlyGovernor
@@ -145,22 +129,6 @@ contract Staking is Ownable, OwnedByGovernor {
         transferToken(msg.sender, amount);
 
         emit Unstake(msg.sender, StakeType.STANDART, amount);
-        return true;
-    }
-
-    function nodeUnstake(address addr, uint256 amount)
-        public
-        addressAllowed(_nodeContract)
-        returns (bool)
-    {
-        _nodeStakes[addr] = _nodeStakes[addr].sub(
-            amount,
-            "Insufficient balance"
-        );
-
-        transferToken(addr, amount);
-
-        emit Unstake(addr, StakeType.NODE, amount);
         return true;
     }
 
@@ -197,10 +165,10 @@ contract Staking is Ownable, OwnedByGovernor {
     }
 
     function totalStakes(address staker) public view returns(uint256) {
-        return _stakes[staker] + _providerStakes[staker] + _nodeStakes[staker] + _poolStakes[staker];
+        return _stakes[staker] + _providerStakes[staker] + _poolStakes[staker];
     }
 
     function totalStakes() public view returns(uint256) {
-        return _stakes[msg.sender] + _providerStakes[msg.sender] + _nodeStakes[msg.sender] + _poolStakes[msg.sender];
+        return _stakes[msg.sender] + _providerStakes[msg.sender] + _poolStakes[msg.sender];
     }
 }
