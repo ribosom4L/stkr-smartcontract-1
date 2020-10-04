@@ -4,12 +4,49 @@ pragma solidity ^0.6.8;
 import "./lib/SafeMath.sol";
 import "./core/OwnedByGovernor.sol";
 
+interface IDepositContract {
+    /// @notice A processed deposit event.
+    event DepositEvent(
+        bytes pubkey,
+        bytes withdrawal_credentials,
+        bytes amount,
+        bytes signature,
+        bytes index
+    );
+
+    /// @notice Submit a Phase 0 DepositData object.
+    /// @param pubkey A BLS12-381 public key.
+    /// @param withdrawal_credentials Commitment to a public key for withdrawals.
+    /// @param signature A BLS12-381 signature.
+    /// @param deposit_data_root The SHA-256 hash of the SSZ-encoded DepositData object.
+    /// Used as a protection against malformed input.
+    function deposit(
+        bytes calldata pubkey,
+        bytes calldata withdrawal_credentials,
+        bytes calldata signature,
+        bytes32 deposit_data_root
+    ) external payable;
+
+    /// @notice Query the current deposit root hash.
+    /// @return The deposit root hash.
+    function get_deposit_root() external view returns (bytes32);
+
+    /// @notice Query the current deposit count.
+    /// @return The deposit count encoded as a little endian 64-bit number.
+    function get_deposit_count() external view returns (bytes memory);
+}
+
 interface TokenContract {
     function mint(address account, uint256 amount) external;
+
     function updateMicroPoolContract(address microPoolContract) external;
 }
 
 interface ProviderContract {
+    function isProvider(address addr) external view returns (bool);
+}
+
+interface Beacon {
     function isProvider(address addr) external view returns (bool);
 }
 
@@ -22,6 +59,13 @@ contract MicroPool is OwnedByGovernor {
         uint256 amount;
         uint256 fee;
         bool isClaimed;
+    }
+
+    struct BeaconDeposit {
+        bytes pubkey;
+        bytes withdrawal_credentials;
+        bytes signature;
+        bytes32 deposit_data_root;
     }
 
     struct Pool {
@@ -41,12 +85,15 @@ contract MicroPool is OwnedByGovernor {
         address payable validator; // validator address
         // address payable[] members; // pool members
         mapping(address => PoolStake) stakes; // stakes of a pool members
+
+        BeaconDeposit depositData;
     }
 
     Pool[] private _pools;
     bool private _claimable = false; // governors will make it true after ETH 2.0
     address private _tokenContract;
     address _insuranceContract;
+    address _beaconContract = 0x07b39F4fDE4A38bACe212b546dAc87C58DfE3fDC;
 
     event PoolCreated(
         uint256 indexed poolIndex,
@@ -65,11 +112,15 @@ contract MicroPool is OwnedByGovernor {
         uint256 unstakeAmount
     );
 
-    constructor(
-        address tokenContract
-    ) public {
+    constructor(address tokenContract) public {
         _tokenContract = tokenContract;
         TokenContract(tokenContract).updateMicroPoolContract(address(this));
+    }
+
+    function pushToBeacon(uint256 poolIndex) public {
+        Pool storage pool = _pools[poolIndex];
+        
+        IDepositContract(_beaconContract).deposit.value(32)(pool.depositData.pubkey, pool.depositData.withdrawal_credentials, pool.depositData.signature, pool.depositData.deposit_data_root);
     }
 
     /**
@@ -78,18 +129,37 @@ contract MicroPool is OwnedByGovernor {
     */
     function initializePool(
         address payable validator,
+        bytes calldata pubkey,
+        bytes calldata withdrawal_credentials,
+        bytes calldata signature,
+        bytes32 deposit_data_root,
         uint256 nodeFee
     ) external {
         // TODO: validations
         // TODO: _nodeFee usd to eth
+        BeaconDeposit memory d;
         Pool memory pool;
+        d.pubkey = pubkey;
+        d.withdrawal_credentials = withdrawal_credentials;
+        d.signature = signature;
+        d.deposit_data_root = deposit_data_root;
+
         pool.provider = msg.sender;
         pool.validator = validator;
         pool.nodeFee = nodeFee;
+        pool.depositData = d;
         // pool.providerOwe = providerOwe;
         pool.startTime = block.timestamp;
         _pools.push(pool);
-        emit PoolCreated(_pools.length.sub(1), msg.sender, validator, msg.sender);
+
+        
+
+        emit PoolCreated(
+            _pools.length.sub(1),
+            msg.sender,
+            validator,
+            msg.sender
+        );
     }
 
     /**
@@ -98,7 +168,6 @@ contract MicroPool is OwnedByGovernor {
     */
     // TODO: not mint AETH directly, wait for pool reach 32 eth.
     function stake(uint256 poolIndex) external payable {
-
         Pool storage pool = _pools[poolIndex];
         uint256 fee = msg.value.div(32 ether).mul(pool.nodeFee);
         uint256 stakeAmount = msg.value.sub(fee);
@@ -157,18 +226,25 @@ contract MicroPool is OwnedByGovernor {
         );
 
         msg.sender.transfer(unstakeAmount);
-        pool.totalStakedAmount = pool.totalStakedAmount.sub(pool.stakes[msg.sender].amount);
+        pool.totalStakedAmount = pool.totalStakedAmount.sub(
+            pool.stakes[msg.sender].amount
+        );
         delete pool.stakes[msg.sender];
 
         emit UserStaked(poolIndex, msg.sender, unstakeAmount);
     }
 
     // TODO: only Insurance contract can call this
-    function updateSlashingOfAPool(uint256 poolIndex, uint256 compensatedAmount) public returns(bool) {
+    function updateSlashingOfAPool(uint256 poolIndex, uint256 compensatedAmount)
+        public
+        returns (bool)
+    {
         // TODO: validations
 
         Pool storage pool = _pools[poolIndex];
-        pool.compensatedBalance = pool.compensatedBalance.add(compensatedAmount);
+        pool.compensatedBalance = pool.compensatedBalance.add(
+            compensatedAmount
+        );
 
         return true;
     }
@@ -177,10 +253,7 @@ contract MicroPool is OwnedByGovernor {
         Governer calls this function to change aEth token contract address
         @param tokenContract address
     */
-    function updateTokenContract(address tokenContract)
-        external
-        onlyGovernor
-    {
+    function updateTokenContract(address tokenContract) external onlyGovernor {
         _tokenContract = tokenContract;
     }
 

@@ -60,7 +60,7 @@ contract Provider is Ownable, OwnedByGovernor {
         _providers[msg.sender] = p;
 
         emit Applied(msg.sender);
-        StakingContract(_stakingContract).providerStake(msg.sender);
+        // StakingContract(_stakingContract).providerStake(msg.sender);
         // require(msg.value >= feeMultiplier * 21000, 'Need extra gas to end transaction');
     }
     
