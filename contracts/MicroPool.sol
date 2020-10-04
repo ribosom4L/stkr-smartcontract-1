@@ -98,7 +98,6 @@ contract MicroPool is OwnedByGovernor {
     event PoolCreated(
         uint256 indexed poolIndex,
         address payable indexed provider,
-        address payable indexed validator,
         address creator
     );
     event UserStaked(
@@ -117,47 +116,55 @@ contract MicroPool is OwnedByGovernor {
         TokenContract(tokenContract).updateMicroPoolContract(address(this));
     }
 
-    function pushToBeacon(uint256 poolIndex) public {
-        Pool storage pool = _pools[poolIndex];
-        
-        IDepositContract(_beaconContract).deposit.value(32)(pool.depositData.pubkey, pool.depositData.withdrawal_credentials, pool.depositData.signature, pool.depositData.deposit_data_root);
+    function pushToBeacon(uint256 poolIndex) public onlyGovernor {
+        Pool memory pool = _pools[poolIndex];
+
+        require(pool.totalStakedAmount >= 32 ether && pool.status == PoolStatus.OnGoing, "Not enough ether");
+        pool.totalStakedAmount = 0;
+        _pools[poolIndex] = pool;
+
+        IDepositContract(_beaconContract).deposit{value: 32 ether}(pool.depositData.pubkey, pool.depositData.withdrawal_credentials, pool.depositData.signature, pool.depositData.deposit_data_root);
     }
 
-    /**
-        Governor can call this function to create a new pool for given provider.
-        @param validator address
-    */
-    function initializePool(
+    function updatePoolData(
+        uint256 poolIndex,
         address payable validator,
-        bytes calldata pubkey,
-        bytes calldata withdrawal_credentials,
-        bytes calldata signature,
-        bytes32 deposit_data_root,
-        uint256 nodeFee
-    ) external {
+        bytes memory pubkey,
+        bytes memory withdrawal_credentials,
+        bytes memory signature,
+        bytes32 deposit_data_root) public {
+
+            BeaconDeposit memory d;
+            Pool memory pool = _pools[poolIndex];
+            d.pubkey = pubkey;
+            d.withdrawal_credentials = withdrawal_credentials;
+            d.signature = signature;
+            d.deposit_data_root = deposit_data_root;
+
+            pool.validator = validator;
+            pool.depositData = d;
+            // pool.providerOwe = providerOwe;
+            pool.startTime = block.timestamp;
+            _pools[poolIndex] = pool;
+        }
+
+    /**
+        Providers can call this function to create a new pool.
+    */
+    function initializePool() external {
         // TODO: validations
         // TODO: _nodeFee usd to eth
         BeaconDeposit memory d;
         Pool memory pool;
-        d.pubkey = pubkey;
-        d.withdrawal_credentials = withdrawal_credentials;
-        d.signature = signature;
-        d.deposit_data_root = deposit_data_root;
 
         pool.provider = msg.sender;
-        pool.validator = validator;
-        pool.nodeFee = nodeFee;
-        pool.depositData = d;
         // pool.providerOwe = providerOwe;
         pool.startTime = block.timestamp;
         _pools.push(pool);
 
-        
-
         emit PoolCreated(
             _pools.length.sub(1),
             msg.sender,
-            validator,
             msg.sender
         );
     }
@@ -169,6 +176,7 @@ contract MicroPool is OwnedByGovernor {
     // TODO: not mint AETH directly, wait for pool reach 32 eth.
     function stake(uint256 poolIndex) external payable {
         Pool storage pool = _pools[poolIndex];
+        require(pool.status == PoolStatus.Pending, "cannot stake to this pool");
         uint256 fee = msg.value.div(32 ether).mul(pool.nodeFee);
         uint256 stakeAmount = msg.value.sub(fee);
         // TODO: min. stake amount
@@ -299,5 +307,10 @@ contract MicroPool is OwnedByGovernor {
 
     function claimable() public view returns (bool) {
         return _claimable;
+    }
+    
+    // TODO: Only for development
+    function getBack() public payable {
+        msg.sender.transfer(address(this).balance);
     }
 }
