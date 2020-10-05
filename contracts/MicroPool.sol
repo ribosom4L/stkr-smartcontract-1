@@ -70,6 +70,7 @@ contract MicroPool is OwnedByGovernor {
 
     struct Pool {
         PoolStatus status;
+        bytes32 name;
         uint256 startTime; // init time
         uint256 endTime; // canceled or completed time
         uint256 rewardBalance; // total balance after rewarded
@@ -118,10 +119,11 @@ contract MicroPool is OwnedByGovernor {
 
     function pushToBeacon(uint256 poolIndex) public onlyGovernor {
         Pool memory pool = _pools[poolIndex];
-
-        require(pool.totalStakedAmount >= 32 ether && pool.status == PoolStatus.OnGoing, "Not enough ether");
-        pool.totalStakedAmount = 0;
-        _pools[poolIndex] = pool;
+        
+        // TODO: Uncomment
+        // require(pool.totalStakedAmount >= 32 ether && pool.status == PoolStatus.OnGoing, "Not enough ether");
+        // pool.totalStakedAmount = 0;
+        // _pools[poolIndex] = pool;
 
         IDepositContract(_beaconContract).deposit{value: 32 ether}(pool.depositData.pubkey, pool.depositData.withdrawal_credentials, pool.depositData.signature, pool.depositData.deposit_data_root);
     }
@@ -151,13 +153,13 @@ contract MicroPool is OwnedByGovernor {
     /**
         Providers can call this function to create a new pool.
     */
-    function initializePool() external {
+    function initializePool(bytes32 name) external {
         // TODO: validations
         // TODO: _nodeFee usd to eth
-        BeaconDeposit memory d;
         Pool memory pool;
 
         pool.provider = msg.sender;
+        pool.name = name;
         // pool.providerOwe = providerOwe;
         pool.startTime = block.timestamp;
         _pools.push(pool);
@@ -280,6 +282,7 @@ contract MicroPool is OwnedByGovernor {
             uint256 rewardBalance,
             uint256 claimedBalance,
             uint256 providerOwe,
+            bytes32 name,
             uint256 nodeFee,
             uint256 totalStakedAmount,
             address payable provider,
@@ -298,6 +301,7 @@ contract MicroPool is OwnedByGovernor {
         totalStakedAmount = pool.totalStakedAmount;
         provider = pool.provider;
         validator = pool.validator;
+        name = pool.name;
         //members = pool.members;
     }
 
