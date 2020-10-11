@@ -5,3 +5,5 @@ build/
 cache/
 contracts/TODO.md
 node_modules
+
+.openzeppelin/.session

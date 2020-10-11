@@ -1,53 +1,59 @@
-const truffleAssert = require("truffle-assertions");
+const truffleAssert = require('truffle-assertions')
 // const BigNumber = require('bignumber.js');
-const helpers = require("./helpers/helpers");
-const { assert } = require("chai");
+const helpers = require('./helpers/helpers')
+const { assert } = require('chai')
 
-describe("MarketPlace", async () => {
-  let microPoolContract;
-  let tokenContract;
-  let governanceContract;
-  let insuranceContract;
-  let marketPlaceContract;
-  let accounts;
-  let providerAddr;
-  let validatorAddr;
+describe('MarketPlace', async () => {
+  let microPoolContract
+  let tokenContract
+  let governanceContract
+  let insuranceContract
+  let marketPlaceContract
+  let accounts
+  let providerAddr
+  let validatorAddr
+  let ankrEthRate
+  let ethUsdRate
+
 
   before(async function () {
-    accounts = await ethers.getSigners();
-    providerAddr = await accounts[8].getAddress();
-    validatorAddr = await accounts[9].getAddress();
+    accounts = await ethers.getSigners()
+    providerAddr = await accounts[8].getAddress()
+    validatorAddr = await accounts[9].getAddress()
 
-    const MicroPoolContract = await ethers.getContractFactory("MicroPool");
-    const TokenContract = await ethers.getContractFactory("AETH");
-    const GovernanceContract = await ethers.getContractFactory("Governance");
-    const InsuranceContract = await ethers.getContractFactory("InsurancePool");
-    const MarketPlaceContract = await ethers.getContractFactory("MarketPlace");
+    const MicroPoolContract = await ethers.getContractFactory('MicroPool')
+    const TokenContract = await ethers.getContractFactory('AETH')
+    const GovernanceContract = await ethers.getContractFactory('Governance')
+    const InsuranceContract = await ethers.getContractFactory('InsurancePool')
+    const MarketPlaceContract = await ethers.getContractFactory('MarketPlace')
 
-    tokenContract = await TokenContract.deploy();
-    await tokenContract.deployed();
+    ankrEthRate = 52000 // 1 eth equals to...
+    ethUsdRate = 300 // 1 eth equals to...
 
-    governanceContract = await GovernanceContract.deploy();
-    await governanceContract.deployed();
+    tokenContract = await TokenContract.deploy()
+    await tokenContract.deployed()
 
-    microPoolContract = await MicroPoolContract.deploy(tokenContract.address);
-    await microPoolContract.deployed();
+    governanceContract = await GovernanceContract.deploy()
+    await governanceContract.deployed()
 
-    insuranceContract = await InsuranceContract.deploy();
-    await insuranceContract.deployed();
+    microPoolContract = await MicroPoolContract.deploy(tokenContract.address)
+    await microPoolContract.deployed()
 
-    marketPlaceContract = await MarketPlaceContract.deploy();
-    await marketPlaceContract.deployed();
-  });
+    insuranceContract = await InsuranceContract.deploy()
+    await insuranceContract.deployed()
 
-  it("Should validate the contracts deployed", async () => {
-    assert.isTrue(web3.utils.isAddress(microPoolContract.address));
-    assert.isTrue(web3.utils.isAddress(tokenContract.address));
-    assert.isTrue(web3.utils.isAddress(governanceContract.address));
-    assert.isTrue(web3.utils.isAddress(marketPlaceContract.address));
-  });
+    marketPlaceContract = await MarketPlaceContract.deploy()
+    await marketPlaceContract.deployed()
+  })
 
-  it("Should add contract addresses to each other", async () => {
+  it('Should validate the contracts deployed', async () => {
+    assert.isTrue(web3.utils.isAddress(microPoolContract.address))
+    assert.isTrue(web3.utils.isAddress(tokenContract.address))
+    assert.isTrue(web3.utils.isAddress(governanceContract.address))
+    assert.isTrue(web3.utils.isAddress(marketPlaceContract.address))
+  })
+
+  it('Should add contract addresses to each other', async () => {
     await truffleAssert.passes(
       tokenContract.updateMicroPoolContract(microPoolContract.address)
     )
@@ -68,30 +74,38 @@ describe("MarketPlace", async () => {
       marketPlaceContract.updateGovernanceContract(governanceContract.address)
     )
 
-    assert.equal(await tokenContract.microPoolContract(), microPoolContract.address);
+    assert.equal(await tokenContract.microPoolContract(), microPoolContract.address)
   })
 
-  it("Should read Governance contract addresses", async () => {
+  it('Should read Governance contract addresses', async () => {
     assert.equal(await marketPlaceContract.governanceContract(), governanceContract.address)
-  });
+  })
 
-  it("Should governor update ETH/USD rate", async () => {
+  it('Should governor update ETH/USD rate', async () => {
     await truffleAssert.passes(
-      marketPlaceContract.updateEthUsdRate(3)
+      marketPlaceContract.updateEthUsdRate(ethUsdRate)
     )
-  });
+  })
 
-  it("Should governor update ANKR/ETH rate", async () => {
+  it('Should governor update ANKR/ETH rate', async () => {
     await truffleAssert.passes(
-      marketPlaceContract.updateAnkrEthRate(3)
+      marketPlaceContract.updateAnkrEthRate(ankrEthRate)
     )
-  });
+  })
 
-  it("Should read ETH/USD rate", async () => {
-    assert.equal((await marketPlaceContract.ethUsdRate()).toString(), "3");
-  });
+  it('Should read ETH/USD rate', async () => {
+    assert.equal((await marketPlaceContract.ethUsdRate()).toString(), ethUsdRate)
+  })
 
-  it("Should read ETH/USD rate", async () => {
-    assert.equal((await marketPlaceContract.ankrEthRate()).toString(), "3");
-  });
-});
+  it('Should read ETH/ANKR rate', async () => {
+
+    assert.equal((await marketPlaceContract.ethAnkrRate()).toString(), ankrEthRate)
+  })
+
+  it('Should read ANKR/USD rate', async () => {
+    const ankrAmount = 1e18 // 1 ankr
+    const expected = ankrAmount / ankrEthRate * ethUsdRate
+    const rate = (await marketPlaceContract.ankrUsdRate(helpers.makeHex(ankrAmount))).toString()
+    assert.equal(rate, expected)
+  })
+})

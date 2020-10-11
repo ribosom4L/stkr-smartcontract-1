@@ -1,40 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.6.8;
 
-import "./lib/SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./core/OwnedByGovernor.sol";
-
-interface IDepositContract {
-    /// @notice A processed deposit event.
-    event DepositEvent(
-        bytes pubkey,
-        bytes withdrawal_credentials,
-        bytes amount,
-        bytes signature,
-        bytes index
-    );
-
-    /// @notice Submit a Phase 0 DepositData object.
-    /// @param pubkey A BLS12-381 public key.
-    /// @param withdrawal_credentials Commitment to a public key for withdrawals.
-    /// @param signature A BLS12-381 signature.
-    /// @param deposit_data_root The SHA-256 hash of the SSZ-encoded DepositData object.
-    /// Used as a protection against malformed input.
-    function deposit(
-        bytes calldata pubkey,
-        bytes calldata withdrawal_credentials,
-        bytes calldata signature,
-        bytes32 deposit_data_root
-    ) external payable;
-
-    /// @notice Query the current deposit root hash.
-    /// @return The deposit root hash.
-    function get_deposit_root() external view returns (bytes32);
-
-    /// @notice Query the current deposit count.
-    /// @return The deposit count encoded as a little endian 64-bit number.
-    function get_deposit_count() external view returns (bytes memory);
-}
+import "./lib/IDepositContract.sol";
 
 interface TokenContract {
     function mint(address account, uint256 amount) external;
@@ -49,7 +18,6 @@ contract MicroPool is OwnedByGovernor {
 
     struct PoolStake {
         uint256 amount;
-        uint256 fee;
         bool isClaimed;
     }
 
@@ -65,35 +33,29 @@ contract MicroPool is OwnedByGovernor {
         bytes32 name;
         uint256 startTime; // init time
         uint256 endTime; // canceled or completed time
-        uint256 rewardBalance; // total balance after rewarded
+        uint256 rewardBalance; // total balance after reward
         uint256 claimedBalance; // pool members' claimed amount
-        uint256 compensatedBalance; // TODO: is required?
-        uint256 providerOwe; // TODO: who will decide it? governor, this contract, etc.
-        uint256 nodeFee; // eth price
-        uint256 totalStakedAmount; // total amount of user stakes
-        uint256 numberOfSlashing;
+        uint256 totalStake; // total amount of user stakes
         uint256 totalSlashedAmount;
         address payable provider; // provider address
         address payable validator; // validator address
-        // address payable[] members; // pool members
+//        address payable[] members; // pool members
         mapping(address => PoolStake) stakes; // stakes of a pool members
 
         BeaconDeposit depositData;
     }
 
-    Pool[] private _pools;
-    bool private _claimable = false; // governors will make it true after ETH 2.0
-    address private _tokenContract;
-    address _insuranceContract;
+    Pool[] public _pools;
+
+    bool public _claimable = false; // governors will make it true after ETH 2.0
+
+    address public _tokenContract;
+
     address _beaconContract = 0x07b39F4fDE4A38bACe212b546dAc87C58DfE3fDC;
 
     // 1000 ANKR
     // TODO: Change
     uint256 private CREATION_FEE = 1e21;
-
-    // USDT
-    // TODO: Change
-    uint256 private PARTICIPATION_FEE = 10;
 
     event PoolCreated(
         uint256 indexed poolIndex,
@@ -120,10 +82,10 @@ contract MicroPool is OwnedByGovernor {
         Pool storage pool = _pools[poolIndex];
 
         require(pool.validator != address(0), "Pool requires deposit data");
-        require(pool.totalStakedAmount >= 32 ether && pool.status == PoolStatus.OnGoing, "Not enough ether");
-        uint256 ethersToSend = pool.totalStakedAmount;
+        require(pool.totalStake >= 32 ether && pool.status == PoolStatus.OnGoing, "Not enough ether");
+        uint256 ethersToSend = pool.totalStake;
 
-        pool.totalStakedAmount = 0;
+        pool.totalStake = 0;
 
         IDepositContract(_beaconContract).deposit{value : ethersToSend}(pool.depositData.pubkey, pool.depositData.withdrawal_credentials, pool.depositData.signature, pool.depositData.deposit_data_root);
     }
@@ -145,7 +107,6 @@ contract MicroPool is OwnedByGovernor {
 
         pool.validator = validator;
         pool.depositData = d;
-        // pool.providerOwe = providerOwe;
         pool.startTime = block.timestamp;
         _pools[poolIndex] = pool;
     }
@@ -155,12 +116,10 @@ contract MicroPool is OwnedByGovernor {
     */
     function initializePool(bytes32 name) external {
         // TODO: validations
-        // TODO: _nodeFee usd to eth
         Pool memory pool;
 
         pool.provider = msg.sender;
         pool.name = name;
-        // pool.providerOwe = providerOwe;
         pool.startTime = block.timestamp;
         _pools.push(pool);
 
@@ -179,15 +138,14 @@ contract MicroPool is OwnedByGovernor {
         Pool storage pool = _pools[poolIndex];
         require(pool.status == PoolStatus.Pending, "cannot stake to this pool");
 
-        uint256 fee = msg.value.div(32 ether).mul(pool.nodeFee);
-        uint256 stakeAmount = msg.value.sub(fee);
+        uint256 stakeAmount = msg.value;
         // TODO: min. stake amount
         require(stakeAmount > 0, "You don't have enough balance.");
 
-        pool.totalStakedAmount = pool.totalStakedAmount.add(stakeAmount);
-        if (pool.totalStakedAmount >= 32 ether) {
+        pool.totalStake = pool.totalStake.add(stakeAmount);
+        if (pool.totalStake >= 32 ether) {
             pool.status = PoolStatus.OnGoing;
-            uint256 excessAmount = pool.totalStakedAmount.sub(32 ether);
+            uint256 excessAmount = pool.totalStake.sub(32 ether);
             if (excessAmount > 0) {
                 stakeAmount = stakeAmount.sub(excessAmount);
                 msg.sender.transfer(excessAmount);
@@ -198,7 +156,6 @@ contract MicroPool is OwnedByGovernor {
         PoolStake storage userStake = pool.stakes[msg.sender];
 
         userStake.amount = userStake.amount.add(stakeAmount);
-        userStake.fee = userStake.fee.add(fee);
         pool.stakes[msg.sender] = userStake;
 
         emit UserStaked(poolIndex, msg.sender, stakeAmount);
@@ -231,32 +188,15 @@ contract MicroPool is OwnedByGovernor {
         //     "You need to approve this contract first."
         // );
 
-        uint256 unstakeAmount = pool.stakes[msg.sender].amount.add(
-            pool.stakes[msg.sender].fee
-        );
+        uint256 unstakeAmount = pool.stakes[msg.sender].amount;
 
         msg.sender.transfer(unstakeAmount);
-        pool.totalStakedAmount = pool.totalStakedAmount.sub(
+        pool.totalStake = pool.totalStake.sub(
             pool.stakes[msg.sender].amount
         );
         delete pool.stakes[msg.sender];
 
         emit UserStaked(poolIndex, msg.sender, unstakeAmount);
-    }
-
-    // TODO: only Insurance contract can call this
-    function updateSlashingOfAPool(uint256 poolIndex, uint256 compensatedAmount)
-    public
-    returns (bool)
-    {
-        // TODO: validations
-
-        Pool storage pool = _pools[poolIndex];
-        pool.compensatedBalance = pool.compensatedBalance.add(
-            compensatedAmount
-        );
-
-        return true;
     }
 
     /**
@@ -281,10 +221,8 @@ contract MicroPool is OwnedByGovernor {
         uint256 endTime,
         uint256 rewardBalance,
         uint256 claimedBalance,
-        uint256 providerOwe,
         bytes32 name,
-        uint256 nodeFee,
-        uint256 totalStakedAmount,
+        uint256 totalStake,
         address payable provider,
         address payable validator
     )
@@ -296,9 +234,7 @@ contract MicroPool is OwnedByGovernor {
         endTime = pool.endTime;
         rewardBalance = pool.rewardBalance;
         claimedBalance = pool.claimedBalance;
-        providerOwe = pool.providerOwe;
-        nodeFee = pool.nodeFee;
-        totalStakedAmount = pool.totalStakedAmount;
+        totalStake = pool.totalStake;
         provider = pool.provider;
         validator = pool.validator;
         name = pool.name;

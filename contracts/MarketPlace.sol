@@ -2,7 +2,7 @@
 pragma solidity ^0.6.8;
 
 import "./core/OwnedByGovernor.sol";
-import "./lib/SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
 contract MarketPlace is OwnedByGovernor {
     using SafeMath for uint256;
@@ -33,6 +33,6 @@ contract MarketPlace is OwnedByGovernor {
 
     // x ankr (as wei)  = x usd
     function ankrUsdRate(uint256 ankrAmount) public view returns (uint256) {
-        return ankrAmount.div(ankrEthRate).mul(ethUsdRate);
+        return ankrAmount.mul(MULTIPLIER).div(_ankrEth).mul(_ethUsd);
     }
 }

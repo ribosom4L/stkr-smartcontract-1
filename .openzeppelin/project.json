@@ -1,0 +1,15 @@
+{
+  "manifestVersion": "2.2",
+  "contracts": {},
+  "dependencies": {},
+  "name": "stkr",
+  "version": "0.2.1",
+  "compiler": {
+    "compilerSettings": {
+      "optimizer": {}
+    },
+    "typechain": {
+      "enabled": false
+    }
+  }
+}

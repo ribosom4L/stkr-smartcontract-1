@@ -2,7 +2,7 @@
 pragma solidity ^0.6.8;
 
 import "./lib/IERC20.sol";
-import "./lib/SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./lib/Ownable.sol";
 import "./core/OwnedByGovernor.sol";
 
@@ -22,7 +22,7 @@ contract Staking is Ownable, OwnedByGovernor {
         uint256 value
     );
 
-    enum StakeType {STANDART, PROVIDER, POOL_FEE}
+    enum StakeType {STANDARD, PROVIDER, POOL_FEE}
 
     // TODO: Set
     address public _ankrContract;
@@ -59,7 +59,7 @@ contract Staking is Ownable, OwnedByGovernor {
         returns (bool)
     {
         _stakes[msg.sender] = _stakes[msg.sender].add(amount);
-        emit Stake(msg.sender, StakeType.STANDART, amount);
+        emit Stake(msg.sender, StakeType.STANDARD, amount);
         return true;
     }
 
@@ -120,7 +120,7 @@ contract Staking is Ownable, OwnedByGovernor {
 
         transferToken(msg.sender, amount);
 
-        emit Unstake(msg.sender, StakeType.STANDART, amount);
+        emit Unstake(msg.sender, StakeType.STANDARD, amount);
         return true;
     }
 
