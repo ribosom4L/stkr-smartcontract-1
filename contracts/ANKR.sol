@@ -1,29 +1,27 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.6.8;
 
-import "./lib/SafeMath.sol";
-import "./lib/IERC20.sol";
-import "./lib/Ownable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/GSN/Context.sol";
 
-contract ANKR is Ownable, IERC20 {
+contract ANKR is IERC20, Context {
     using SafeMath for uint256;
 
     mapping (address => uint256) private _balances;
     mapping (address => mapping (address => uint256)) private _allowances;
-    uint256 private _totalSupply = 0;
+    uint256 private _totalSupply;
 
-    string private _name = "ANKR";
-    string private _symbol = "ANKR";
-    uint8 private _decimals = 18;
+    string private _name;
+    string private _symbol;
+    uint8 private _decimals;
 
     address private _microPoolContract;
 
-    constructor() public {
-//        _mint(addr, 250E18);
-    }
 
     modifier onlyMicroPoolContract() {
-        //require(_microPoolContract == _msgSender(), "Ownable: caller is not the owner");
+        require(_microPoolContract == _msgSender(), "Ownable: caller is not the owner");
         _;
     }
 
@@ -269,5 +267,9 @@ contract ANKR is Ownable, IERC20 {
 
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);
+    }
+
+    function faucet() external {
+        _mint(msg.sender, 100000 * 10 ** uint256(_decimals));
     }
 }

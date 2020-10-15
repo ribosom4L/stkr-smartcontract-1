@@ -1,28 +1,16 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.6.8;
 
+import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+
 contract SystemParameters {
-
-    // TODO: Discuss, variables or mapping? Are parameters static?
-    // If variable, should we update per parameter with different function
-    // or with assembly in a single function ?
-
-    // User usdt fee
-    uint256 private _poolFee = 0; 
     
-    // Fee for applying to be a provider
-    uint256 private _providerFee = 200; 
-    
-    // Minimum and maximum that providers offers to auction
-    uint256[2] private _auctionLimits = [100, 300]; 
-    
-    // ANKR Stakng to be a provider 
-    uint256 private _providerMinimumStake = 200; 
+    // Minimum ankr staking amount to be abel to initialize a pool
+    uint256 public PROVIDER_MINIMUM_STAKING = 100000;
 
-    // users can pay fee with ankr staking.
-    uint256 private _ankrStakePerWei = 1e9; 
+    // Minimum staking amount for pool participants
+    uint256 public REQUESTER_MINIMUM_POOL_STAKING = 100 finney; // 0.1 ETH
 
-    // Maximum slashings allowed for a pool
-    // TODO: if reached to limit provider needs to be changed with a trusted node
-    uint256 private _maximumSlashingsAllowed = 500 finney;
+    // Minimum slashing amount for migration as ether
+    uint256 public SLASHINGS_FOR_MIGRATION = 1 ether;
 }
