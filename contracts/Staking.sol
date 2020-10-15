@@ -26,7 +26,6 @@ contract Staking is Ownable, OwnedByGovernor {
 
     // TODO: Set
     address public _ankrContract;
-    address public _providerContract;
     address public _microPoolContract;
 
     mapping(address => uint256) public _stakes;
@@ -67,7 +66,7 @@ contract Staking is Ownable, OwnedByGovernor {
     function providerStake(address user)
         public
         shouldAllowed(user, providerStakingAmount)
-        addressAllowed(_providerContract)
+        addressAllowed(_microPoolContract)
         returns (bool)
     {
         _providerStakes[msg.sender] = _providerStakes[msg.sender].add(providerStakingAmount);
@@ -81,8 +80,8 @@ contract Staking is Ownable, OwnedByGovernor {
         addressAllowed(_microPoolContract)
         returns (bool)
     {
-        _poolStakes[msg.sender] = _providerStakes[msg.sender].add(amount);
-        emit Stake(msg.sender, StakeType.PROVIDER, amount);
+        _poolStakes[msg.sender] = _poolStakes[msg.sender].add(amount);
+        emit Stake(msg.sender, StakeType.POOL_FEE, amount);
         return true;
     }
 
@@ -100,13 +99,6 @@ contract Staking is Ownable, OwnedByGovernor {
 
     function updateAnkrContract(address ankrContract) public onlyGovernor {
         _ankrContract = ankrContract;
-    }
-
-    function updateProviderContract(address providerContract)
-        public
-        onlyGovernor
-    {
-        _providerContract = providerContract;
     }
 
     function updateMicroPoolContract(address microPoolContract)
@@ -129,22 +121,6 @@ contract Staking is Ownable, OwnedByGovernor {
         transferToken(msg.sender, amount);
 
         emit Unstake(msg.sender, StakeType.STANDART, amount);
-        return true;
-    }
-
-    function providerUnstake(address addr, uint256 amount)
-        public
-        addressAllowed(_providerContract)
-        returns (bool)
-    {
-        _providerStakes[addr] = _providerStakes[addr].sub(
-            amount,
-            "Insufficient balance"
-        );
-
-        transferToken(addr, amount);
-
-        emit Unstake(addr, StakeType.PROVIDER, amount);
         return true;
     }
 
