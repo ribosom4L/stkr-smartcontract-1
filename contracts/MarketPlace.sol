@@ -2,26 +2,37 @@
 pragma solidity ^0.6.8;
 
 import "./core/OwnedByGovernor.sol";
+import "./lib/SafeMath.sol";
 
 contract MarketPlace is OwnedByGovernor {
+    using SafeMath for uint256;
     // ETH-USD
     // ANKR-ETH
     uint256 private _ethUsd;
     uint256 private _ankrEth;
 
-    function updateEthUsdRate(uint256 ethUsd) external onlyGovernor {
+    uint256 private MULTIPLIER = 1e10;
+
+    function updateEthUsdRate(uint256 ethUsd) public onlyGovernor {
         _ethUsd = ethUsd;
     }
 
-    function updateAnkrEthRate(uint256 ankrEth) external onlyGovernor {
+    function updateAnkrEthRate(uint256 ankrEth) public onlyGovernor {
         _ankrEth = ankrEth;
     }
 
+    // 1 eth  = x usd
     function ethUsdRate() public view returns (uint256) {
         return _ethUsd;
     }
 
-    function ankrEthRate() public view returns (uint256) {
+    // 1 eth = x ankr
+    function ethAnkrRate() public view returns (uint256) {
         return _ankrEth;
+    }
+
+    // x ankr (as wei)  = x usd
+    function ankrUsdRate(uint256 ankrAmount) public view returns (uint256) {
+        return ankrAmount.div(ankrEthRate).mul(ethUsdRate);
     }
 }

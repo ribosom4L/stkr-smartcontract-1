@@ -42,14 +42,6 @@ interface TokenContract {
     function updateMicroPoolContract(address microPoolContract) external;
 }
 
-interface ProviderContract {
-    function isProvider(address addr) external view returns (bool);
-}
-
-interface Beacon {
-    function isProvider(address addr) external view returns (bool);
-}
-
 contract MicroPool is OwnedByGovernor {
     using SafeMath for uint256;
 
@@ -81,7 +73,6 @@ contract MicroPool is OwnedByGovernor {
         uint256 totalStakedAmount; // total amount of user stakes
         uint256 numberOfSlashing;
         uint256 totalSlashedAmount;
-        // TODO: last slashing check time (as block number)
         address payable provider; // provider address
         address payable validator; // validator address
         // address payable[] members; // pool members
@@ -96,11 +87,19 @@ contract MicroPool is OwnedByGovernor {
     address _insuranceContract;
     address _beaconContract = 0x07b39F4fDE4A38bACe212b546dAc87C58DfE3fDC;
 
+    // 1000 ANKR
+    // TODO: Change
+    uint256 private CREATION_FEE = 1e21;
+
+    // USDT
+    // TODO: Change
+    uint256 private PARTICIPATION_FEE = 10;
+
     event PoolCreated(
         uint256 indexed poolIndex,
-        address payable indexed provider,
-        address creator
+        address payable indexed provider
     );
+
     event UserStaked(
         uint256 indexed poolIndex,
         address indexed user,
@@ -118,14 +117,15 @@ contract MicroPool is OwnedByGovernor {
     }
 
     function pushToBeacon(uint256 poolIndex) public onlyGovernor {
-        Pool memory pool = _pools[poolIndex];
-        
-        // TODO: Uncomment
-        // require(pool.totalStakedAmount >= 32 ether && pool.status == PoolStatus.OnGoing, "Not enough ether");
-        // pool.totalStakedAmount = 0;
-        // _pools[poolIndex] = pool;
+        Pool storage pool = _pools[poolIndex];
 
-        IDepositContract(_beaconContract).deposit{value: 32 ether}(pool.depositData.pubkey, pool.depositData.withdrawal_credentials, pool.depositData.signature, pool.depositData.deposit_data_root);
+        require(pool.validator != address(0), "Pool requires deposit data");
+        require(pool.totalStakedAmount >= 32 ether && pool.status == PoolStatus.OnGoing, "Not enough ether");
+        uint256 ethersToSend = pool.totalStakedAmount;
+
+        pool.totalStakedAmount = 0;
+
+        IDepositContract(_beaconContract).deposit{value : ethersToSend}(pool.depositData.pubkey, pool.depositData.withdrawal_credentials, pool.depositData.signature, pool.depositData.deposit_data_root);
     }
 
     function updatePoolData(
@@ -136,19 +136,19 @@ contract MicroPool is OwnedByGovernor {
         bytes memory signature,
         bytes32 deposit_data_root) public {
 
-            BeaconDeposit memory d;
-            Pool memory pool = _pools[poolIndex];
-            d.pubkey = pubkey;
-            d.withdrawal_credentials = withdrawal_credentials;
-            d.signature = signature;
-            d.deposit_data_root = deposit_data_root;
+        BeaconDeposit memory d;
+        Pool memory pool = _pools[poolIndex];
+        d.pubkey = pubkey;
+        d.withdrawal_credentials = withdrawal_credentials;
+        d.signature = signature;
+        d.deposit_data_root = deposit_data_root;
 
-            pool.validator = validator;
-            pool.depositData = d;
-            // pool.providerOwe = providerOwe;
-            pool.startTime = block.timestamp;
-            _pools[poolIndex] = pool;
-        }
+        pool.validator = validator;
+        pool.depositData = d;
+        // pool.providerOwe = providerOwe;
+        pool.startTime = block.timestamp;
+        _pools[poolIndex] = pool;
+    }
 
     /**
         Providers can call this function to create a new pool.
@@ -166,7 +166,6 @@ contract MicroPool is OwnedByGovernor {
 
         emit PoolCreated(
             _pools.length.sub(1),
-            msg.sender,
             msg.sender
         );
     }
@@ -179,21 +178,22 @@ contract MicroPool is OwnedByGovernor {
     function stake(uint256 poolIndex) external payable {
         Pool storage pool = _pools[poolIndex];
         require(pool.status == PoolStatus.Pending, "cannot stake to this pool");
+
         uint256 fee = msg.value.div(32 ether).mul(pool.nodeFee);
         uint256 stakeAmount = msg.value.sub(fee);
         // TODO: min. stake amount
         require(stakeAmount > 0, "You don't have enough balance.");
 
-        uint256 newTotalAmount = stakeAmount.add(pool.totalStakedAmount);
-        if (newTotalAmount >= 32 ether) {
+        pool.totalStakedAmount = pool.totalStakedAmount.add(stakeAmount);
+        if (pool.totalStakedAmount >= 32 ether) {
             pool.status = PoolStatus.OnGoing;
-            uint256 excessAmount = newTotalAmount.sub(32 ether);
+            uint256 excessAmount = pool.totalStakedAmount.sub(32 ether);
             if (excessAmount > 0) {
                 stakeAmount = stakeAmount.sub(excessAmount);
                 msg.sender.transfer(excessAmount);
             }
         }
-        pool.totalStakedAmount = pool.totalStakedAmount.add(stakeAmount);
+
 
         PoolStake storage userStake = pool.stakes[msg.sender];
 
@@ -246,8 +246,8 @@ contract MicroPool is OwnedByGovernor {
 
     // TODO: only Insurance contract can call this
     function updateSlashingOfAPool(uint256 poolIndex, uint256 compensatedAmount)
-        public
-        returns (bool)
+    public
+    returns (bool)
     {
         // TODO: validations
 
@@ -273,22 +273,22 @@ contract MicroPool is OwnedByGovernor {
         @param poolIndex uint256
     */
     function poolDetails(uint256 poolIndex)
-        public
-        view
-        returns (
-            PoolStatus status,
-            uint256 startTime,
-            uint256 endTime,
-            uint256 rewardBalance,
-            uint256 claimedBalance,
-            uint256 providerOwe,
-            bytes32 name,
-            uint256 nodeFee,
-            uint256 totalStakedAmount,
-            address payable provider,
-            address payable validator
-        )
-    //address payable[] memory members
+    public
+    view
+    returns (
+        PoolStatus status,
+        uint256 startTime,
+        uint256 endTime,
+        uint256 rewardBalance,
+        uint256 claimedBalance,
+        uint256 providerOwe,
+        bytes32 name,
+        uint256 nodeFee,
+        uint256 totalStakedAmount,
+        address payable provider,
+        address payable validator
+    )
+        //address payable[] memory members
     {
         Pool memory pool = _pools[poolIndex];
         status = pool.status;
@@ -312,7 +312,7 @@ contract MicroPool is OwnedByGovernor {
     function claimable() public view returns (bool) {
         return _claimable;
     }
-    
+
     // TODO: Only for development
     function getBack() public payable {
         msg.sender.transfer(address(this).balance);
