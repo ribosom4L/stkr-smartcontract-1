@@ -1,7 +1,6 @@
 client/
 .idea/
 artifacts/
-build/
 cache/
 contracts/TODO.md
 node_modules
