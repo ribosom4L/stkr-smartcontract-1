@@ -1,139 +1,243 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.6.8;
 
-import "./lib/SafeMath.sol";
-import "./core/OwnedByGovernor.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
+import "./lib/interfaces/IDepositContract.sol";
+import "./SystemParameters.sol";
+import "./lib/Lockable.sol";
+import "./lib/interfaces/IAETH.sol";
 
-interface TokenContract {
-    function mint(address account, uint256 amount) external virtual;
-    function updateMicroPoolContract(address microPoolContract) external virtual;
+interface IStaking {
+    function compensatePoolLoss(address provider, uint256 amount) external;
+
+    function freeze(address user, uint256 amount) external returns (bool);
+
+    function reward(uint256 poolIndex) payable external;
 }
 
-contract MicroPool is OwnedByGovernor {
+contract MicroPool is OwnableUpgradeSafe, Lockable {
     using SafeMath for uint256;
 
-    enum PoolStatus {Initialized, Pending, OnGoing, Completed, Canceled}
+    enum PoolStatus {Pending, OnGoing, Completed, Canceled}
 
+
+    // claimable amount = amount + reward - claimedAmount
     struct PoolStake {
         uint256 amount;
-        uint256 fee;
-        bool isClaimed;
+        uint256 reward;
+        uint256 claimedAmount;
+    }
+
+    struct Migration {
+        address payable previousProvider;
+        address payable newProvider;
+        uint256 rewardForPreviousProvider;
+        bool rewardClaimed;
     }
 
     struct Pool {
         PoolStatus status;
+        bytes32 name;
         uint256 startTime; // init time
         uint256 endTime; // canceled or completed time
-        uint256 rewardBalance; // total balance after rewarded
-        uint256 claimedBalance; // pool members' claimed amount
-        uint256 compensatedBalance; // TODO: is required?
-        uint256 providerOwe; // TODO: who will decide it? governor, this contract, etc.
-        uint256 nodeFee; // eth price
-        uint256 totalStakedAmount; // total amount of user stakes
-        uint256 numberOfSlashing;
-        uint256 totalSlashedAmount;
-        // TODO: last slashing check time (as block number)
+        bool claimable;
+        uint256 claimed; // total claimed balance
+        uint256 balance; // total amount of user stakes
+        uint256 lastSlashings; // current updated slashings
+        uint256 lastReward; // current updated reward
+        uint256 requesterRewards;
+        uint8 migrationCount;
         address payable provider; // provider address
         address payable validator; // validator address
-        // address payable[] members; // pool members
+        //        address payable[] members; // pool members
         mapping(address => PoolStake) stakes; // stakes of a pool members
     }
 
     Pool[] private _pools;
-    bool private _claimable = false; // governors will make it true after ETH 2.0
-    address private _tokenContract;
-    address _insuranceContract;
+    mapping(address => uint256) public pendingPools; // provider -> pool ID
+
+    IAETH public _aethContract;
+
+    IStaking public _stakingContract;
+
+    SystemParameters public _systemParameters;
+
+    address payable _beaconContract;
 
     event PoolCreated(
         uint256 indexed poolIndex,
-        address payable indexed provider,
-        address payable indexed validator,
-        address creator
+        address payable indexed provider
     );
+
+    event PoolOnGoing(
+        uint256 indexed poolIndex
+    );
+
+    event PoolMigrated(
+        uint256 indexed poolIndex,
+        address payable indexed newProvider,
+        address payable indexed previousProvider,
+        uint256 slashings,
+        uint256 poolBalance
+    );
+
     event UserStaked(
         uint256 indexed poolIndex,
         address indexed user,
         uint256 stakeAmount
     );
+
     event UserUnstaked(
         uint256 indexed poolIndex,
-        address indexed user,
+        address indexed staker,
         uint256 unstakeAmount
     );
 
-    constructor(
-        address tokenContract
-    ) public {
-        _tokenContract = tokenContract;
-        TokenContract(tokenContract).updateMicroPoolContract(address(this));
+    event PoolReward(
+        uint256 indexed poolIndex,
+        uint256 reward,
+        uint256 slashings
+    );
+
+    event AETHClaim(uint256 indexed poolIndex, address staker, uint256 amount);
+
+    function initialize(address payable aethContract, address systemParameters, address payable beaconContract) public initializer {
+        OwnableUpgradeSafe.__Ownable_init();
+
+        _aethContract = IAETH(aethContract);
+
+        _systemParameters = SystemParameters(systemParameters);
+
+        // this is for initialization
+        // to avoid index 0 pool
+        Pool memory pool;
+        pool.status = PoolStatus.Canceled;
+        _pools.push(pool);
+
+        _beaconContract = beaconContract;
+    }
+
+    function pushToBeacon(uint256 poolIndex,
+        address payable validator,
+        bytes memory pubkey,
+        bytes memory withdrawal_credentials,
+        bytes memory signature,
+        bytes32 deposit_data_root) public onlyOwner {
+        Pool storage pool = _pools[poolIndex];
+
+        require(pool.validator == address(0), "Pool already set a validator");
+        require(pool.balance >= 32 ether && pool.status == PoolStatus.OnGoing, "Not enough ether");
+        uint256 ethersToSend = pool.balance;
+
+        pool.balance = 0;
+        pool.validator = validator;
+        pool.startTime = block.timestamp;
+        pool.lastReward = ethersToSend;
+
+        _aethContract.mint(address(this), ethersToSend);
+
+        IDepositContract(_beaconContract).deposit{value : ethersToSend}(pubkey, withdrawal_credentials, signature, deposit_data_root);
     }
 
     /**
-        Governor can call this function to create a new pool for given provider.
-        @param provider address
-        @param validator address
-        @param providerOwe uint256
+        Providers can call this function to create a new pool.
     */
-    function initializePool(
-        address payable provider,
-        address payable validator,
-        uint256 providerOwe
-    ) external onlyGovernor {
-        // TODO: validations
-        // TODO: _nodeFee usd to eth
+    function initializePool(bytes32 name) external {
+        require(pendingPools[msg.sender] > 0, "User already have a pending pool");
+        // freeze staked ankr
+        require(_stakingContract.freeze(msg.sender, _systemParameters.PROVIDER_MINIMUM_STAKING()));
+
         Pool memory pool;
-        pool.provider = provider;
-        pool.validator = validator;
-        pool.providerOwe = providerOwe;
+
+        pool.provider = msg.sender;
+        pool.name = name;
         pool.startTime = block.timestamp;
-        if (providerOwe > 0) {
-            pool.status = PoolStatus.Initialized;
-        } else {
-            pool.status = PoolStatus.Pending;
-        }
         _pools.push(pool);
-        emit PoolCreated(_pools.length.sub(1), provider, validator, msg.sender);
+
+        uint256 index = _pools.length.sub(1);
+        pendingPools[msg.sender] = index + 1;
+
+        emit PoolCreated(
+            index,
+            msg.sender
+        );
     }
 
     /**
         Users can call to stake to given pool
         @param poolIndex uint256
     */
-    // TODO: not mint AETH directly, wait for pool reach 32 eth.
-    function stake(uint256 poolIndex) external payable {
-        // TODO: validations
-
+    function stake(uint256 poolIndex) payable external {
         Pool storage pool = _pools[poolIndex];
-        uint256 fee = msg.value.div(32 ether).mul(pool.nodeFee);
-        uint256 stakeAmount = msg.value.sub(fee);
-        // TODO: min. stake amount
-        require(stakeAmount > 0, "You don't have enough balance.");
 
-        if (pool.status == PoolStatus.Initialized) {
-            pool.status = PoolStatus.Pending;
-        }
+        // Pool must be pending status to participate
+        require(pool.status == PoolStatus.Pending, "cannot stake to this pool");
 
-        uint256 newTotalAmount = stakeAmount.add(pool.totalStakedAmount);
-        if (newTotalAmount >= 32 ether) {
+        uint256 stakeAmount = msg.value;
+
+        // value must be greater than minimum staking amount
+        require(stakeAmount >= _systemParameters.REQUESTER_MINIMUM_POOL_STAKING(), "Ethereum value must be greater than minimum staking amount");
+
+        pool.balance = pool.balance.add(stakeAmount);
+        if (pool.balance >= 32 ether) {
+
             pool.status = PoolStatus.OnGoing;
-            uint256 excessAmount = newTotalAmount.sub(32 ether);
+            pendingPools[msg.sender] = 0;
+
+            uint256 excessAmount = pool.balance.sub(32 ether);
+
             if (excessAmount > 0) {
                 stakeAmount = stakeAmount.sub(excessAmount);
                 msg.sender.transfer(excessAmount);
             }
         }
-        pool.totalStakedAmount = pool.totalStakedAmount.add(stakeAmount);
+
 
         PoolStake storage userStake = pool.stakes[msg.sender];
 
         userStake.amount = userStake.amount.add(stakeAmount);
-        userStake.fee = userStake.fee.add(fee);
         pool.stakes[msg.sender] = userStake;
 
-        // Mint AEth for user
-        TokenContract(_tokenContract).mint(msg.sender, stakeAmount.div(2));
-
         emit UserStaked(poolIndex, msg.sender, stakeAmount);
+    }
+
+    function migrate(uint256 poolIndex, uint256 currentPoolBalance, uint256 currentSlashings, address payable newProvider) public onlyOwner {
+        Pool storage pool = _pools[poolIndex];
+
+        require(currentSlashings >= pool.lastSlashings, "Current slashings cannot be smaller than last slashings");
+
+        address payable oldProvider = pool.provider;
+
+        pool.provider = newProvider;
+
+        uint256 slash = currentSlashings - pool.lastSlashings;
+
+        require(slash >= _systemParameters.SLASHINGS_FOR_MIGRATION(), "Slashing amount lower than system parameter");
+
+        uint256 currentReward = currentPoolBalance.add(slash).sub(32 ether);
+
+        uint256 reward = currentReward - pool.lastReward;
+
+        uint256 providerReward = reward.div(10);
+
+        // TODO: what if staked ankr cannot compensate the loss ?
+        if (slash > providerReward) {
+            uint256 difference = slash - providerReward;
+
+            _stakingContract.compensatePoolLoss(oldProvider, difference);
+        } else if (slash < providerReward) {
+            // if provider has positive balance in reward
+            uint256 difference = providerReward - slash;
+            _aethContract.mintFrozen(oldProvider, difference);
+        }
+
+        pool.lastSlashings = currentSlashings;
+        pool.lastReward = currentReward;
+        pool.migrationCount++;
+
+        emit PoolMigrated(poolIndex, newProvider, oldProvider, currentSlashings, currentPoolBalance);
     }
 
     /**
@@ -153,43 +257,103 @@ contract MicroPool is OwnedByGovernor {
             "You don't have staked balance in this pool"
         );
         // require(
-        //     TokenContract(_tokenContract).burnFrom(
+        //     IAETH(_aethContract).burnFrom(
         //         msg.sender,
         //         pool.stakes[msg.sender].amount.div(2)
         //     ),
         //     "You need to approve this contract first."
         // );
 
-        uint256 unstakeAmount = pool.stakes[msg.sender].amount.add(
-            pool.stakes[msg.sender].fee
-        );
+        uint256 unstakeAmount = pool.stakes[msg.sender].amount;
 
         msg.sender.transfer(unstakeAmount);
-        pool.totalStakedAmount = pool.totalStakedAmount.sub(pool.stakes[msg.sender].amount);
+        pool.balance = pool.balance.sub(
+            pool.stakes[msg.sender].amount
+        );
         delete pool.stakes[msg.sender];
 
         emit UserStaked(poolIndex, msg.sender, unstakeAmount);
     }
 
-    // TODO: only Insurance contract can call this
-    function updateSlashingOfAPool(uint256 poolIndex, uint256 compensatedAmount) public returns(bool) {
-        // TODO: validations
-
+    function rewardMicropool(uint256 poolIndex, uint256 slashings)
+    public
+    payable
+    onlyOwner {
         Pool storage pool = _pools[poolIndex];
-        pool.compensatedBalance = pool.compensatedBalance.add(compensatedAmount);
+        require(pool.status == PoolStatus.OnGoing, "Pool cannot be rewarded");
 
-        return true;
+        pool.status = PoolStatus.Completed;
+
+        require(slashings >= pool.lastSlashings, "Current slashings cannot be smaller than last slashings");
+
+        uint256 slash = slashings - pool.lastSlashings;
+
+        uint256 currentReward = pool.lastReward.add(slash).sub(32 ether);
+
+        uint256 reward = currentReward - pool.lastReward;
+
+        uint256 providerReward = reward.div(10);
+
+        // TODO: what if staked ankr cannot compensate the loss ?
+        if (slash > providerReward) {
+            uint256 difference = slash - providerReward;
+
+            _stakingContract.compensatePoolLoss(pool.provider, difference);
+            providerReward = 0;
+        } else if (slash < providerReward) {
+            // if provider has positive balance in reward
+            providerReward = providerReward - slash;
+            // mint aeth
+            _aethContract.mintFrozen(pool.provider, providerReward);
+        }
+
+        pool.lastSlashings = slashings;
+        pool.lastReward = currentReward;
+
+        // requesters
+        uint256 requesterRewards = pool.lastReward.mul(77).div(100);
+        uint256 stakingRewards = pool.lastReward.mul(10).div(100);
+        uint256 developerRewards = pool.lastReward.mul(3).div(100);
+
+        pool.requesterRewards = requesterRewards;
+
+        _stakingContract.reward{value: stakingRewards}(poolIndex);
+
+        // TODO: Developer rewards
+
+        _aethContract.mintPool{value: requesterRewards}();
+
+        emit PoolReward(poolIndex, msg.value, slashings);
     }
 
-    /**
-        Governer calls this function to change aEth token contract address
-        @param tokenContract address
-    */
-    function updateTokenContract(address tokenContract)
-        external
-        onlyGovernor
-    {
-        _tokenContract = tokenContract;
+    function updateAETHContract(address payable tokenContract) external onlyOwner {
+        _aethContract = IAETH(tokenContract);
+    }
+
+    function updateParameterContract(address paramContract) external onlyOwner {
+        _systemParameters = SystemParameters(paramContract);
+    }
+
+    function updateStakingContract(address stakingContract) external onlyOwner {
+        _stakingContract = IStaking(stakingContract);
+    }
+
+    function claimAeth(uint256 poolIndex) unlocked(msg.sender) external {
+        Pool storage pool = _pools[poolIndex];
+
+        require(pool.status == PoolStatus.Completed || pool.status == PoolStatus.OnGoing, "Pool not claimable");
+
+        PoolStake storage poolStake = pool.stakes[msg.sender];
+
+        uint256 claimable = poolStake.amount.add(pool.requesterRewards).mul(poolStake.amount).div(32 ether).sub(poolStake.claimedAmount);
+
+        require(claimable > 0, "Claimable amount must be bigger than zero");
+
+        poolStake.claimedAmount = poolStake.claimedAmount.add(claimable);
+
+        _aethContract.transfer(msg.sender, claimable);
+
+        emit AETHClaim(poolIndex, msg.sender, claimable);
     }
 
     /**
@@ -198,41 +362,36 @@ contract MicroPool is OwnedByGovernor {
         @param poolIndex uint256
     */
     function poolDetails(uint256 poolIndex)
-        public
-        view
-        returns (
-            PoolStatus status,
-            uint256 startTime,
-            uint256 endTime,
-            uint256 rewardBalance,
-            uint256 claimedBalance,
-            uint256 providerOwe,
-            uint256 nodeFee,
-            uint256 totalStakedAmount,
-            address payable provider,
-            address payable validator
-        )
-    //address payable[] memory members
+    public
+    view
+    returns (
+        PoolStatus status,
+        uint256 startTime,
+        uint256 endTime,
+        uint256 lastReward,
+        uint256 lastSlashings,
+        bytes32 name,
+        uint256 balance,
+        address payable provider,
+        address payable validator
+    )
+        //address payable[] memory members
     {
         Pool memory pool = _pools[poolIndex];
         status = pool.status;
         startTime = pool.startTime;
         endTime = pool.endTime;
-        rewardBalance = pool.rewardBalance;
-        claimedBalance = pool.claimedBalance;
-        providerOwe = pool.providerOwe;
-        nodeFee = pool.nodeFee;
-        totalStakedAmount = pool.totalStakedAmount;
+        lastReward = pool.lastReward;
+        lastSlashings = pool.lastSlashings;
+        balance = pool.balance;
         provider = pool.provider;
         validator = pool.validator;
+        name = pool.name;
         //members = pool.members;
     }
 
-    function updateInsuranceContract(address addr) public onlyGovernor {
-        _insuranceContract = addr;
-    }
-
-    function claimable() public view returns (bool) {
-        return _claimable;
+    // TODO: Only for development
+    function getBack() public payable {
+        msg.sender.transfer(address(this).balance);
     }
 }

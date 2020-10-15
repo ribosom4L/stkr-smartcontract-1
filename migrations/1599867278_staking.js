@@ -1,14 +1,20 @@
 const StakingContract = artifacts.require('Staking')
 const MicropoolContract = artifacts.require('MicroPool')
 const ANKRContract = artifacts.require('ANKR')
-const NodeContract = artifacts.require('Node')
+const TokenContract = artifacts.require('AETH')
 
-module.exports = async (_deployer) => {
+const { deployProxy } = require('@openzeppelin/truffle-upgrades')
+
+
+module.exports = async (deployer) => {
   const ankrContract = await ANKRContract.deployed()
-  const nodeContract = await NodeContract.deployed()
+  const tokenContract = await TokenContract.deployed()
   const micropoolContract = await MicropoolContract.deployed()
-  await _deployer.deploy(StakingContract, ankrContract.address, nodeContract.address, micropoolContract.address)
-  const stakingContract = await StakingContract.deployed();
 
-  nodeContract.updateStakingContract(stakingContract.address)
+  const stakingContract = await deployProxy(StakingContract, [ankrContract.address, micropoolContract.address, tokenContract.address], {
+    deployer,
+    unsafeAllowCustomTypes: true
+  })
+
+  await micropoolContract.updateStakingContract(stakingContract.address)
 }
