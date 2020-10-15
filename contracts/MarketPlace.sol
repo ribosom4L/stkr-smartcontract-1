@@ -1,38 +1,53 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.6.8;
 
-import "./core/OwnedByGovernor.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
+import "./lib/interfaces/IAETH.sol";
 
-contract MarketPlace is OwnedByGovernor {
+contract MarketPlace is OwnableUpgradeSafe {
     using SafeMath for uint256;
+
     // ETH-USD
     // ANKR-ETH
     uint256 private _ethUsd;
     uint256 private _ankrEth;
 
-    uint256 private MULTIPLIER = 1e10;
+//    mapping (address => uint256) public _funders;
 
-    function updateEthUsdRate(uint256 ethUsd) public onlyGovernor {
+    IAETH public AETHContract;
+
+    function initialize(address aethContract) public initializer {
+        OwnableUpgradeSafe.__Ownable_init();
+        AETHContract = IAETH(aethContract);
+    }
+
+    function updateEthUsdRate(uint256 ethUsd) public onlyOwner {
         _ethUsd = ethUsd;
     }
 
-    function updateAnkrEthRate(uint256 ankrEth) public onlyGovernor {
+    function updateAnkrEthRate(uint256 ankrEth) public onlyOwner {
         _ankrEth = ankrEth;
     }
 
-    // 1 eth  = x usd
-    function ethUsdRate() public view returns (uint256) {
-        return _ethUsd;
+    function ethUsdRate() external returns (uint256 ethUsd) {
+        ethUsd = _ethUsd;
     }
 
-    // 1 eth = x ankr
-    function ethAnkrRate() public view returns (uint256) {
-        return _ankrEth;
+    function ankrEthRate() external returns (uint256 ankrEth) {
+        ankrEth = _ankrEth;
     }
 
-    // x ankr (as wei)  = x usd
-    function ankrUsdRate(uint256 ankrAmount) public view returns (uint256) {
-        return ankrAmount.mul(MULTIPLIER).div(_ankrEth).mul(_ethUsd);
+    function updateAETHContract(address aethContract) public onlyOwner {
+        AETHContract = IAETH(aethContract);
+    }
+
+    function swapAndBurn(uint256 etherAmount) external returns(uint256) {
+        uint256 ankrAmount = etherAmount.mul(etherAmount);
+
+        AETHContract.burn(ankrAmount);
+
+        return ankrAmount;
     }
 }

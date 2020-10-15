@@ -7,3 +7,4 @@ contracts/TODO.md
 node_modules
 
 .openzeppelin/.session
+.DS_Store
