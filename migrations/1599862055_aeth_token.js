@@ -1,5 +1,7 @@
 const TokenContract = artifacts.require('AETH')
 
-module.exports = async (_deployer) => {
-  await _deployer.deploy(TokenContract)
-};
+const { deployProxy } = require('@openzeppelin/truffle-upgrades');
+
+module.exports = async (deployer) => {
+  await deployProxy(TokenContract, ['AEthereum', 'aEth'], { deployer })
+}
