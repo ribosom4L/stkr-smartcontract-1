@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "compile": "truffle compile",
-    "contracts:copy": "cp -rf build/contracts client/src/",
-    "contracts:rm": "rm -rf client/src/contracts",
+    "compile": "truffle compile --all",
+    "migrate:goerli": "truffle migrate --network goerli",
+    "migrate:local": "truffle migrate",
     "test": "truffle test"
   },
   "keywords": [],
