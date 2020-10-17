@@ -138,14 +138,17 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
 
         _aethContract.mint(address(this), ethersToSend);
 
+        pendingPools[msg.sender] = 0;
+
         IDepositContract(_beaconContract).deposit{value : ethersToSend}(pubkey, withdrawal_credentials, signature, deposit_data_root);
+        emit PoolOnGoing(poolIndex);
     }
 
     /**
         Providers can call this function to create a new pool.
     */
     function initializePool(bytes32 name) external {
-        require(pendingPools[msg.sender] > 0, "User already have a pending pool");
+        require(pendingPools[msg.sender] == 0, "User already have a pending pool");
         // freeze staked ankr
         require(_stakingContract.freeze(msg.sender, _systemParameters.PROVIDER_MINIMUM_STAKING()));
 
@@ -157,7 +160,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         _pools.push(pool);
 
         uint256 index = _pools.length.sub(1);
-        pendingPools[msg.sender] = index + 1;
+        pendingPools[msg.sender] = index;
 
         emit PoolCreated(
             index,
