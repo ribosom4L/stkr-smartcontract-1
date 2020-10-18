@@ -20,7 +20,7 @@ interface IStaking {
 contract MicroPool is OwnableUpgradeSafe, Lockable {
     using SafeMath for uint256;
 
-    enum PoolStatus {Pending, OnGoing, Completed, Canceled}
+    enum PoolStatus {Pending, PushWaiting, OnGoing, Completed, Canceled}
 
 
     // claimable amount = amount + reward - claimedAmount
@@ -49,8 +49,8 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         uint256 lastReward; // current updated reward
         uint256 requesterRewards;
         uint8 migrationCount;
+        address validator; // validator address
         address payable provider; // provider address
-        address payable validator; // validator address
         //        address payable[] members; // pool members
         mapping(address => PoolStake) stakes; // stakes of a pool members
     }
@@ -64,7 +64,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
 
     SystemParameters public _systemParameters;
 
-    address payable _beaconContract;
+    address payable _depositContract;
 
     event PoolCreated(
         uint256 indexed poolIndex,
@@ -116,19 +116,24 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         pool.status = PoolStatus.Canceled;
         _pools.push(pool);
 
-        _beaconContract = beaconContract;
+        _depositContract = beaconContract;
     }
 
     function pushToBeacon(uint256 poolIndex,
-        address payable validator,
         bytes memory pubkey,
         bytes memory withdrawal_credentials,
         bytes memory signature,
         bytes32 deposit_data_root) public onlyOwner {
+
         Pool storage pool = _pools[poolIndex];
 
-        require(pool.validator == address(0), "Pool already set a validator");
-        require(pool.balance >= 32 ether && pool.status == PoolStatus.OnGoing, "Not enough ether");
+        require(pool.status == PoolStatus.PushWaiting, "Pool status not allow to push");
+        require(pool.balance >= 32 ether, "Not enough ether");
+
+        pool.status = PoolStatus.OnGoing;
+
+        address validator = address(bytes20(keccak256(pubkey)));
+
         uint256 ethersToSend = pool.balance;
 
         pool.balance = 0;
@@ -140,7 +145,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
 
         pendingPools[msg.sender] = 0;
 
-        IDepositContract(_beaconContract).deposit{value : ethersToSend}(pubkey, withdrawal_credentials, signature, deposit_data_root);
+        IDepositContract(_depositContract).deposit{value : ethersToSend}(pubkey, withdrawal_credentials, signature, deposit_data_root);
         emit PoolOnGoing(poolIndex);
     }
 
@@ -176,7 +181,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         Pool storage pool = _pools[poolIndex];
 
         // Pool must be pending status to participate
-        require(pool.status == PoolStatus.Pending, "cannot stake to this pool");
+        require(pool.status == PoolStatus.Pending, "Cannot stake to this pool");
 
         uint256 stakeAmount = msg.value;
 
@@ -186,13 +191,15 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         pool.balance = pool.balance.add(stakeAmount);
         if (pool.balance >= 32 ether) {
 
-            pool.status = PoolStatus.OnGoing;
+            pool.status = PoolStatus.PushWaiting;
+
             pendingPools[msg.sender] = 0;
 
             uint256 excessAmount = pool.balance.sub(32 ether);
 
             if (excessAmount > 0) {
                 stakeAmount = stakeAmount.sub(excessAmount);
+                pool.balance = pool.balance.sub(excessAmount);
                 msg.sender.transfer(excessAmount);
             }
         }
@@ -375,8 +382,8 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         uint256 lastSlashings,
         bytes32 name,
         uint256 balance,
-        address payable provider,
-        address payable validator
+        address validator,
+        address payable provider
     )
         //address payable[] memory members
     {
@@ -391,6 +398,18 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         validator = pool.validator;
         name = pool.name;
         //members = pool.members;
+    }
+
+    function poolCount() public view returns(uint256) {
+        return _pools.length;
+    }
+
+    function userStakeAmount(uint256 poolIndex, address addr) public view returns(uint256) {
+        return _pools[poolIndex].stakes[addr].amount;
+    }
+
+    function changeDepositContract(address payable depositContract) public onlyOwner {
+        _depositContract = depositContract;
     }
 
     // TODO: Only for development

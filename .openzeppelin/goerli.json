@@ -1,9 +1,88 @@
 {
   "manifestVersion": "3.1",
   "impls": {
-    "7981a8795c9d09ba320395dc776156ea224fbcb7b1ad10e2f8bdd691c5f826f8": {
-      "address": "0xa46dd834953f51C57828f325D44B5B93A801168F",
-      "txHash": "0x5a240b0e5a0133dbc965cc5913e842116f230aa33b2701a993b1f9c8bf1540bf",
+    "bb6f5a14bdca46be946537f42d79aba5a8fe50069a29e05fa8fc8688122323a1": {
+      "address": "0x39dC2300C52E62Ba1dc59955C4f9F2a16937C142",
+      "txHash": "0x0e43a3297d173ca3396add7bbe4b8b2bec65cb0860057e3fdc8549fd1c22e799",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "initialized",
+            "type": "t_bool",
+            "src": "../@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "initializing",
+            "type": "t_bool",
+            "src": "../@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol:26"
+          },
+          {
+            "contract": "Initializable",
+            "label": "______gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "../@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol:61"
+          },
+          {
+            "contract": "ContextUpgradeSafe",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "../@openzeppelin/contracts-ethereum-package/contracts/GSN/Context.sol:37"
+          },
+          {
+            "contract": "OwnableUpgradeSafe",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "../@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol:18"
+          },
+          {
+            "contract": "OwnableUpgradeSafe",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "../@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol:78"
+          },
+          {
+            "contract": "SystemParameters",
+            "label": "PROVIDER_MINIMUM_STAKING",
+            "type": "t_uint256",
+            "src": "SystemParameters.sol:9"
+          },
+          {
+            "contract": "SystemParameters",
+            "label": "REQUESTER_MINIMUM_POOL_STAKING",
+            "type": "t_uint256",
+            "src": "SystemParameters.sol:12"
+          },
+          {
+            "contract": "SystemParameters",
+            "label": "SLASHINGS_FOR_MIGRATION",
+            "type": "t_uint256",
+            "src": "SystemParameters.sol:15"
+          }
+        ],
+        "types": {
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "ae36c467c7fdd190943129d7617f4ba873aab36071d701790f935d1a80b4fb99": {
+      "address": "0x147ca0f5BB0D2E1cBf69842E45D0748247784879",
+      "txHash": "0xe0020a47b5c019bd2cbc1645feec3c35253cc3aa31034ad3b8d37942965f39a0",
       "layout": {
         "storage": [
           {
@@ -94,49 +173,49 @@
             "contract": "AETH",
             "label": "_totalSupply",
             "type": "t_uint256",
-            "src": "AETH.sol:16"
+            "src": "AETH.sol:18"
           },
           {
             "contract": "AETH",
             "label": "_name",
             "type": "t_string_storage",
-            "src": "AETH.sol:18"
+            "src": "AETH.sol:20"
           },
           {
             "contract": "AETH",
             "label": "_symbol",
             "type": "t_string_storage",
-            "src": "AETH.sol:19"
+            "src": "AETH.sol:21"
           },
           {
             "contract": "AETH",
             "label": "_decimals",
             "type": "t_uint8",
-            "src": "AETH.sol:20"
+            "src": "AETH.sol:22"
           },
           {
             "contract": "AETH",
             "label": "_balances",
             "type": "t_mapping(t_address,t_uint256)",
-            "src": "AETH.sol:22"
+            "src": "AETH.sol:24"
           },
           {
             "contract": "AETH",
             "label": "_frozenBalances",
             "type": "t_mapping(t_address,t_uint256)",
-            "src": "AETH.sol:23"
+            "src": "AETH.sol:25"
           },
           {
             "contract": "AETH",
             "label": "_claimable",
             "type": "t_bool",
-            "src": "AETH.sol:25"
+            "src": "AETH.sol:27"
           },
           {
             "contract": "AETH",
             "label": "_microPoolContract",
             "type": "t_address",
-            "src": "AETH.sol:27"
+            "src": "AETH.sol:29"
           }
         ],
         "types": {
@@ -176,9 +255,9 @@
         }
       }
     },
-    "e553c8a354bfde8c24e458b40d829924c1f3982935485adf6991e42fd56c34af": {
-      "address": "0xb59a85d80049472C9d66Da52400770B368183B92",
-      "txHash": "0xad6067411b3c234b56acfd361d169bfe7b17ed2e19508391f58a42e686205a1c",
+    "e35ffd3db57bf0a32c4e4005a9663c3b690aca81ab6809b3a64ec00b830ab863": {
+      "address": "0x3b2a3E894Bb62d254fF4B0584204Cb60744d4A32",
+      "txHash": "0x6fcfb25e9abb515dc324835781fcdb00010e290cbc0822f0cf3a05e674a1aa58",
       "layout": {
         "storage": [
           {
@@ -226,7 +305,7 @@
           {
             "contract": "MicroPool",
             "label": "_pools",
-            "type": "t_array(t_struct(Pool)1134_storage)dyn_storage",
+            "type": "t_array(t_struct(Pool)1696_storage)dyn_storage",
             "src": "MicroPool.sol:58"
           },
           {
@@ -238,42 +317,42 @@
           {
             "contract": "MicroPool",
             "label": "_aethContract",
-            "type": "t_contract(IAETH)3086",
+            "type": "t_contract(IAETH)3732",
             "src": "MicroPool.sol:61"
           },
           {
             "contract": "MicroPool",
             "label": "_stakingContract",
-            "type": "t_contract(IStaking)1075",
+            "type": "t_contract(IStaking)1636",
             "src": "MicroPool.sol:63"
           },
           {
             "contract": "MicroPool",
             "label": "_systemParameters",
-            "type": "t_contract(SystemParameters)3013",
+            "type": "t_contract(SystemParameters)3659",
             "src": "MicroPool.sol:65"
           },
           {
             "contract": "MicroPool",
-            "label": "_beaconContract",
+            "label": "_depositContract",
             "type": "t_address_payable",
             "src": "MicroPool.sol:67"
           }
         ],
         "types": {
-          "t_array(t_struct(Pool)1134_storage)dyn_storage": {
+          "t_array(t_struct(Pool)1696_storage)dyn_storage": {
             "label": "struct MicroPool.Pool[]"
           },
           "t_mapping(t_address,t_uint256)": {
             "label": "mapping(address => uint256)"
           },
-          "t_contract(IAETH)3086": {
+          "t_contract(IAETH)3732": {
             "label": "contract IAETH"
           },
-          "t_contract(IStaking)1075": {
+          "t_contract(IStaking)1636": {
             "label": "contract IStaking"
           },
-          "t_contract(SystemParameters)3013": {
+          "t_contract(SystemParameters)3659": {
             "label": "contract SystemParameters"
           },
           "t_address_payable": {
@@ -298,8 +377,8 @@
       }
     },
     "ec002a9bb6406b5a9ef1bc4cfff7a03a913746a9c23cd5162e4bd9d82c83102c": {
-      "address": "0x27A5AAdbd61e8355a28a739C3E1eE53A7B9F70ae",
-      "txHash": "0x6fe8b7255fcdc434b1feee7fa84a1045febd1cf0a62d6203961f184f3f12d8e1",
+      "address": "0xc509976d7bd3F577e1C9822CA50FbDFa47e4D0e7",
+      "txHash": "0x9dcf7b6013af465877f46392b766094ac9d121a2d8ab5ecdd25c3e24c2e7b565",
       "layout": {
         "storage": [
           {
@@ -359,19 +438,19 @@
           {
             "contract": "Staking",
             "label": "AETHContract",
-            "type": "t_contract(IAETH)3086",
+            "type": "t_contract(IAETH)3732",
             "src": "Staking.sol:64"
           },
           {
             "contract": "Staking",
             "label": "_marketPlaceContract",
-            "type": "t_contract(IMarketPlace)3146",
+            "type": "t_contract(IMarketPlace)3792",
             "src": "Staking.sol:66"
           },
           {
             "contract": "Staking",
             "label": "_ankrContract",
-            "type": "t_contract(IERC20)4381",
+            "type": "t_contract(IERC20)5027",
             "src": "Staking.sol:68"
           },
           {
@@ -383,7 +462,7 @@
           {
             "contract": "Staking",
             "label": "_stakes",
-            "type": "t_mapping(t_address,t_struct(UserStake)2324_storage)",
+            "type": "t_mapping(t_address,t_struct(UserStake)2953_storage)",
             "src": "Staking.sol:72"
           },
           {
@@ -403,19 +482,19 @@
           "t_uint256": {
             "label": "uint256"
           },
-          "t_contract(IAETH)3086": {
+          "t_contract(IAETH)3732": {
             "label": "contract IAETH"
           },
-          "t_contract(IMarketPlace)3146": {
+          "t_contract(IMarketPlace)3792": {
             "label": "contract IMarketPlace"
           },
-          "t_contract(IERC20)4381": {
+          "t_contract(IERC20)5027": {
             "label": "contract IERC20"
           },
           "t_address": {
             "label": "address"
           },
-          "t_mapping(t_address,t_struct(UserStake)2324_storage)": {
+          "t_mapping(t_address,t_struct(UserStake)2953_storage)": {
             "label": "mapping(address => struct Staking.UserStake)"
           },
           "t_mapping(t_address,t_bool)": {
@@ -434,8 +513,8 @@
       }
     },
     "92bf1be904cb366e4eeadbc8220a69290e431c023d4316cf777a878afc13ba96": {
-      "address": "0x027058A5501E6027bfe365931D0600B6C5d7B46D",
-      "txHash": "0x814bcc16963a8a66beb1a57e8d5014dfeca782ee21b9a416711355e98d6f9760",
+      "address": "0xe01CA22d84E31187E7E8e5Af94a446a2f497d6ca",
+      "txHash": "0xaf8d742cb8d65db1d5a819ca58e2aaec215bf9379405d444484d2bff7a5e7c75",
       "layout": {
         "storage": [
           {
@@ -489,7 +568,7 @@
           {
             "contract": "MarketPlace",
             "label": "AETHContract",
-            "type": "t_contract(IAETH)3086",
+            "type": "t_contract(IAETH)3732",
             "src": "MarketPlace.sol:19"
           }
         ],
@@ -497,278 +576,8 @@
           "t_uint256": {
             "label": "uint256"
           },
-          "t_contract(IAETH)3086": {
+          "t_contract(IAETH)3732": {
             "label": "contract IAETH"
-          },
-          "t_address": {
-            "label": "address"
-          },
-          "t_array(t_uint256)49_storage": {
-            "label": "uint256[49]"
-          },
-          "t_array(t_uint256)50_storage": {
-            "label": "uint256[50]"
-          },
-          "t_bool": {
-            "label": "bool"
-          }
-        }
-      }
-    },
-    "453047965e7e0897610d38c7d5ff9d0631226fcf0699391783f1ac9dc899322c": {
-      "address": "0x49C6e6A333B00Cf6a0c94D3B8Ba488ACf5c45C33",
-      "txHash": "0x49b9e073cf7fb5f48cb140e8da438654414b30abbea1fd1f2611cd88150ad017",
-      "layout": {
-        "storage": [
-          {
-            "contract": "Initializable",
-            "label": "initialized",
-            "type": "t_bool",
-            "src": "../@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol:21"
-          },
-          {
-            "contract": "Initializable",
-            "label": "initializing",
-            "type": "t_bool",
-            "src": "../@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol:26"
-          },
-          {
-            "contract": "Initializable",
-            "label": "______gap",
-            "type": "t_array(t_uint256)50_storage",
-            "src": "../@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol:61"
-          },
-          {
-            "contract": "ContextUpgradeSafe",
-            "label": "__gap",
-            "type": "t_array(t_uint256)50_storage",
-            "src": "../@openzeppelin/contracts-ethereum-package/contracts/GSN/Context.sol:37"
-          },
-          {
-            "contract": "OwnableUpgradeSafe",
-            "label": "_owner",
-            "type": "t_address",
-            "src": "../@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol:18"
-          },
-          {
-            "contract": "OwnableUpgradeSafe",
-            "label": "__gap",
-            "type": "t_array(t_uint256)49_storage",
-            "src": "../@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol:78"
-          },
-          {
-            "contract": "SystemParameters",
-            "label": "PROVIDER_MINIMUM_STAKING",
-            "type": "t_uint256",
-            "src": "SystemParameters.sol:9"
-          },
-          {
-            "contract": "SystemParameters",
-            "label": "REQUESTER_MINIMUM_POOL_STAKING",
-            "type": "t_uint256",
-            "src": "SystemParameters.sol:12"
-          },
-          {
-            "contract": "SystemParameters",
-            "label": "SLASHINGS_FOR_MIGRATION",
-            "type": "t_uint256",
-            "src": "SystemParameters.sol:15"
-          }
-        ],
-        "types": {
-          "t_uint256": {
-            "label": "uint256"
-          },
-          "t_address": {
-            "label": "address"
-          },
-          "t_array(t_uint256)49_storage": {
-            "label": "uint256[49]"
-          },
-          "t_array(t_uint256)50_storage": {
-            "label": "uint256[50]"
-          },
-          "t_bool": {
-            "label": "bool"
-          }
-        }
-      }
-    },
-    "b4cfef18e7aef6d243ac1b2776ef460717c0abf6b3e98928331936a2576bb020": {
-      "address": "0xFC7Ee817378c1e30288e520a69F25674E8E1a65d",
-      "txHash": "0xd6bd1be60c6b9e4d28a043226ad3b81eae93acbb8260b3aa25b6baa419a531d1",
-      "layout": {
-        "storage": [
-          {
-            "contract": "ANKR",
-            "label": "_balances",
-            "type": "t_mapping(t_address,t_uint256)",
-            "src": "ANKR.sol:12"
-          },
-          {
-            "contract": "ANKR",
-            "label": "_allowances",
-            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
-            "src": "ANKR.sol:13"
-          },
-          {
-            "contract": "ANKR",
-            "label": "_totalSupply",
-            "type": "t_uint256",
-            "src": "ANKR.sol:14"
-          },
-          {
-            "contract": "ANKR",
-            "label": "_name",
-            "type": "t_string_storage",
-            "src": "ANKR.sol:16"
-          },
-          {
-            "contract": "ANKR",
-            "label": "_symbol",
-            "type": "t_string_storage",
-            "src": "ANKR.sol:17"
-          },
-          {
-            "contract": "ANKR",
-            "label": "_decimals",
-            "type": "t_uint8",
-            "src": "ANKR.sol:18"
-          },
-          {
-            "contract": "ANKR",
-            "label": "_microPoolContract",
-            "type": "t_address",
-            "src": "ANKR.sol:20"
-          }
-        ],
-        "types": {
-          "t_mapping(t_address,t_uint256)": {
-            "label": "mapping(address => uint256)"
-          },
-          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
-            "label": "mapping(address => mapping(address => uint256))"
-          },
-          "t_uint256": {
-            "label": "uint256"
-          },
-          "t_string_storage": {
-            "label": "string"
-          },
-          "t_uint8": {
-            "label": "uint8"
-          },
-          "t_address": {
-            "label": "address"
-          }
-        }
-      }
-    },
-    "7d539cdd3d6dc69cd1ad3b30b4d070bfee76102b7c90ed942788c3779f96d9c5": {
-      "address": "0x38792f5b656c6f3623aD2a46d5F1F8B043d9a378",
-      "txHash": "0x1dc9daa0359cc2bdce7486b014bc8d70209ab036245ec8f320751b14e4a00aec",
-      "layout": {
-        "storage": [
-          {
-            "contract": "Initializable",
-            "label": "initialized",
-            "type": "t_bool",
-            "src": "../@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol:21"
-          },
-          {
-            "contract": "Initializable",
-            "label": "initializing",
-            "type": "t_bool",
-            "src": "../@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol:26"
-          },
-          {
-            "contract": "Initializable",
-            "label": "______gap",
-            "type": "t_array(t_uint256)50_storage",
-            "src": "../@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol:61"
-          },
-          {
-            "contract": "ContextUpgradeSafe",
-            "label": "__gap",
-            "type": "t_array(t_uint256)50_storage",
-            "src": "../@openzeppelin/contracts-ethereum-package/contracts/GSN/Context.sol:37"
-          },
-          {
-            "contract": "OwnableUpgradeSafe",
-            "label": "_owner",
-            "type": "t_address",
-            "src": "../@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol:18"
-          },
-          {
-            "contract": "OwnableUpgradeSafe",
-            "label": "__gap",
-            "type": "t_array(t_uint256)49_storage",
-            "src": "../@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol:78"
-          },
-          {
-            "contract": "Lockable",
-            "label": "_locks",
-            "type": "t_mapping(t_address,t_bool)",
-            "src": "lib/Lockable.sol:4"
-          },
-          {
-            "contract": "MicroPool",
-            "label": "_pools",
-            "type": "t_array(t_struct(Pool)1134_storage)dyn_storage",
-            "src": "MicroPool.sol:58"
-          },
-          {
-            "contract": "MicroPool",
-            "label": "pendingPools",
-            "type": "t_mapping(t_address,t_uint256)",
-            "src": "MicroPool.sol:59"
-          },
-          {
-            "contract": "MicroPool",
-            "label": "_aethContract",
-            "type": "t_contract(IAETH)3112",
-            "src": "MicroPool.sol:61"
-          },
-          {
-            "contract": "MicroPool",
-            "label": "_stakingContract",
-            "type": "t_contract(IStaking)1075",
-            "src": "MicroPool.sol:63"
-          },
-          {
-            "contract": "MicroPool",
-            "label": "_systemParameters",
-            "type": "t_contract(SystemParameters)3039",
-            "src": "MicroPool.sol:65"
-          },
-          {
-            "contract": "MicroPool",
-            "label": "_beaconContract",
-            "type": "t_address_payable",
-            "src": "MicroPool.sol:67"
-          }
-        ],
-        "types": {
-          "t_array(t_struct(Pool)1134_storage)dyn_storage": {
-            "label": "struct MicroPool.Pool[]"
-          },
-          "t_mapping(t_address,t_uint256)": {
-            "label": "mapping(address => uint256)"
-          },
-          "t_contract(IAETH)3112": {
-            "label": "contract IAETH"
-          },
-          "t_contract(IStaking)1075": {
-            "label": "contract IStaking"
-          },
-          "t_contract(SystemParameters)3039": {
-            "label": "contract SystemParameters"
-          },
-          "t_address_payable": {
-            "label": "address payable"
-          },
-          "t_mapping(t_address,t_bool)": {
-            "label": "mapping(address => bool)"
           },
           "t_address": {
             "label": "address"
@@ -787,7 +596,7 @@
     }
   },
   "admin": {
-    "address": "0x230f047563E4b89F8811738B79C4dfcE9f6442Bd",
-    "txHash": "0xf2d42af18e23ff31c1b2e70b83852a0894048dede8e47658ce7498c0296144c9"
+    "address": "0xB841Fdf43A2F35805922f7f7461428AbCFbF36B3",
+    "txHash": "0xbbacd9405c3a9c05bf4e4d577684fdc241ff47c074ccd3e476066c8dbf07c088"
   }
 }

@@ -3,5 +3,5 @@ const { deployProxy } = require('@openzeppelin/truffle-upgrades');
 
 
 module.exports = async (deployer) => {
-  await deployProxy(ANKRContract, [], { deployer })
+  await deployer.deploy(ANKRContract)
 }
