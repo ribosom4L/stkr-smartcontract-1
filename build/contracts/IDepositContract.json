@@ -105,15 +105,15 @@
     "absolutePath": "/Users/anilkucukrecep/Code/Personal/st/contracts/contracts/lib/interfaces/IDepositContract.sol",
     "exportedSymbols": {
       "IDepositContract": [
-        3152
+        3772
       ]
     },
-    "id": 3153,
+    "id": 3773,
     "license": null,
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 3114,
+        "id": 3734,
         "literals": [
           "solidity",
           "^",
@@ -121,7 +121,7 @@
           ".8"
         ],
         "nodeType": "PragmaDirective",
-        "src": "0:23:9"
+        "src": "0:23:10"
       },
       {
         "abstract": false,
@@ -130,9 +130,9 @@
         "contractKind": "interface",
         "documentation": null,
         "fullyImplemented": false,
-        "id": 3152,
+        "id": 3772,
         "linearizedBaseContracts": [
-          3152
+          3772
         ],
         "name": "IDepositContract",
         "nodeType": "ContractDefinition",
@@ -140,28 +140,28 @@
           {
             "anonymous": false,
             "documentation": {
-              "id": 3115,
+              "id": 3735,
               "nodeType": "StructuredDocumentation",
-              "src": "58:38:9",
+              "src": "58:38:10",
               "text": "@notice A processed deposit event."
             },
-            "id": 3127,
+            "id": 3747,
             "name": "DepositEvent",
             "nodeType": "EventDefinition",
             "parameters": {
-              "id": 3126,
+              "id": 3746,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 3117,
+                  "id": 3737,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "pubkey",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3127,
-                  "src": "129:12:9",
+                  "scope": 3747,
+                  "src": "129:12:10",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -169,10 +169,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 3116,
+                    "id": 3736,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "129:5:9",
+                    "src": "129:5:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -183,14 +183,14 @@
                 },
                 {
                   "constant": false,
-                  "id": 3119,
+                  "id": 3739,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "withdrawal_credentials",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3127,
-                  "src": "151:28:9",
+                  "scope": 3747,
+                  "src": "151:28:10",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -198,10 +198,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 3118,
+                    "id": 3738,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "151:5:9",
+                    "src": "151:5:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -212,14 +212,14 @@
                 },
                 {
                   "constant": false,
-                  "id": 3121,
+                  "id": 3741,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "amount",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3127,
-                  "src": "189:12:9",
+                  "scope": 3747,
+                  "src": "189:12:10",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -227,10 +227,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 3120,
+                    "id": 3740,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "189:5:9",
+                    "src": "189:5:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -241,14 +241,14 @@
                 },
                 {
                   "constant": false,
-                  "id": 3123,
+                  "id": 3743,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "signature",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3127,
-                  "src": "211:15:9",
+                  "scope": 3747,
+                  "src": "211:15:10",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -256,10 +256,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 3122,
+                    "id": 3742,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "211:5:9",
+                    "src": "211:5:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -270,14 +270,14 @@
                 },
                 {
                   "constant": false,
-                  "id": 3125,
+                  "id": 3745,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "index",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3127,
-                  "src": "236:11:9",
+                  "scope": 3747,
+                  "src": "236:11:10",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -285,10 +285,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 3124,
+                    "id": 3744,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "236:5:9",
+                    "src": "236:5:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -298,20 +298,20 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "119:134:9"
+              "src": "119:134:10"
             },
-            "src": "101:153:9"
+            "src": "101:153:10"
           },
           {
             "body": null,
             "documentation": {
-              "id": 3128,
+              "id": 3748,
               "nodeType": "StructuredDocumentation",
-              "src": "260:367:9",
+              "src": "260:367:10",
               "text": "@notice Submit a Phase 0 DepositData object.\n @param pubkey A BLS12-381 public key.\n @param withdrawal_credentials Commitment to a public key for withdrawals.\n @param signature A BLS12-381 signature.\n @param deposit_data_root The SHA-256 hash of the SSZ-encoded DepositData object.\n Used as a protection against malformed input."
             },
             "functionSelector": "22895118",
-            "id": 3139,
+            "id": 3759,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -319,18 +319,18 @@
             "nodeType": "FunctionDefinition",
             "overrides": null,
             "parameters": {
-              "id": 3137,
+              "id": 3757,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 3130,
+                  "id": 3750,
                   "mutability": "mutable",
                   "name": "pubkey",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3139,
-                  "src": "658:21:9",
+                  "scope": 3759,
+                  "src": "658:21:10",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -338,10 +338,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 3129,
+                    "id": 3749,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "658:5:9",
+                    "src": "658:5:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -352,13 +352,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 3132,
+                  "id": 3752,
                   "mutability": "mutable",
                   "name": "withdrawal_credentials",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3139,
-                  "src": "689:37:9",
+                  "scope": 3759,
+                  "src": "689:37:10",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -366,10 +366,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 3131,
+                    "id": 3751,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "689:5:9",
+                    "src": "689:5:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -380,13 +380,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 3134,
+                  "id": 3754,
                   "mutability": "mutable",
                   "name": "signature",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3139,
-                  "src": "736:24:9",
+                  "scope": 3759,
+                  "src": "736:24:10",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -394,10 +394,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 3133,
+                    "id": 3753,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "736:5:9",
+                    "src": "736:5:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -408,13 +408,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 3136,
+                  "id": 3756,
                   "mutability": "mutable",
                   "name": "deposit_data_root",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3139,
-                  "src": "770:25:9",
+                  "scope": 3759,
+                  "src": "770:25:10",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -422,10 +422,10 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 3135,
+                    "id": 3755,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
-                    "src": "770:7:9",
+                    "src": "770:7:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
                       "typeString": "bytes32"
@@ -435,16 +435,16 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "648:153:9"
+              "src": "648:153:10"
             },
             "returnParameters": {
-              "id": 3138,
+              "id": 3758,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "818:0:9"
+              "src": "818:0:10"
             },
-            "scope": 3152,
-            "src": "632:187:9",
+            "scope": 3772,
+            "src": "632:187:10",
             "stateMutability": "payable",
             "virtual": false,
             "visibility": "external"
@@ -452,13 +452,13 @@
           {
             "body": null,
             "documentation": {
-              "id": 3140,
+              "id": 3760,
               "nodeType": "StructuredDocumentation",
-              "src": "825:87:9",
+              "src": "825:87:10",
               "text": "@notice Query the current deposit root hash.\n @return The deposit root hash."
             },
             "functionSelector": "c5f2892f",
-            "id": 3145,
+            "id": 3765,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -466,24 +466,24 @@
             "nodeType": "FunctionDefinition",
             "overrides": null,
             "parameters": {
-              "id": 3141,
+              "id": 3761,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "942:2:9"
+              "src": "942:2:10"
             },
             "returnParameters": {
-              "id": 3144,
+              "id": 3764,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 3143,
+                  "id": 3763,
                   "mutability": "mutable",
                   "name": "",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3145,
-                  "src": "968:7:9",
+                  "scope": 3765,
+                  "src": "968:7:10",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -491,10 +491,10 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 3142,
+                    "id": 3762,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
-                    "src": "968:7:9",
+                    "src": "968:7:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
                       "typeString": "bytes32"
@@ -504,10 +504,10 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "967:9:9"
+              "src": "967:9:10"
             },
-            "scope": 3152,
-            "src": "917:60:9",
+            "scope": 3772,
+            "src": "917:60:10",
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
@@ -515,13 +515,13 @@
           {
             "body": null,
             "documentation": {
-              "id": 3146,
+              "id": 3766,
               "nodeType": "StructuredDocumentation",
-              "src": "983:120:9",
+              "src": "983:120:10",
               "text": "@notice Query the current deposit count.\n @return The deposit count encoded as a little endian 64-bit number."
             },
             "functionSelector": "621fd130",
-            "id": 3151,
+            "id": 3771,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -529,24 +529,24 @@
             "nodeType": "FunctionDefinition",
             "overrides": null,
             "parameters": {
-              "id": 3147,
+              "id": 3767,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "1134:2:9"
+              "src": "1134:2:10"
             },
             "returnParameters": {
-              "id": 3150,
+              "id": 3770,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 3149,
+                  "id": 3769,
                   "mutability": "mutable",
                   "name": "",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3151,
-                  "src": "1160:12:9",
+                  "scope": 3771,
+                  "src": "1160:12:10",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
@@ -554,10 +554,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 3148,
+                    "id": 3768,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1160:5:9",
+                    "src": "1160:5:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -567,34 +567,34 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "1159:14:9"
+              "src": "1159:14:10"
             },
-            "scope": 3152,
-            "src": "1108:66:9",
+            "scope": 3772,
+            "src": "1108:66:10",
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           }
         ],
-        "scope": 3153,
-        "src": "25:1151:9"
+        "scope": 3773,
+        "src": "25:1151:10"
       }
     ],
-    "src": "0:1178:9"
+    "src": "0:1178:10"
   },
   "legacyAST": {
     "absolutePath": "/Users/anilkucukrecep/Code/Personal/st/contracts/contracts/lib/interfaces/IDepositContract.sol",
     "exportedSymbols": {
       "IDepositContract": [
-        3152
+        3772
       ]
     },
-    "id": 3153,
+    "id": 3773,
     "license": null,
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 3114,
+        "id": 3734,
         "literals": [
           "solidity",
           "^",
@@ -602,7 +602,7 @@
           ".8"
         ],
         "nodeType": "PragmaDirective",
-        "src": "0:23:9"
+        "src": "0:23:10"
       },
       {
         "abstract": false,
@@ -611,9 +611,9 @@
         "contractKind": "interface",
         "documentation": null,
         "fullyImplemented": false,
-        "id": 3152,
+        "id": 3772,
         "linearizedBaseContracts": [
-          3152
+          3772
         ],
         "name": "IDepositContract",
         "nodeType": "ContractDefinition",
@@ -621,28 +621,28 @@
           {
             "anonymous": false,
             "documentation": {
-              "id": 3115,
+              "id": 3735,
               "nodeType": "StructuredDocumentation",
-              "src": "58:38:9",
+              "src": "58:38:10",
               "text": "@notice A processed deposit event."
             },
-            "id": 3127,
+            "id": 3747,
             "name": "DepositEvent",
             "nodeType": "EventDefinition",
             "parameters": {
-              "id": 3126,
+              "id": 3746,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 3117,
+                  "id": 3737,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "pubkey",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3127,
-                  "src": "129:12:9",
+                  "scope": 3747,
+                  "src": "129:12:10",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -650,10 +650,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 3116,
+                    "id": 3736,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "129:5:9",
+                    "src": "129:5:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -664,14 +664,14 @@
                 },
                 {
                   "constant": false,
-                  "id": 3119,
+                  "id": 3739,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "withdrawal_credentials",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3127,
-                  "src": "151:28:9",
+                  "scope": 3747,
+                  "src": "151:28:10",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -679,10 +679,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 3118,
+                    "id": 3738,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "151:5:9",
+                    "src": "151:5:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -693,14 +693,14 @@
                 },
                 {
                   "constant": false,
-                  "id": 3121,
+                  "id": 3741,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "amount",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3127,
-                  "src": "189:12:9",
+                  "scope": 3747,
+                  "src": "189:12:10",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -708,10 +708,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 3120,
+                    "id": 3740,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "189:5:9",
+                    "src": "189:5:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -722,14 +722,14 @@
                 },
                 {
                   "constant": false,
-                  "id": 3123,
+                  "id": 3743,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "signature",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3127,
-                  "src": "211:15:9",
+                  "scope": 3747,
+                  "src": "211:15:10",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -737,10 +737,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 3122,
+                    "id": 3742,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "211:5:9",
+                    "src": "211:5:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -751,14 +751,14 @@
                 },
                 {
                   "constant": false,
-                  "id": 3125,
+                  "id": 3745,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "index",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3127,
-                  "src": "236:11:9",
+                  "scope": 3747,
+                  "src": "236:11:10",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -766,10 +766,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 3124,
+                    "id": 3744,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "236:5:9",
+                    "src": "236:5:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -779,20 +779,20 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "119:134:9"
+              "src": "119:134:10"
             },
-            "src": "101:153:9"
+            "src": "101:153:10"
           },
           {
             "body": null,
             "documentation": {
-              "id": 3128,
+              "id": 3748,
               "nodeType": "StructuredDocumentation",
-              "src": "260:367:9",
+              "src": "260:367:10",
               "text": "@notice Submit a Phase 0 DepositData object.\n @param pubkey A BLS12-381 public key.\n @param withdrawal_credentials Commitment to a public key for withdrawals.\n @param signature A BLS12-381 signature.\n @param deposit_data_root The SHA-256 hash of the SSZ-encoded DepositData object.\n Used as a protection against malformed input."
             },
             "functionSelector": "22895118",
-            "id": 3139,
+            "id": 3759,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -800,18 +800,18 @@
             "nodeType": "FunctionDefinition",
             "overrides": null,
             "parameters": {
-              "id": 3137,
+              "id": 3757,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 3130,
+                  "id": 3750,
                   "mutability": "mutable",
                   "name": "pubkey",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3139,
-                  "src": "658:21:9",
+                  "scope": 3759,
+                  "src": "658:21:10",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -819,10 +819,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 3129,
+                    "id": 3749,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "658:5:9",
+                    "src": "658:5:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -833,13 +833,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 3132,
+                  "id": 3752,
                   "mutability": "mutable",
                   "name": "withdrawal_credentials",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3139,
-                  "src": "689:37:9",
+                  "scope": 3759,
+                  "src": "689:37:10",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -847,10 +847,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 3131,
+                    "id": 3751,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "689:5:9",
+                    "src": "689:5:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -861,13 +861,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 3134,
+                  "id": 3754,
                   "mutability": "mutable",
                   "name": "signature",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3139,
-                  "src": "736:24:9",
+                  "scope": 3759,
+                  "src": "736:24:10",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -875,10 +875,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 3133,
+                    "id": 3753,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "736:5:9",
+                    "src": "736:5:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -889,13 +889,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 3136,
+                  "id": 3756,
                   "mutability": "mutable",
                   "name": "deposit_data_root",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3139,
-                  "src": "770:25:9",
+                  "scope": 3759,
+                  "src": "770:25:10",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -903,10 +903,10 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 3135,
+                    "id": 3755,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
-                    "src": "770:7:9",
+                    "src": "770:7:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
                       "typeString": "bytes32"
@@ -916,16 +916,16 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "648:153:9"
+              "src": "648:153:10"
             },
             "returnParameters": {
-              "id": 3138,
+              "id": 3758,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "818:0:9"
+              "src": "818:0:10"
             },
-            "scope": 3152,
-            "src": "632:187:9",
+            "scope": 3772,
+            "src": "632:187:10",
             "stateMutability": "payable",
             "virtual": false,
             "visibility": "external"
@@ -933,13 +933,13 @@
           {
             "body": null,
             "documentation": {
-              "id": 3140,
+              "id": 3760,
               "nodeType": "StructuredDocumentation",
-              "src": "825:87:9",
+              "src": "825:87:10",
               "text": "@notice Query the current deposit root hash.\n @return The deposit root hash."
             },
             "functionSelector": "c5f2892f",
-            "id": 3145,
+            "id": 3765,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -947,24 +947,24 @@
             "nodeType": "FunctionDefinition",
             "overrides": null,
             "parameters": {
-              "id": 3141,
+              "id": 3761,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "942:2:9"
+              "src": "942:2:10"
             },
             "returnParameters": {
-              "id": 3144,
+              "id": 3764,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 3143,
+                  "id": 3763,
                   "mutability": "mutable",
                   "name": "",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3145,
-                  "src": "968:7:9",
+                  "scope": 3765,
+                  "src": "968:7:10",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -972,10 +972,10 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 3142,
+                    "id": 3762,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
-                    "src": "968:7:9",
+                    "src": "968:7:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
                       "typeString": "bytes32"
@@ -985,10 +985,10 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "967:9:9"
+              "src": "967:9:10"
             },
-            "scope": 3152,
-            "src": "917:60:9",
+            "scope": 3772,
+            "src": "917:60:10",
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
@@ -996,13 +996,13 @@
           {
             "body": null,
             "documentation": {
-              "id": 3146,
+              "id": 3766,
               "nodeType": "StructuredDocumentation",
-              "src": "983:120:9",
+              "src": "983:120:10",
               "text": "@notice Query the current deposit count.\n @return The deposit count encoded as a little endian 64-bit number."
             },
             "functionSelector": "621fd130",
-            "id": 3151,
+            "id": 3771,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -1010,24 +1010,24 @@
             "nodeType": "FunctionDefinition",
             "overrides": null,
             "parameters": {
-              "id": 3147,
+              "id": 3767,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "1134:2:9"
+              "src": "1134:2:10"
             },
             "returnParameters": {
-              "id": 3150,
+              "id": 3770,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 3149,
+                  "id": 3769,
                   "mutability": "mutable",
                   "name": "",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3151,
-                  "src": "1160:12:9",
+                  "scope": 3771,
+                  "src": "1160:12:10",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
@@ -1035,10 +1035,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 3148,
+                    "id": 3768,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1160:5:9",
+                    "src": "1160:5:10",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -1048,20 +1048,20 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "1159:14:9"
+              "src": "1159:14:10"
             },
-            "scope": 3152,
-            "src": "1108:66:9",
+            "scope": 3772,
+            "src": "1108:66:10",
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           }
         ],
-        "scope": 3153,
-        "src": "25:1151:9"
+        "scope": 3773,
+        "src": "25:1151:10"
       }
     ],
-    "src": "0:1178:9"
+    "src": "0:1178:10"
   },
   "compiler": {
     "name": "solc",
@@ -1069,7 +1069,7 @@
   },
   "networks": {},
   "schemaVersion": "3.3.0",
-  "updatedAt": "2020-10-16T22:25:52.631Z",
+  "updatedAt": "2020-10-18T01:32:36.491Z",
   "devdoc": {
     "methods": {
       "deposit(bytes,bytes,bytes,bytes32)": {

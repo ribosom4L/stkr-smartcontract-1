@@ -13,6 +13,8 @@ contract AETH is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
     event Unfreeze(address indexed account, uint256 value);
     event Claimed(address payable user, uint256 amount);
 
+    event ClaimableToggle(bool _claimable);
+
     uint256 private _totalSupply;
 
     string private _name;
@@ -32,7 +34,7 @@ contract AETH is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
     }
 
     modifier claimable() {
-        require(_claimable, "Ownable: caller is not the owner");
+        require(_claimable, "Not claimable");
         _;
     }
 
@@ -49,7 +51,7 @@ contract AETH is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
     }
 
     function availableBalanceOf(address account) public view returns (uint256) {
-        return _balances[account].sub(_frozenBalances[account]);
+        return balanceOf(account).sub(frozenBalanceOf(account));
     }
 
     function frozenBalanceOf(address account) public view returns (uint256) {
@@ -85,7 +87,7 @@ contract AETH is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
     }
 
     function swap() payable claimable external {
-        require(availableBalanceOf(msg.sender) > 0, "Aeth balance zero");
+        require(availableBalanceOf(msg.sender) > 0, "Available aeth balance is zero");
 
         uint256 balance = availableBalanceOf(msg.sender);
         _burn(msg.sender, balance);
@@ -96,7 +98,10 @@ contract AETH is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
         _burn(msg.sender, amount);
     }
 
-
+    function toggleClaimable() external onlyOwner {
+        _claimable = !_claimable;
+        emit ClaimableToggle(_claimable);
+    }
 
     receive() external payable  {
         _mint(msg.sender, msg.value);
