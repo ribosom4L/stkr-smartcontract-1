@@ -14,7 +14,8 @@ contract MarketPlace is OwnableUpgradeSafe {
     uint256 private _ethUsd;
     uint256 private _ankrEth;
 
-//    mapping (address => uint256) public _funders;
+    // TODO: Funders
+    // mapping (address => uint256) public _funders;
 
     IAETH public AETHContract;
 
@@ -43,11 +44,10 @@ contract MarketPlace is OwnableUpgradeSafe {
         AETHContract = IAETH(aethContract);
     }
 
-    function swapAndBurn(uint256 etherAmount) external returns(uint256) {
-        uint256 ankrAmount = etherAmount.mul(etherAmount);
+    // TODO: Only staking contract
+    function burnAeth(uint256 etherAmount) external returns (uint256) {
+        AETHContract.burn(etherAmount);
 
-        AETHContract.burn(ankrAmount);
-
-        return ankrAmount;
+        return etherAmount;
     }
 }
