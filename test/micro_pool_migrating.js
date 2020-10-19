@@ -96,19 +96,74 @@ contract("MicroPool Migrating", function(accounts) {
     });
 
     await micropool.pushToBeacon(1, depositData[0], depositData[1], depositData[2], depositData[3]);
-
-    currentPoolBalance = helpers.amount(34);
-    currentSlashingAmount = helpers.amount(1.1);
-
-    await migrate(accounts[9], currentPoolBalance, currentSlashingAmount);
-
-    currentPoolBalance = helpers.amount(35);
-    currentSlashingAmount = helpers.amount(2.2);
-
-    await migrate(accounts[8], currentPoolBalance, currentSlashingAmount);
   });
 
-  
+  describe("Positive Provider Balance Migration", async () => {
+    it("Should Migrate Without Errors", async () => {
+      currentPoolBalance = helpers.amount(49);
+      currentSlashingAmount = helpers.amount(1.6);
+
+      let newProvider = accounts[9];
+
+      await migrate(newProvider, currentPoolBalance, currentSlashingAmount);
+    });
+
+    it("new provider's available balance should be frozen", async () => {
+      // because this is a positive balance migration, old provider should have same total staking amount as before
+      assert.equal(Number(newProviderStakeAmountAfterMigration.available), 0);
+    });
+
+    it("old provider's frozen balance should be unfrozen after migration", async () => {
+      // because this is a positive balance migration, old provider should have same total staking amount as before
+      assert.equal(oldProviderStakeAmountBeforeMigration.frozen - providerMinimumStaking, 0);
+    });
+
+    it("old provider's available balance should be equal to old total balance", async () => {
+      // because this is a positive balance migration, old provider should have same total staking amount as before
+      assert.equal(Number(oldProviderStakeAmountAfterMigration.available), Number(oldProviderStakeAmountBeforeMigration.frozen) + Number(oldProviderStakeAmountBeforeMigration.available));
+    });
+
+    it("old provider should get positive balance as frozen aeth", async () => {
+      assert.equal(Number(oldProviderFrozenAethBalanceBeforeMigration), 0);
+      assert.equal(Number(oldProviderFrozenAethBalanceAfterMigration), 260000000000000000);
+    });
+  });
+
+  describe("Negative Provider Balance Migration", async () => {
+    it("Should Migrate Without Errors", async () => {
+      currentPoolBalance = helpers.amount(49);
+      currentSlashingAmount = helpers.amount(3.2);
+
+      let newProvider = accounts[8];
+
+      await migrate(newProvider, currentPoolBalance, currentSlashingAmount);
+    });
+
+    it("new provider's available balance should be frozen", async () => {
+      // because this is a positive balance migration, old provider should have same total staking amount as before
+      assert.equal(Number(newProviderStakeAmountAfterMigration.available), 0);
+    });
+
+    it("old provider's frozen balance should be unfrozen after migration", async () => {
+      // because this is a positive balance migration, old provider should have same total staking amount as before
+      assert.equal(0, oldProviderStakeAmountBeforeMigration.frozen - providerMinimumStaking);
+    });
+
+    it("old provider's available balance should be equal to (old total - compensated balance)", async () => {
+      // because this is a positive balance migration, old provider should have same total staking amount as before
+      const poolMigratedEvent = tx.logs[0].args
+      const compensated = poolMigratedEvent.compensated
+      const oldTotal = oldProviderStakeAmountBeforeMigration.frozen.add(oldProviderStakeAmountBeforeMigration.available)
+      const newTotal = oldProviderStakeAmountAfterMigration.frozen.add(oldProviderStakeAmountAfterMigration.available)
+
+      assert.equal(Number(newTotal), Number(oldTotal.sub(compensated)));
+    });
+
+    // TODO: We should test burned aeth
+    // it("compensated aeth should be burned", async () => {
+    //
+    // });
+  });
 
   const migrate = async (newProvider, currentPoolBalance, currentSlashingAmount) => {
     await ankr.approve(staking.address, providerMinimumStaking, { from: newProvider });

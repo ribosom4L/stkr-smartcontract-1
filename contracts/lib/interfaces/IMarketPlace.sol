@@ -5,5 +5,5 @@ interface IMarketPlace {
 
     function ankrEthRate() external returns (uint256);
 
-    function swapAndBurn(uint256 etherAmount) external returns (uint256);
+    function burnAeth(uint256 etherAmount) external returns (uint256);
 }

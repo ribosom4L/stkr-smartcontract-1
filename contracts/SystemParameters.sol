@@ -14,9 +14,11 @@ contract SystemParameters is OwnableUpgradeSafe {
     // Minimum slashing amount for migration as ether
     uint256 public SLASHINGS_FOR_MIGRATION;
 
+    // TODO: allow only multiplies of requester minimum staking amount
+
     function initialize() external initializer {
         PROVIDER_MINIMUM_STAKING = 100000 ether;
         REQUESTER_MINIMUM_POOL_STAKING = 100 finney; // 0.1 ETH
-        SLASHINGS_FOR_MIGRATION = 1 ether;
+        SLASHINGS_FOR_MIGRATION = 0.1 ether;
     }
 }
