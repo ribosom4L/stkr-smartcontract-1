@@ -221,53 +221,6 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         emit UserStaked(poolIndex, msg.sender, stakeAmount);
     }
 
-    function migrate(uint256 poolIndex, uint256 currentPoolBalance, uint256 currentSlashings, address payable newProvider) public onlyOwner {
-        Pool storage pool = _pools[poolIndex];
-
-        require(currentSlashings >= pool.lastSlashings, "Current slashings cannot be smaller than last slashings");
-
-        address payable oldProvider = pool.provider;
-
-        pool.provider = newProvider;
-
-        uint256 minimumStakingAmount = _systemParameters.PROVIDER_MINIMUM_STAKING();
-
-        require(_stakingContract.freeze(pool.provider, minimumStakingAmount));
-
-        uint256 slash = currentSlashings - pool.lastSlashings;
-
-        require(slash >= _systemParameters.SLASHINGS_FOR_MIGRATION(), "Slashing amount lower than system parameter");
-
-        uint256 currentReward = currentPoolBalance.add(currentSlashings).sub(32 ether, "Current reward: substraction");
-
-        uint256 reward = currentReward.sub(pool.lastReward, "Reward: substraction");
-
-        uint256 providerReward = reward.div(10);
-
-        uint256 compensatedAnkrAmount = 0;
-
-        // TODO: what if staked ankr cannot compensate the loss ?
-        if (slash > providerReward) {
-            uint256 difference = slash - providerReward;
-
-            compensatedAnkrAmount = _stakingContract.compensatePoolLoss(oldProvider, difference, pool.providerTokenStakeAmount);
-        } else if (slash < providerReward) {
-            // if provider has positive balance in reward
-            uint256 difference = providerReward - slash;
-            // unfreeze frozen staking amount
-            _stakingContract.unfreeze(oldProvider, pool.providerTokenStakeAmount);
-            // mint frozen aeth for provider
-            _aethContract.mintFrozen(oldProvider, difference);
-        }
-
-        pool.lastSlashings = currentSlashings;
-        pool.lastReward = currentReward;
-        pool.providerTokenStakeAmount = minimumStakingAmount;
-        pool.migrationCount++;
-
-        emit PoolMigrated(poolIndex, newProvider, oldProvider, currentSlashings, currentPoolBalance, compensatedAnkrAmount);
-    }
-
     /**
         Users can call to unstake from given pool
         until pool start
@@ -316,11 +269,13 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
 
         uint256 slash = slashings - pool.lastSlashings;
 
-        uint256 currentReward = pool.lastReward.add(slash);
+        uint256 totalReward = msg.value > 32 ether ? msg.value.sub(32 ether) : 0;
 
-        uint256 reward = currentReward - pool.lastReward;
+        uint256 currentReward = msg.value.add(slashings).sub(32 ether);
 
-        uint256 providerReward = reward.div(10);
+        uint256 reward = currentReward.sub(pool.lastReward);
+
+        uint256 providerReward = currentReward.sub(pool.lastReward).div(10);
 
         // TODO: what if staked ankr cannot compensate the loss ?
         if (slash > providerReward) {
@@ -344,6 +299,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         uint256 developerRewards = pool.lastReward.mul(3).div(100);
 
         pool.requesterRewards = requesterRewards;
+        pool.status = PoolStatus.Completed;
 
         _stakingContract.reward{value : stakingRewards}(poolIndex);
 
@@ -351,7 +307,54 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
 
         _aethContract.mintPool{value : requesterRewards}();
 
-        emit PoolReward(poolIndex, msg.value, slashings);
+        emit PoolReward(poolIndex, pool.lastReward, slashings);
+    }
+
+    function migrate(uint256 poolIndex, uint256 currentPoolBalance, uint256 currentSlashings, address payable newProvider) public onlyOwner {
+        Pool storage pool = _pools[poolIndex];
+
+        require(currentSlashings >= pool.lastSlashings, "Current slashings cannot be smaller than last slashings");
+
+        address payable oldProvider = pool.provider;
+
+        pool.provider = newProvider;
+
+        uint256 minimumStakingAmount = _systemParameters.PROVIDER_MINIMUM_STAKING();
+
+        require(_stakingContract.freeze(pool.provider, minimumStakingAmount));
+
+        uint256 slash = currentSlashings - pool.lastSlashings;
+
+        require(slash >= _systemParameters.SLASHINGS_FOR_MIGRATION(), "Slashing amount lower than system parameter");
+
+        uint256 currentReward = currentPoolBalance.add(currentSlashings).sub(32 ether, "Current reward: substraction");
+
+        uint256 reward = currentReward.sub(pool.lastReward, "Reward: substraction");
+
+        uint256 providerReward = reward.div(10);
+
+        uint256 compensatedAnkrAmount = 0;
+
+        // TODO: what if staked ankr cannot compensate the loss ?
+        if (slash > providerReward) {
+            uint256 difference = slash - providerReward;
+
+            compensatedAnkrAmount = _stakingContract.compensatePoolLoss(oldProvider, difference, pool.providerTokenStakeAmount);
+        } else if (slash < providerReward) {
+            // if provider has positive balance in reward
+            uint256 difference = providerReward - slash;
+            // unfreeze frozen staking amount
+            _stakingContract.unfreeze(oldProvider, pool.providerTokenStakeAmount);
+            // mint frozen aeth for provider
+            _aethContract.mintFrozen(oldProvider, difference);
+        }
+
+        pool.lastSlashings = currentSlashings;
+        pool.lastReward = currentReward;
+        pool.providerTokenStakeAmount = minimumStakingAmount;
+        pool.migrationCount++;
+
+        emit PoolMigrated(poolIndex, newProvider, oldProvider, currentSlashings, currentPoolBalance, compensatedAnkrAmount);
     }
 
     function updateAETHContract(address payable tokenContract) external onlyOwner {
