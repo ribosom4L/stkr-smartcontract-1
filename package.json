@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "compile": "truffle compile --all",
+    "compile": "truffle compile --all -s ASSERTIONS=1",
     "migrate:goerli": "truffle migrate --network goerli",
     "migrate:local": "truffle migrate",
-    "test": "truffle test -s ASSERTIONS=1"
+    "test": "truffle test"
   },
   "keywords": [],
   "author": "",
