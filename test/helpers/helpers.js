@@ -65,7 +65,7 @@ makeHex = data => {
 }
 
 amount = data => {
-  return String(data) + "000000000000000000";
+  return String(web3.utils.toWei(String(data)));
 }
 
 module.exports = {
