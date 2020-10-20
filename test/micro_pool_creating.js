@@ -55,7 +55,7 @@ contract('MicroPool Creating and Staking', function (accounts) {
 
         await ankr.approve(staking.address, helpers.amount(99999), {from: accounts[1]})
 
-        await expectRevert(micropool.initializePool(helpers.makeHex('test'), {from: accounts[1]}), 'Insufficient funds')
+        await expectRevert(micropool.initializePool(helpers.makeHex('test'), {from: accounts[1]}), 'Staking: Insufficient funds')
     })
 
     it('should allow users to participate to pool', async () => {
@@ -144,6 +144,6 @@ contract('MicroPool Creating and Staking', function (accounts) {
         const pool = await micropool.poolDetails(1)
 
         assert.equal(Number(pool.balance), 0)
-        assert.equal(Number(pool.lastReward), helpers.amount(32))
+        assert.equal(Number(pool.lastReward), 0)
     })
 })
