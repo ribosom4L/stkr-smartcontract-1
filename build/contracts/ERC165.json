@@ -15701,7 +15701,7 @@
   },
   "networks": {},
   "schemaVersion": "3.3.0",
-  "updatedAt": "2020-10-19T00:47:53.130Z",
+  "updatedAt": "2020-10-21T16:29:32.300Z",
   "devdoc": {
     "methods": {
       "supportsInterface(bytes4)": {

@@ -1,10 +1,10 @@
-const MicroPool = artifacts.require("MicroPool");
-const Staking = artifacts.require("Staking");
-const AEth = artifacts.require("AETH");
-const MarketPlace = artifacts.require("MarketPlace");
-const Ankr = artifacts.require("Ankr");
+const MicroPool        = artifacts.require("MicroPool");
+const Staking          = artifacts.require("Staking");
+const AEth             = artifacts.require("AETH");
+const MarketPlace      = artifacts.require("MarketPlace");
+const Ankr             = artifacts.require("Ankr");
 const SystemParameters = artifacts.require("SystemParameters");
-const DepositContract = artifacts.require("DepositContract");
+const DepositContract  = artifacts.require("DepositContract");
 
 const helpers = require("./helpers");
 
@@ -19,8 +19,17 @@ module.exports = async (owner) => {
   // -- micropool migrations
   const depositContract = await DepositContract.new({ from: owner });
 
-  const micropool = await MicroPool.new(aeth.address, systemParameters.address, depositContract.address, { from: owner });
-  await micropool.initialize(aeth.address, systemParameters.address, depositContract.address);
+  const micropool = await MicroPool.new(
+    aeth.address,
+    systemParameters.address,
+    depositContract.address,
+    { from: owner }
+  );
+  await micropool.initialize(
+    aeth.address,
+    systemParameters.address,
+    depositContract.address
+  );
 
   await aeth.updateMicroPoolContract(micropool.address);
 
