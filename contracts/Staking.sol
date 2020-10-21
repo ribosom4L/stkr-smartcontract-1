@@ -242,19 +242,7 @@ contract Staking is OwnableUpgradeSafe, Lockable {
         // TODO: Time based calculation
 
         uint256 totalEarned = totalRewards.mul(totalStakesOf(_staker)).div(totalStakes);
-        return totalEarned - staker.claimedRewardAmount;
-    }
-
-    function updateMarketPlaceContract(address marketPlaceContract) external onlyOwner {
-        _marketPlaceContract = IMarketPlace(marketPlaceContract);
-    }
-
-    function updateAETHContract(address aethContract) public onlyOwner {
-        AETHContract = IAETH(aethContract);
-    }
-
-    function setClaimableBlock(uint256 blockNumber) public onlyOwner {
-        claimableAfter = blockNumber;
+        return totalEarned.sub(staker.claimedRewardAmount);
     }
 
     function claimRewards() public payable unlocked(msg.sender) {
@@ -270,5 +258,17 @@ contract Staking is OwnableUpgradeSafe, Lockable {
         require(msg.sender.send(claimableReward), "Rewards could not sent");
 
         emit RewardClaim(msg.sender, claimableReward);
+    }
+
+    function updateMarketPlaceContract(address marketPlaceContract) external onlyOwner {
+        _marketPlaceContract = IMarketPlace(marketPlaceContract);
+    }
+
+    function updateAETHContract(address aethContract) public onlyOwner {
+        AETHContract = IAETH(aethContract);
+    }
+
+    function setClaimableBlock(uint256 blockNumber) public onlyOwner {
+        claimableAfter = blockNumber;
     }
 }
