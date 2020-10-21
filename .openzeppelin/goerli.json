@@ -1011,6 +1011,127 @@
           }
         }
       }
+    },
+    "14a568fbf829ab78858cece116882b1a1b109f5de6ba0641e88fdf05096f2df8": {
+      "address": "0x43925Db5205954Af39e6e4421C71D896052336Ef",
+      "txHash": "0x723bcf434b9ca88959805964c31a63147ca56daa897cd2a8f5deb88668c385d8",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "initialized",
+            "type": "t_bool",
+            "src": "../@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "initializing",
+            "type": "t_bool",
+            "src": "../@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol:26"
+          },
+          {
+            "contract": "Initializable",
+            "label": "______gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "../@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol:61"
+          },
+          {
+            "contract": "ContextUpgradeSafe",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "../@openzeppelin/contracts-ethereum-package/contracts/GSN/Context.sol:37"
+          },
+          {
+            "contract": "OwnableUpgradeSafe",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "../@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol:18"
+          },
+          {
+            "contract": "OwnableUpgradeSafe",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "../@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol:78"
+          },
+          {
+            "contract": "Lockable",
+            "label": "_locks",
+            "type": "t_mapping(t_address,t_bool)",
+            "src": "lib/Lockable.sol:4"
+          },
+          {
+            "contract": "MicroPool",
+            "label": "_pools",
+            "type": "t_array(t_struct(Pool)1704_storage)dyn_storage",
+            "src": "MicroPool.sol:64"
+          },
+          {
+            "contract": "MicroPool",
+            "label": "pendingPools",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "MicroPool.sol:65"
+          },
+          {
+            "contract": "MicroPool",
+            "label": "_aethContract",
+            "type": "t_contract(IAETH)3858",
+            "src": "MicroPool.sol:67"
+          },
+          {
+            "contract": "MicroPool",
+            "label": "_stakingContract",
+            "type": "t_contract(IStaking)1642",
+            "src": "MicroPool.sol:69"
+          },
+          {
+            "contract": "MicroPool",
+            "label": "_systemParameters",
+            "type": "t_contract(SystemParameters)3785",
+            "src": "MicroPool.sol:71"
+          },
+          {
+            "contract": "MicroPool",
+            "label": "_depositContract",
+            "type": "t_address_payable",
+            "src": "MicroPool.sol:73"
+          }
+        ],
+        "types": {
+          "t_array(t_struct(Pool)1704_storage)dyn_storage": {
+            "label": "struct MicroPool.Pool[]"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_contract(IAETH)3858": {
+            "label": "contract IAETH"
+          },
+          "t_contract(IStaking)1642": {
+            "label": "contract IStaking"
+          },
+          "t_contract(SystemParameters)3785": {
+            "label": "contract SystemParameters"
+          },
+          "t_address_payable": {
+            "label": "address payable"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
     }
   },
   "admin": {

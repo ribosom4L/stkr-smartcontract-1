@@ -13,15 +13,15 @@
     "absolutePath": "/Users/anilkucukrecep/Code/Personal/st/contracts/contracts/lib/Lockable.sol",
     "exportedSymbols": {
       "Lockable": [
-        3818
+        3821
       ]
     },
-    "id": 3819,
+    "id": 3822,
     "license": null,
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 3787,
+        "id": 3790,
         "literals": [
           "solidity",
           "^",
@@ -38,21 +38,21 @@
         "contractKind": "contract",
         "documentation": null,
         "fullyImplemented": true,
-        "id": 3818,
+        "id": 3821,
         "linearizedBaseContracts": [
-          3818
+          3821
         ],
         "name": "Lockable",
         "nodeType": "ContractDefinition",
         "nodes": [
           {
             "constant": false,
-            "id": 3791,
+            "id": 3794,
             "mutability": "mutable",
             "name": "_locks",
             "nodeType": "VariableDeclaration",
             "overrides": null,
-            "scope": 3818,
+            "scope": 3821,
             "src": "58:39:8",
             "stateVariable": true,
             "storageLocation": "default",
@@ -61,9 +61,9 @@
               "typeString": "mapping(address => bool)"
             },
             "typeName": {
-              "id": 3790,
+              "id": 3793,
               "keyType": {
-                "id": 3788,
+                "id": 3791,
                 "name": "address",
                 "nodeType": "ElementaryTypeName",
                 "src": "66:7:8",
@@ -79,7 +79,7 @@
                 "typeString": "mapping(address => bool)"
               },
               "valueType": {
-                "id": 3789,
+                "id": 3792,
                 "name": "bool",
                 "nodeType": "ElementaryTypeName",
                 "src": "77:4:8",
@@ -94,7 +94,7 @@
           },
           {
             "body": {
-              "id": 3816,
+              "id": 3819,
               "nodeType": "Block",
               "src": "136:134:8",
               "statements": [
@@ -104,7 +104,7 @@
                     "arguments": [
                       {
                         "argumentTypes": null,
-                        "id": 3799,
+                        "id": 3802,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -117,25 +117,25 @@
                           "argumentTypes": null,
                           "baseExpression": {
                             "argumentTypes": null,
-                            "id": 3796,
+                            "id": 3799,
                             "name": "_locks",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 3791,
+                            "referencedDeclaration": 3794,
                             "src": "155:6:8",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_address_$_t_bool_$",
                               "typeString": "mapping(address => bool)"
                             }
                           },
-                          "id": 3798,
+                          "id": 3801,
                           "indexExpression": {
                             "argumentTypes": null,
-                            "id": 3797,
+                            "id": 3800,
                             "name": "addr",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 3793,
+                            "referencedDeclaration": 3796,
                             "src": "162:4:8",
                             "typeDescriptions": {
                               "typeIdentifier": "t_address",
@@ -161,7 +161,7 @@
                       {
                         "argumentTypes": null,
                         "hexValue": "5265656e7472616e63792070726f74656374696f6e",
-                        "id": 3800,
+                        "id": 3803,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -188,7 +188,7 @@
                           "typeString": "literal_string \"Reentrancy protection\""
                         }
                       ],
-                      "id": 3795,
+                      "id": 3798,
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
@@ -202,7 +202,7 @@
                         "typeString": "function (bool,string memory) pure"
                       }
                     },
-                    "id": 3801,
+                    "id": 3804,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -217,14 +217,14 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 3802,
+                  "id": 3805,
                   "nodeType": "ExpressionStatement",
                   "src": "146:47:8"
                 },
                 {
                   "expression": {
                     "argumentTypes": null,
-                    "id": 3807,
+                    "id": 3810,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -233,25 +233,25 @@
                       "argumentTypes": null,
                       "baseExpression": {
                         "argumentTypes": null,
-                        "id": 3803,
+                        "id": 3806,
                         "name": "_locks",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 3791,
+                        "referencedDeclaration": 3794,
                         "src": "203:6:8",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_address_$_t_bool_$",
                           "typeString": "mapping(address => bool)"
                         }
                       },
-                      "id": 3805,
+                      "id": 3808,
                       "indexExpression": {
                         "argumentTypes": null,
-                        "id": 3804,
+                        "id": 3807,
                         "name": "addr",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 3793,
+                        "referencedDeclaration": 3796,
                         "src": "210:4:8",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -274,7 +274,7 @@
                     "rightHandSide": {
                       "argumentTypes": null,
                       "hexValue": "74727565",
-                      "id": 3806,
+                      "id": 3809,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -295,19 +295,19 @@
                       "typeString": "bool"
                     }
                   },
-                  "id": 3808,
+                  "id": 3811,
                   "nodeType": "ExpressionStatement",
                   "src": "203:19:8"
                 },
                 {
-                  "id": 3809,
+                  "id": 3812,
                   "nodeType": "PlaceholderStatement",
                   "src": "232:1:8"
                 },
                 {
                   "expression": {
                     "argumentTypes": null,
-                    "id": 3814,
+                    "id": 3817,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -316,25 +316,25 @@
                       "argumentTypes": null,
                       "baseExpression": {
                         "argumentTypes": null,
-                        "id": 3810,
+                        "id": 3813,
                         "name": "_locks",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 3791,
+                        "referencedDeclaration": 3794,
                         "src": "243:6:8",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_address_$_t_bool_$",
                           "typeString": "mapping(address => bool)"
                         }
                       },
-                      "id": 3812,
+                      "id": 3815,
                       "indexExpression": {
                         "argumentTypes": null,
-                        "id": 3811,
+                        "id": 3814,
                         "name": "addr",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 3793,
+                        "referencedDeclaration": 3796,
                         "src": "250:4:8",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -357,7 +357,7 @@
                     "rightHandSide": {
                       "argumentTypes": null,
                       "hexValue": "66616c7365",
-                      "id": 3813,
+                      "id": 3816,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -378,29 +378,29 @@
                       "typeString": "bool"
                     }
                   },
-                  "id": 3815,
+                  "id": 3818,
                   "nodeType": "ExpressionStatement",
                   "src": "243:20:8"
                 }
               ]
             },
             "documentation": null,
-            "id": 3817,
+            "id": 3820,
             "name": "unlocked",
             "nodeType": "ModifierDefinition",
             "overrides": null,
             "parameters": {
-              "id": 3794,
+              "id": 3797,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 3793,
+                  "id": 3796,
                   "mutability": "mutable",
                   "name": "addr",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3817,
+                  "scope": 3820,
                   "src": "122:12:8",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -409,7 +409,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 3792,
+                    "id": 3795,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "122:7:8",
@@ -430,7 +430,7 @@
             "visibility": "internal"
           }
         ],
-        "scope": 3819,
+        "scope": 3822,
         "src": "25:247:8"
       }
     ],
@@ -440,15 +440,15 @@
     "absolutePath": "/Users/anilkucukrecep/Code/Personal/st/contracts/contracts/lib/Lockable.sol",
     "exportedSymbols": {
       "Lockable": [
-        3818
+        3821
       ]
     },
-    "id": 3819,
+    "id": 3822,
     "license": null,
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 3787,
+        "id": 3790,
         "literals": [
           "solidity",
           "^",
@@ -465,21 +465,21 @@
         "contractKind": "contract",
         "documentation": null,
         "fullyImplemented": true,
-        "id": 3818,
+        "id": 3821,
         "linearizedBaseContracts": [
-          3818
+          3821
         ],
         "name": "Lockable",
         "nodeType": "ContractDefinition",
         "nodes": [
           {
             "constant": false,
-            "id": 3791,
+            "id": 3794,
             "mutability": "mutable",
             "name": "_locks",
             "nodeType": "VariableDeclaration",
             "overrides": null,
-            "scope": 3818,
+            "scope": 3821,
             "src": "58:39:8",
             "stateVariable": true,
             "storageLocation": "default",
@@ -488,9 +488,9 @@
               "typeString": "mapping(address => bool)"
             },
             "typeName": {
-              "id": 3790,
+              "id": 3793,
               "keyType": {
-                "id": 3788,
+                "id": 3791,
                 "name": "address",
                 "nodeType": "ElementaryTypeName",
                 "src": "66:7:8",
@@ -506,7 +506,7 @@
                 "typeString": "mapping(address => bool)"
               },
               "valueType": {
-                "id": 3789,
+                "id": 3792,
                 "name": "bool",
                 "nodeType": "ElementaryTypeName",
                 "src": "77:4:8",
@@ -521,7 +521,7 @@
           },
           {
             "body": {
-              "id": 3816,
+              "id": 3819,
               "nodeType": "Block",
               "src": "136:134:8",
               "statements": [
@@ -531,7 +531,7 @@
                     "arguments": [
                       {
                         "argumentTypes": null,
-                        "id": 3799,
+                        "id": 3802,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -544,25 +544,25 @@
                           "argumentTypes": null,
                           "baseExpression": {
                             "argumentTypes": null,
-                            "id": 3796,
+                            "id": 3799,
                             "name": "_locks",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 3791,
+                            "referencedDeclaration": 3794,
                             "src": "155:6:8",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_address_$_t_bool_$",
                               "typeString": "mapping(address => bool)"
                             }
                           },
-                          "id": 3798,
+                          "id": 3801,
                           "indexExpression": {
                             "argumentTypes": null,
-                            "id": 3797,
+                            "id": 3800,
                             "name": "addr",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 3793,
+                            "referencedDeclaration": 3796,
                             "src": "162:4:8",
                             "typeDescriptions": {
                               "typeIdentifier": "t_address",
@@ -588,7 +588,7 @@
                       {
                         "argumentTypes": null,
                         "hexValue": "5265656e7472616e63792070726f74656374696f6e",
-                        "id": 3800,
+                        "id": 3803,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -615,7 +615,7 @@
                           "typeString": "literal_string \"Reentrancy protection\""
                         }
                       ],
-                      "id": 3795,
+                      "id": 3798,
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
@@ -629,7 +629,7 @@
                         "typeString": "function (bool,string memory) pure"
                       }
                     },
-                    "id": 3801,
+                    "id": 3804,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -644,14 +644,14 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 3802,
+                  "id": 3805,
                   "nodeType": "ExpressionStatement",
                   "src": "146:47:8"
                 },
                 {
                   "expression": {
                     "argumentTypes": null,
-                    "id": 3807,
+                    "id": 3810,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -660,25 +660,25 @@
                       "argumentTypes": null,
                       "baseExpression": {
                         "argumentTypes": null,
-                        "id": 3803,
+                        "id": 3806,
                         "name": "_locks",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 3791,
+                        "referencedDeclaration": 3794,
                         "src": "203:6:8",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_address_$_t_bool_$",
                           "typeString": "mapping(address => bool)"
                         }
                       },
-                      "id": 3805,
+                      "id": 3808,
                       "indexExpression": {
                         "argumentTypes": null,
-                        "id": 3804,
+                        "id": 3807,
                         "name": "addr",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 3793,
+                        "referencedDeclaration": 3796,
                         "src": "210:4:8",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -701,7 +701,7 @@
                     "rightHandSide": {
                       "argumentTypes": null,
                       "hexValue": "74727565",
-                      "id": 3806,
+                      "id": 3809,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -722,19 +722,19 @@
                       "typeString": "bool"
                     }
                   },
-                  "id": 3808,
+                  "id": 3811,
                   "nodeType": "ExpressionStatement",
                   "src": "203:19:8"
                 },
                 {
-                  "id": 3809,
+                  "id": 3812,
                   "nodeType": "PlaceholderStatement",
                   "src": "232:1:8"
                 },
                 {
                   "expression": {
                     "argumentTypes": null,
-                    "id": 3814,
+                    "id": 3817,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -743,25 +743,25 @@
                       "argumentTypes": null,
                       "baseExpression": {
                         "argumentTypes": null,
-                        "id": 3810,
+                        "id": 3813,
                         "name": "_locks",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 3791,
+                        "referencedDeclaration": 3794,
                         "src": "243:6:8",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_address_$_t_bool_$",
                           "typeString": "mapping(address => bool)"
                         }
                       },
-                      "id": 3812,
+                      "id": 3815,
                       "indexExpression": {
                         "argumentTypes": null,
-                        "id": 3811,
+                        "id": 3814,
                         "name": "addr",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 3793,
+                        "referencedDeclaration": 3796,
                         "src": "250:4:8",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -784,7 +784,7 @@
                     "rightHandSide": {
                       "argumentTypes": null,
                       "hexValue": "66616c7365",
-                      "id": 3813,
+                      "id": 3816,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -805,29 +805,29 @@
                       "typeString": "bool"
                     }
                   },
-                  "id": 3815,
+                  "id": 3818,
                   "nodeType": "ExpressionStatement",
                   "src": "243:20:8"
                 }
               ]
             },
             "documentation": null,
-            "id": 3817,
+            "id": 3820,
             "name": "unlocked",
             "nodeType": "ModifierDefinition",
             "overrides": null,
             "parameters": {
-              "id": 3794,
+              "id": 3797,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 3793,
+                  "id": 3796,
                   "mutability": "mutable",
                   "name": "addr",
                   "nodeType": "VariableDeclaration",
                   "overrides": null,
-                  "scope": 3817,
+                  "scope": 3820,
                   "src": "122:12:8",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -836,7 +836,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 3792,
+                    "id": 3795,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "122:7:8",
@@ -857,7 +857,7 @@
             "visibility": "internal"
           }
         ],
-        "scope": 3819,
+        "scope": 3822,
         "src": "25:247:8"
       }
     ],
@@ -869,7 +869,7 @@
   },
   "networks": {},
   "schemaVersion": "3.3.0",
-  "updatedAt": "2020-10-21T16:29:32.363Z",
+  "updatedAt": "2020-10-21T22:57:56.818Z",
   "devdoc": {
     "methods": {}
   },
