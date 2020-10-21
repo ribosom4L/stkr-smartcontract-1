@@ -300,6 +300,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
 
         pool.requesterRewards = requesterRewards;
         pool.status = PoolStatus.Completed;
+        pool.endTime = now;
 
         _stakingContract.reward{value : stakingRewards}(poolIndex);
 
@@ -376,7 +377,9 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
 
         PoolStake storage poolStake = pool.stakes[msg.sender];
 
-        uint256 claimable = poolStake.amount.add(pool.requesterRewards).mul(poolStake.amount).div(32 ether).sub(poolStake.claimedAmount);
+        uint256 rewardAsRequester = pool.requesterRewards.mul(poolStake.amount).div(32 ether);
+
+        uint256 claimable = rewardAsRequester.add(poolStake.amount).sub(poolStake.claimedAmount);
 
         require(claimable > 0, "Claimable amount must be bigger than zero");
 
@@ -401,6 +404,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         uint256 endTime,
         uint256 lastReward,
         uint256 lastSlashings,
+        uint256 requesterRewards,
         bytes32 name,
         uint256 balance,
         address validator,
@@ -414,6 +418,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         endTime = pool.endTime;
         lastReward = pool.lastReward;
         lastSlashings = pool.lastSlashings;
+        requesterRewards = pool.requesterRewards;
         balance = pool.balance;
         provider = pool.provider;
         validator = pool.validator;
