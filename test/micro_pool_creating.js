@@ -164,7 +164,7 @@ contract("MicroPool Creating and Staking", function(accounts) {
       depositData[1],
       depositData[2],
       depositData[3]
-    ), "Not enough ether");
+    ), "Pool status not allow to push");
   });
 
   it("pool balance and reward should be correct after push", async () => {
