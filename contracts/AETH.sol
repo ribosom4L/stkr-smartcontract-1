@@ -62,7 +62,7 @@ contract AETH is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
         _mint(account, amount);
     }
 
-    function mintPool() payable external {
+    function mintPool() payable external onlyMicroPoolContract {
         _mint(msg.sender, msg.value);
     }
 
