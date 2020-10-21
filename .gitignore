@@ -9,4 +9,6 @@ json_abi/
 .openzeppelin/.session
 .DS_Store
 
+.openzeppelin/unknown-1337.json
+
 .env
