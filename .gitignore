@@ -5,6 +5,7 @@ cache/
 contracts/TODO.md
 node_modules/
 json_abi/
+build/contracts/*.abi
 
 .openzeppelin/.session
 .DS_Store
