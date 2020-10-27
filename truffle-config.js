@@ -5,12 +5,14 @@ const privateKey       = process.env.DEPLOYMENT_KEY;
 
 module.exports = {
   networks: {
-    develop: {
+    development: {
+      host: "127.0.0.1",
       port: 8545,
       network_id: "*",
-      accounts: 10,
+    },
+    develop: {
+      port: 8545,
       defaultEtherBalance: 5000,
-      blockTime: 1
     },
     ropsten: {
       provider:      () =>
@@ -23,7 +25,7 @@ module.exports = {
       timeoutBlocks: 50, // # of blocks before a deployment times out  (minimum/default:
                          // 50)
       skipDryRun:    true // Skip dry run before migrations? (defaultü false for public
-                           // nets)
+      // nets)
     },
     goerli:  {
       provider:      () =>
@@ -36,7 +38,7 @@ module.exports = {
       timeoutBlocks: 50, // # of blocks before a deployment times out  (minimum/default:
                          // 50)
       skipDryRun:    true // Skip dry run before migrations? (defaultü false for public
-                           // nets)
+      // nets)
     }
   },
   // Set default mocha options here, use special reporters etc.
@@ -48,8 +50,7 @@ module.exports = {
   compilers: {
     solc: {
       version:  "0.6.8", // Fetch exact version from solc-bin (default: truffle's version)
-      // docker: true,        // Use "0.5.1" you've installed locally with docker
-      // (default: false)
+      docker: false,        // Use "0.5.1" you've installed locally with docker
       settings: {
         optimizer: {
           enabled: false,

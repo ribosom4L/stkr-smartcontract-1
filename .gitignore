@@ -4,12 +4,12 @@ artifacts/
 cache/
 contracts/TODO.md
 node_modules/
-json_abi/
+build/
 build/contracts/*.abi
 
 .openzeppelin/.session
 .DS_Store
 
-.openzeppelin/unknown-1337.json
+.openzeppelin/unknown-*.json
 
 .env
