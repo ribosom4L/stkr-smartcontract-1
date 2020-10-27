@@ -1,9 +1,11 @@
 {
   "manifestVersion": "2.2",
-  "contracts": {},
+  "contracts": {
+    "SystemParameters": "SystemParameters"
+  },
   "dependencies": {},
   "name": "stkr",
-  "version": "0.2.1",
+  "version": "1.0.0",
   "compiler": {
     "compilerSettings": {
       "optimizer": {}
@@ -11,6 +13,5 @@
     "typechain": {
       "enabled": false
     }
-  },
-  "telemetryOptIn": false
+  }
 }

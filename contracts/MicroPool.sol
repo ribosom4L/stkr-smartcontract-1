@@ -8,26 +8,18 @@ import "./lib/interfaces/IDepositContract.sol";
 import "./SystemParameters.sol";
 import "./lib/Lockable.sol";
 import "./lib/interfaces/IAETH.sol";
-
-interface IStaking {
-    function compensatePoolLoss(address provider, uint256 amount, uint256 providerStakeAmount) external returns (uint256);
-
-    function freeze(address user, uint256 amount) external returns (bool);
-
-    function unfreeze(address user, uint256 amount) external returns (bool);
-
-    function reward(uint256 poolIndex) payable external;
-}
+import "./lib/interfaces/IStaking.sol";
 
 contract MicroPool is OwnableUpgradeSafe, Lockable {
     using SafeMath for uint256;
 
     enum PoolStatus {Pending, PushWaiting, OnGoing, Completed, Canceled}
 
+    enum PoolType {Ankr, ETH}
 
-    // claimable amount = amount + reward - claimedAmount
     struct PoolStake {
         uint256 amount;
+        uint256 negativeBalance;
         uint256 reward;
         uint256 claimedAmount;
     }
@@ -40,6 +32,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
     }
 
     struct Pool {
+        PoolType poolType;
         PoolStatus status;
         bytes32 name;
         uint256 startTime; // init time
@@ -87,7 +80,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         address payable indexed previousProvider,
         uint256 slashings,
         uint256 poolBalance,
-        uint256 compensated
+        PoolType poolType
     );
 
     event UserStaked(
@@ -158,7 +151,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
     /**
         Providers can call this function to create a new pool.
     */
-    function initializePool(bytes32 name) external {
+    function initializePool(bytes32 name) unlocked(msg.sender) external {
         require(pendingPools[msg.sender] == 0, "User already have a pending pool");
         uint256 minimumStakingAmount = _systemParameters.PROVIDER_MINIMUM_STAKING();
         // freeze staked ankr
@@ -182,10 +175,41 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
     }
 
     /**
+        Ethereum staking
+    */
+    function initializePoolWithETH(bytes32 name) payable external {
+        require(pendingPools[msg.sender] == 0, "User already have a pending pool");
+        uint256 minimumStakingAmount = _systemParameters.ETHEREUM_STAKING_AMOUNT();
+        // freeze staked ankr
+        require(msg.value >= minimumStakingAmount, "Minimum staking amount higher than value");
+
+        Pool memory pool;
+
+        pool.provider = msg.sender;
+        pool.name = name;
+        pool.startTime = block.timestamp;
+        pool.poolType = PoolType.ETH;
+
+        _pools.push(pool);
+
+        uint256 index = _pools.length.sub(1);
+        pendingPools[msg.sender] = index;
+
+        stake(index);
+
+        _pools[index].stakes[msg.sender].negativeBalance = minimumStakingAmount;
+
+        emit PoolCreated(
+            index,
+            msg.sender
+        );
+    }
+
+    /**
         Users can call to stake to given pool
         @param poolIndex uint256
     */
-    function stake(uint256 poolIndex) payable external {
+    function stake(uint256 poolIndex) payable public {
         Pool storage pool = _pools[poolIndex];
 
         // Pool must be pending status to participate
@@ -237,13 +261,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
             pool.stakes[msg.sender].amount > 0,
             "You don't have staked balance in this pool"
         );
-        // require(
-        //     IAETH(_aethContract).burnFrom(
-        //         msg.sender,
-        //         pool.stakes[msg.sender].amount.div(2)
-        //     ),
-        //     "You need to approve this contract first."
-        // );
+        require(pool.stakes[msg.sender].negativeBalance == 0, "Providers cannot unstake");
 
         uint256 unstakeAmount = pool.stakes[msg.sender].amount;
 
@@ -269,20 +287,14 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
 
         uint256 slash = slashings - pool.lastSlashings;
 
-        uint256 totalReward = msg.value > 32 ether ? msg.value.sub(32 ether) : 0;
-
         uint256 currentReward = msg.value.add(slashings).sub(32 ether);
-
-        uint256 reward = currentReward.sub(pool.lastReward);
 
         uint256 providerReward = currentReward.sub(pool.lastReward).div(10);
 
-        // TODO: what if staked ankr cannot compensate the loss ?
         if (slash > providerReward) {
             uint256 difference = slash - providerReward;
 
             _stakingContract.compensatePoolLoss(pool.provider, difference, pool.providerTokenStakeAmount);
-            providerReward = 0;
         } else if (slash < providerReward) {
             // if provider has positive balance in reward
             providerReward = providerReward - slash;
@@ -304,9 +316,9 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
 
         _stakingContract.reward{value : stakingRewards}(poolIndex);
 
-        // TODO: Developer rewards
-
         _aethContract.mintPool{value : requesterRewards}();
+
+        pool.stakes[pool.provider].negativeBalance = 0;
 
         emit PoolReward(poolIndex, pool.lastReward, slashings);
     }
@@ -314,7 +326,10 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
     function migrate(uint256 poolIndex, uint256 currentPoolBalance, uint256 currentSlashings, address payable newProvider) public onlyOwner {
         Pool storage pool = _pools[poolIndex];
 
+        // slashings must be greater than last slashings
         require(currentSlashings >= pool.lastSlashings, "Current slashings cannot be smaller than last slashings");
+
+        PoolType poolType = pool.poolType;
 
         address payable oldProvider = pool.provider;
 
@@ -324,7 +339,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
 
         require(_stakingContract.freeze(pool.provider, minimumStakingAmount));
 
-        uint256 slash = currentSlashings - pool.lastSlashings;
+        uint256 slash = currentSlashings.sub(pool.lastSlashings);
 
         require(slash >= _systemParameters.SLASHINGS_FOR_MIGRATION(), "Slashing amount lower than system parameter");
 
@@ -334,13 +349,16 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
 
         uint256 providerReward = reward.div(10);
 
-        uint256 compensatedAnkrAmount = 0;
-
-        // TODO: what if staked ankr cannot compensate the loss ?
-        if (slash > providerReward) {
+        if (pool.poolType == PoolType.ETH) {
+            pool.poolType = PoolType.Ankr;
+            pool.stakes[oldProvider].negativeBalance = 0;
+            // we will set current slashings as claimed amount to compensate pool loss
+            pool.stakes[oldProvider].claimedAmount = currentSlashings;
+        }
+        else if (slash > providerReward) {
             uint256 difference = slash - providerReward;
 
-            compensatedAnkrAmount = _stakingContract.compensatePoolLoss(oldProvider, difference, pool.providerTokenStakeAmount);
+            _stakingContract.compensatePoolLoss(oldProvider, difference, pool.providerTokenStakeAmount);
         } else if (slash < providerReward) {
             // if provider has positive balance in reward
             uint256 difference = providerReward - slash;
@@ -355,7 +373,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         pool.providerTokenStakeAmount = minimumStakingAmount;
         pool.migrationCount++;
 
-        emit PoolMigrated(poolIndex, newProvider, oldProvider, currentSlashings, currentPoolBalance, compensatedAnkrAmount);
+        emit PoolMigrated(poolIndex, newProvider, oldProvider, currentSlashings, currentPoolBalance, poolType);
     }
 
     function updateAETHContract(address payable tokenContract) external onlyOwner {
@@ -381,7 +399,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
 
         uint256 claimable = rewardAsRequester.add(poolStake.amount).sub(poolStake.claimedAmount);
 
-        require(claimable > 0, "Claimable amount must be bigger than zero");
+        require(claimable > poolStake.negativeBalance, "Claimable amount must be bigger than zero");
 
         poolStake.claimedAmount = poolStake.claimedAmount.add(claimable);
 
