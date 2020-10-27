@@ -10,7 +10,7 @@ const MarketPlace      = artifacts.require("MarketPlace");
 const Ankr             = artifacts.require("Ankr");
 const SystemParameters = artifacts.require("SystemParameters");
 
-contract("MicroPool Migrating", function(accounts) {
+contract("MicroPool Migrating (ANKR Staking)", function(accounts) {
   let ankr;
   let staking;
   let micropool;
@@ -178,21 +178,21 @@ contract("MicroPool Migrating", function(accounts) {
       );
     });
 
-    it(
-      "old provider's available balance should be equal to (old total - compensated balance)",
-      async () => {
-        // because this is a positive balance migration, old provider should have same
-        // total staking amount as before
-        const poolMigratedEvent = tx.logs[0].args;
-        const compensated       = poolMigratedEvent.compensated;
-        const oldTotal          = oldProviderStakeAmountBeforeMigration.frozen.add(
-          oldProviderStakeAmountBeforeMigration.available);
-        const newTotal          = oldProviderStakeAmountAfterMigration.frozen.add(
-          oldProviderStakeAmountAfterMigration.available);
-
-        assert.equal(Number(newTotal), Number(oldTotal.sub(compensated)));
-      }
-    );
+    // it(
+    //   "old provider's available balance should be equal to (old total - compensated balance)",
+    //   async () => {
+    //     // because this is a positive balance migration, old provider should have same
+    //     // total staking amount as before
+    //     const poolMigratedEvent = tx.logs[0].args;
+    //     const compensated       = poolMigratedEvent.compensated;
+    //     const oldTotal          = oldProviderStakeAmountBeforeMigration.frozen.add(
+    //       oldProviderStakeAmountBeforeMigration.available);
+    //     const newTotal          = oldProviderStakeAmountAfterMigration.frozen.add(
+    //       oldProviderStakeAmountAfterMigration.available);
+    //
+    //     assert.equal(Number(newTotal), Number(oldTotal.sub(compensated)));
+    //   }
+    // );
 
     // TODO: We should test burned aeth
     // it("compensated aeth should be burned", async () => {

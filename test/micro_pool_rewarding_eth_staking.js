@@ -6,7 +6,7 @@ const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const fakeMigration = require("./helpers/migrate");
 const { BN }        = require("@openzeppelin/test-helpers");
 
-contract("MicroPool Rewarding", function(accounts) {
+contract("MicroPool Rewarding (ETH Staking)", function(accounts) {
   let contracts = {};
 
   let stakers;

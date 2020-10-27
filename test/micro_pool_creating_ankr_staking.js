@@ -8,7 +8,7 @@ const Staking          = artifacts.require("Staking");
 const Ankr             = artifacts.require("Ankr");
 const SystemParameters = artifacts.require("SystemParameters");
 
-contract("MicroPool Creating and Staking", function(accounts) {
+contract("MicroPool Creating and Staking (ANKR Staking)", function(accounts) {
   let ankr;
   let staking;
   let micropool;
