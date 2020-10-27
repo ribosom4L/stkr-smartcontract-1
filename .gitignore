@@ -10,4 +10,6 @@ build/contracts/*.abi
 .openzeppelin/.session
 .DS_Store
 
+.openzeppelin/unknown-1337.json
+
 .env

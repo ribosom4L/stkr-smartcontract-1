@@ -21,8 +21,8 @@ contract AETH is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
     string private _symbol;
     uint8 private _decimals;
 
-    mapping (address => uint256) private _balances;
-    mapping (address => uint256) private _frozenBalances;
+    mapping(address => uint256) private _balances;
+    mapping(address => uint256) private _frozenBalances;
 
     bool public _claimable;
 
@@ -46,7 +46,7 @@ contract AETH is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
         _claimable = false;
     }
 
-    function updateMicroPoolContract(address microPoolContract) external onlyOwner{
+    function updateMicroPoolContract(address microPoolContract) external onlyOwner {
         _microPoolContract = microPoolContract;
     }
 
@@ -62,7 +62,7 @@ contract AETH is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
         _mint(account, amount);
     }
 
-    function mintPool() payable external {
+    function mintPool() payable external onlyMicroPoolContract {
         _mint(msg.sender, msg.value);
     }
 
@@ -103,7 +103,7 @@ contract AETH is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
         emit ClaimableToggle(_claimable);
     }
 
-    receive() external payable  {
+    receive() external payable {
         _mint(msg.sender, msg.value);
     }
 
