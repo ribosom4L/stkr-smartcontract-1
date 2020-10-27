@@ -116,15 +116,15 @@
     "absolutePath": "/Users/anilkucukrecep/Code/Personal/st/contracts/contracts/SystemParameters.sol",
     "exportedSymbols": {
       "SystemParameters": [
-        3739
+        3788
       ]
     },
-    "id": 3740,
+    "id": 3789,
     "license": "UNLICENSED",
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 3711,
+        "id": 3760,
         "literals": [
           "solidity",
           "^",
@@ -137,10 +137,10 @@
       {
         "absolutePath": "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol",
         "file": "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol",
-        "id": 3712,
+        "id": 3761,
         "nodeType": "ImportDirective",
-        "scope": 3740,
-        "sourceUnit": 4121,
+        "scope": 3789,
+        "sourceUnit": 4170,
         "src": "63:79:7",
         "symbolAliases": [],
         "unitAlias": ""
@@ -152,35 +152,35 @@
             "arguments": null,
             "baseName": {
               "contractScope": null,
-              "id": 3713,
+              "id": 3762,
               "name": "OwnableUpgradeSafe",
               "nodeType": "UserDefinedTypeName",
-              "referencedDeclaration": 4120,
+              "referencedDeclaration": 4169,
               "src": "173:18:7",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_OwnableUpgradeSafe_$4120",
+                "typeIdentifier": "t_contract$_OwnableUpgradeSafe_$4169",
                 "typeString": "contract OwnableUpgradeSafe"
               }
             },
-            "id": 3714,
+            "id": 3763,
             "nodeType": "InheritanceSpecifier",
             "src": "173:18:7"
           }
         ],
         "contractDependencies": [
-          3917,
-          3990,
-          4120
+          3966,
+          4039,
+          4169
         ],
         "contractKind": "contract",
         "documentation": null,
         "fullyImplemented": true,
-        "id": 3739,
+        "id": 3788,
         "linearizedBaseContracts": [
-          3739,
-          4120,
-          3917,
-          3990
+          3788,
+          4169,
+          3966,
+          4039
         ],
         "name": "SystemParameters",
         "nodeType": "ContractDefinition",
@@ -188,12 +188,12 @@
           {
             "constant": false,
             "functionSelector": "6c70b1e5",
-            "id": 3716,
+            "id": 3765,
             "mutability": "mutable",
             "name": "PROVIDER_MINIMUM_STAKING",
             "nodeType": "VariableDeclaration",
             "overrides": null,
-            "scope": 3739,
+            "scope": 3788,
             "src": "266:39:7",
             "stateVariable": true,
             "storageLocation": "default",
@@ -202,7 +202,7 @@
               "typeString": "uint256"
             },
             "typeName": {
-              "id": 3715,
+              "id": 3764,
               "name": "uint256",
               "nodeType": "ElementaryTypeName",
               "src": "266:7:7",
@@ -217,12 +217,12 @@
           {
             "constant": false,
             "functionSelector": "21011331",
-            "id": 3718,
+            "id": 3767,
             "mutability": "mutable",
             "name": "REQUESTER_MINIMUM_POOL_STAKING",
             "nodeType": "VariableDeclaration",
             "overrides": null,
-            "scope": 3739,
+            "scope": 3788,
             "src": "364:45:7",
             "stateVariable": true,
             "storageLocation": "default",
@@ -231,7 +231,7 @@
               "typeString": "uint256"
             },
             "typeName": {
-              "id": 3717,
+              "id": 3766,
               "name": "uint256",
               "nodeType": "ElementaryTypeName",
               "src": "364:7:7",
@@ -246,12 +246,12 @@
           {
             "constant": false,
             "functionSelector": "1aea175e",
-            "id": 3720,
+            "id": 3769,
             "mutability": "mutable",
             "name": "SLASHINGS_FOR_MIGRATION",
             "nodeType": "VariableDeclaration",
             "overrides": null,
-            "scope": 3739,
+            "scope": 3788,
             "src": "481:38:7",
             "stateVariable": true,
             "storageLocation": "default",
@@ -260,7 +260,7 @@
               "typeString": "uint256"
             },
             "typeName": {
-              "id": 3719,
+              "id": 3768,
               "name": "uint256",
               "nodeType": "ElementaryTypeName",
               "src": "481:7:7",
@@ -274,25 +274,25 @@
           },
           {
             "body": {
-              "id": 3737,
+              "id": 3786,
               "nodeType": "Block",
               "src": "641:165:7",
               "statements": [
                 {
                   "expression": {
                     "argumentTypes": null,
-                    "id": 3727,
+                    "id": 3776,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "argumentTypes": null,
-                      "id": 3725,
+                      "id": 3774,
                       "name": "PROVIDER_MINIMUM_STAKING",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 3716,
+                      "referencedDeclaration": 3765,
                       "src": "651:24:7",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint256",
@@ -304,7 +304,7 @@
                     "rightHandSide": {
                       "argumentTypes": null,
                       "hexValue": "313030303030",
-                      "id": 3726,
+                      "id": 3775,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -325,25 +325,25 @@
                       "typeString": "uint256"
                     }
                   },
-                  "id": 3728,
+                  "id": 3777,
                   "nodeType": "ExpressionStatement",
                   "src": "651:39:7"
                 },
                 {
                   "expression": {
                     "argumentTypes": null,
-                    "id": 3731,
+                    "id": 3780,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "argumentTypes": null,
-                      "id": 3729,
+                      "id": 3778,
                       "name": "REQUESTER_MINIMUM_POOL_STAKING",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 3718,
+                      "referencedDeclaration": 3767,
                       "src": "700:30:7",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint256",
@@ -355,7 +355,7 @@
                     "rightHandSide": {
                       "argumentTypes": null,
                       "hexValue": "313030",
-                      "id": 3730,
+                      "id": 3779,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -376,25 +376,25 @@
                       "typeString": "uint256"
                     }
                   },
-                  "id": 3732,
+                  "id": 3781,
                   "nodeType": "ExpressionStatement",
                   "src": "700:43:7"
                 },
                 {
                   "expression": {
                     "argumentTypes": null,
-                    "id": 3735,
+                    "id": 3784,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "argumentTypes": null,
-                      "id": 3733,
+                      "id": 3782,
                       "name": "SLASHINGS_FOR_MIGRATION",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 3720,
+                      "referencedDeclaration": 3769,
                       "src": "764:23:7",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint256",
@@ -406,7 +406,7 @@
                     "rightHandSide": {
                       "argumentTypes": null,
                       "hexValue": "302e31",
-                      "id": 3734,
+                      "id": 3783,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -427,7 +427,7 @@
                       "typeString": "uint256"
                     }
                   },
-                  "id": 3736,
+                  "id": 3785,
                   "nodeType": "ExpressionStatement",
                   "src": "764:35:7"
                 }
@@ -435,20 +435,20 @@
             },
             "documentation": null,
             "functionSelector": "8129fc1c",
-            "id": 3738,
+            "id": 3787,
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
                 "arguments": null,
-                "id": 3723,
+                "id": 3772,
                 "modifierName": {
                   "argumentTypes": null,
-                  "id": 3722,
+                  "id": 3771,
                   "name": "initializer",
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
-                  "referencedDeclaration": 3963,
+                  "referencedDeclaration": 4012,
                   "src": "629:11:7",
                   "typeDescriptions": {
                     "typeIdentifier": "t_modifier$__$",
@@ -463,25 +463,25 @@
             "nodeType": "FunctionDefinition",
             "overrides": null,
             "parameters": {
-              "id": 3721,
+              "id": 3770,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "617:2:7"
             },
             "returnParameters": {
-              "id": 3724,
+              "id": 3773,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "641:0:7"
             },
-            "scope": 3739,
+            "scope": 3788,
             "src": "598:208:7",
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           }
         ],
-        "scope": 3740,
+        "scope": 3789,
         "src": "144:664:7"
       }
     ],
@@ -491,15 +491,15 @@
     "absolutePath": "/Users/anilkucukrecep/Code/Personal/st/contracts/contracts/SystemParameters.sol",
     "exportedSymbols": {
       "SystemParameters": [
-        3739
+        3788
       ]
     },
-    "id": 3740,
+    "id": 3789,
     "license": "UNLICENSED",
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 3711,
+        "id": 3760,
         "literals": [
           "solidity",
           "^",
@@ -512,10 +512,10 @@
       {
         "absolutePath": "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol",
         "file": "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol",
-        "id": 3712,
+        "id": 3761,
         "nodeType": "ImportDirective",
-        "scope": 3740,
-        "sourceUnit": 4121,
+        "scope": 3789,
+        "sourceUnit": 4170,
         "src": "63:79:7",
         "symbolAliases": [],
         "unitAlias": ""
@@ -527,35 +527,35 @@
             "arguments": null,
             "baseName": {
               "contractScope": null,
-              "id": 3713,
+              "id": 3762,
               "name": "OwnableUpgradeSafe",
               "nodeType": "UserDefinedTypeName",
-              "referencedDeclaration": 4120,
+              "referencedDeclaration": 4169,
               "src": "173:18:7",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_OwnableUpgradeSafe_$4120",
+                "typeIdentifier": "t_contract$_OwnableUpgradeSafe_$4169",
                 "typeString": "contract OwnableUpgradeSafe"
               }
             },
-            "id": 3714,
+            "id": 3763,
             "nodeType": "InheritanceSpecifier",
             "src": "173:18:7"
           }
         ],
         "contractDependencies": [
-          3917,
-          3990,
-          4120
+          3966,
+          4039,
+          4169
         ],
         "contractKind": "contract",
         "documentation": null,
         "fullyImplemented": true,
-        "id": 3739,
+        "id": 3788,
         "linearizedBaseContracts": [
-          3739,
-          4120,
-          3917,
-          3990
+          3788,
+          4169,
+          3966,
+          4039
         ],
         "name": "SystemParameters",
         "nodeType": "ContractDefinition",
@@ -563,12 +563,12 @@
           {
             "constant": false,
             "functionSelector": "6c70b1e5",
-            "id": 3716,
+            "id": 3765,
             "mutability": "mutable",
             "name": "PROVIDER_MINIMUM_STAKING",
             "nodeType": "VariableDeclaration",
             "overrides": null,
-            "scope": 3739,
+            "scope": 3788,
             "src": "266:39:7",
             "stateVariable": true,
             "storageLocation": "default",
@@ -577,7 +577,7 @@
               "typeString": "uint256"
             },
             "typeName": {
-              "id": 3715,
+              "id": 3764,
               "name": "uint256",
               "nodeType": "ElementaryTypeName",
               "src": "266:7:7",
@@ -592,12 +592,12 @@
           {
             "constant": false,
             "functionSelector": "21011331",
-            "id": 3718,
+            "id": 3767,
             "mutability": "mutable",
             "name": "REQUESTER_MINIMUM_POOL_STAKING",
             "nodeType": "VariableDeclaration",
             "overrides": null,
-            "scope": 3739,
+            "scope": 3788,
             "src": "364:45:7",
             "stateVariable": true,
             "storageLocation": "default",
@@ -606,7 +606,7 @@
               "typeString": "uint256"
             },
             "typeName": {
-              "id": 3717,
+              "id": 3766,
               "name": "uint256",
               "nodeType": "ElementaryTypeName",
               "src": "364:7:7",
@@ -621,12 +621,12 @@
           {
             "constant": false,
             "functionSelector": "1aea175e",
-            "id": 3720,
+            "id": 3769,
             "mutability": "mutable",
             "name": "SLASHINGS_FOR_MIGRATION",
             "nodeType": "VariableDeclaration",
             "overrides": null,
-            "scope": 3739,
+            "scope": 3788,
             "src": "481:38:7",
             "stateVariable": true,
             "storageLocation": "default",
@@ -635,7 +635,7 @@
               "typeString": "uint256"
             },
             "typeName": {
-              "id": 3719,
+              "id": 3768,
               "name": "uint256",
               "nodeType": "ElementaryTypeName",
               "src": "481:7:7",
@@ -649,25 +649,25 @@
           },
           {
             "body": {
-              "id": 3737,
+              "id": 3786,
               "nodeType": "Block",
               "src": "641:165:7",
               "statements": [
                 {
                   "expression": {
                     "argumentTypes": null,
-                    "id": 3727,
+                    "id": 3776,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "argumentTypes": null,
-                      "id": 3725,
+                      "id": 3774,
                       "name": "PROVIDER_MINIMUM_STAKING",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 3716,
+                      "referencedDeclaration": 3765,
                       "src": "651:24:7",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint256",
@@ -679,7 +679,7 @@
                     "rightHandSide": {
                       "argumentTypes": null,
                       "hexValue": "313030303030",
-                      "id": 3726,
+                      "id": 3775,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -700,25 +700,25 @@
                       "typeString": "uint256"
                     }
                   },
-                  "id": 3728,
+                  "id": 3777,
                   "nodeType": "ExpressionStatement",
                   "src": "651:39:7"
                 },
                 {
                   "expression": {
                     "argumentTypes": null,
-                    "id": 3731,
+                    "id": 3780,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "argumentTypes": null,
-                      "id": 3729,
+                      "id": 3778,
                       "name": "REQUESTER_MINIMUM_POOL_STAKING",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 3718,
+                      "referencedDeclaration": 3767,
                       "src": "700:30:7",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint256",
@@ -730,7 +730,7 @@
                     "rightHandSide": {
                       "argumentTypes": null,
                       "hexValue": "313030",
-                      "id": 3730,
+                      "id": 3779,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -751,25 +751,25 @@
                       "typeString": "uint256"
                     }
                   },
-                  "id": 3732,
+                  "id": 3781,
                   "nodeType": "ExpressionStatement",
                   "src": "700:43:7"
                 },
                 {
                   "expression": {
                     "argumentTypes": null,
-                    "id": 3735,
+                    "id": 3784,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "argumentTypes": null,
-                      "id": 3733,
+                      "id": 3782,
                       "name": "SLASHINGS_FOR_MIGRATION",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 3720,
+                      "referencedDeclaration": 3769,
                       "src": "764:23:7",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint256",
@@ -781,7 +781,7 @@
                     "rightHandSide": {
                       "argumentTypes": null,
                       "hexValue": "302e31",
-                      "id": 3734,
+                      "id": 3783,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -802,7 +802,7 @@
                       "typeString": "uint256"
                     }
                   },
-                  "id": 3736,
+                  "id": 3785,
                   "nodeType": "ExpressionStatement",
                   "src": "764:35:7"
                 }
@@ -810,20 +810,20 @@
             },
             "documentation": null,
             "functionSelector": "8129fc1c",
-            "id": 3738,
+            "id": 3787,
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
                 "arguments": null,
-                "id": 3723,
+                "id": 3772,
                 "modifierName": {
                   "argumentTypes": null,
-                  "id": 3722,
+                  "id": 3771,
                   "name": "initializer",
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
-                  "referencedDeclaration": 3963,
+                  "referencedDeclaration": 4012,
                   "src": "629:11:7",
                   "typeDescriptions": {
                     "typeIdentifier": "t_modifier$__$",
@@ -838,25 +838,25 @@
             "nodeType": "FunctionDefinition",
             "overrides": null,
             "parameters": {
-              "id": 3721,
+              "id": 3770,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "617:2:7"
             },
             "returnParameters": {
-              "id": 3724,
+              "id": 3773,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "641:0:7"
             },
-            "scope": 3739,
+            "scope": 3788,
             "src": "598:208:7",
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           }
         ],
-        "scope": 3740,
+        "scope": 3789,
         "src": "144:664:7"
       }
     ],
@@ -890,12 +890,11 @@
         }
       },
       "links": {},
-      "address": "0x40Eec3627A95c8fb969Bbf6769817cA3E021C289",
-      "transactionHash": "0x7b0ddf6dd6ad7654d6b573a674405b445ec047b60a471ab2f516daa062eb66d4"
+      "address": "0x1FD6480AC244faaC320B88C15Cd723eb08cC162C"
     }
   },
   "schemaVersion": "3.3.0",
-  "updatedAt": "2020-10-19T01:00:35.416Z",
+  "updatedAt": "2020-10-21T23:21:16.183Z",
   "networkType": "ethereum",
   "devdoc": {
     "methods": {
