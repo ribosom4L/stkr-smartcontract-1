@@ -65,9 +65,9 @@ workflows:
   build-deploy:
     jobs:
       - test:
-          context: contracts
+          context: STRK_Smart_Contract_GOERLI
       - deploy:
-          context: contracts
+          context: STRK_Smart_Contract_GOERLI
           requires:
             - test
           filters:
