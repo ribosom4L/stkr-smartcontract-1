@@ -8,53 +8,34 @@ import "./lib/interfaces/IDepositContract.sol";
 import "./SystemParameters.sol";
 import "./lib/Lockable.sol";
 import "./lib/interfaces/IAETH.sol";
-
-interface IStaking {
-    function compensatePoolLoss(address provider, uint256 amount, uint256 providerStakeAmount) external returns (uint256);
-
-    function freeze(address user, uint256 amount) external returns (bool);
-
-    function unfreeze(address user, uint256 amount) external returns (bool);
-
-    function reward(uint256 poolIndex) payable external;
-}
+import "./lib/interfaces/IStaking.sol";
 
 contract MicroPool is OwnableUpgradeSafe, Lockable {
     using SafeMath for uint256;
 
     enum PoolStatus {Pending, PushWaiting, OnGoing, Completed, Canceled}
 
+    enum PoolType {Ankr, ETH}
 
-    // claimable amount = amount + reward - claimedAmount
     struct PoolStake {
         uint256 amount;
-        uint256 reward;
+        uint256 negativeBalance;
         uint256 claimedAmount;
     }
 
-    struct Migration {
-        address payable previousProvider;
-        address payable newProvider;
-        uint256 rewardForPreviousProvider;
-        bool rewardClaimed;
-    }
-
     struct Pool {
+        PoolType poolType;
         PoolStatus status;
         bytes32 name;
         uint256 startTime; // init time
         uint256 endTime; // canceled or completed time
-        bool claimable;
-        uint256 claimed; // total claimed balance
         uint256 balance; // total amount of user stakes
         uint256 lastSlashings; // current updated slashings
         uint256 lastReward; // current updated reward
         uint256 requesterRewards;
-        uint8 migrationCount;
         // Provider default staking amount can change on process
         // in case of migrations, we have to store current provider's ankr staking amount
         uint256 providerTokenStakeAmount;
-
         address validator; // validator address
         address payable provider; // provider address
         //        address payable[] members; // pool members
@@ -62,7 +43,9 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
     }
 
     Pool[] private _pools;
-    mapping(address => uint256) public pendingPools; // provider -> pool ID
+    // Change name before production
+    mapping(address => uint256) public providerPendingPools; // provider -> pool ID
+    mapping(address => uint256[]) public userStakePools; // user -> pols that has stake
 
     IAETH public _aethContract;
 
@@ -72,14 +55,14 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
 
     address payable _depositContract;
 
+    uint256 public nextPool;
+
     event PoolCreated(
         uint256 indexed poolIndex,
         address payable indexed provider
     );
 
-    event PoolOnGoing(
-        uint256 indexed poolIndex
-    );
+    event PoolOnGoing(uint256 indexed poolIndex);
 
     event PoolMigrated(
         uint256 indexed poolIndex,
@@ -87,7 +70,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         address payable indexed previousProvider,
         uint256 slashings,
         uint256 poolBalance,
-        uint256 compensated
+        PoolType poolType
     );
 
     event UserStaked(
@@ -96,11 +79,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         uint256 stakeAmount
     );
 
-    event UserUnstaked(
-        uint256 indexed poolIndex,
-        address indexed staker,
-        uint256 unstakeAmount
-    );
+    event UserUnstaked(address indexed staker, uint256 unstakeAmount);
 
     event PoolReward(
         uint256 indexed poolIndex,
@@ -110,7 +89,11 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
 
     event AETHClaim(uint256 indexed poolIndex, address staker, uint256 amount);
 
-    function initialize(address payable aethContract, address systemParameters, address payable beaconContract) public initializer {
+    function initialize(
+        address payable aethContract,
+        address systemParameters,
+        address payable beaconContract
+    ) public initializer {
         OwnableUpgradeSafe.__Ownable_init();
 
         _aethContract = IAETH(aethContract);
@@ -123,18 +106,24 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         pool.status = PoolStatus.Canceled;
         _pools.push(pool);
 
+        nextPool = 1;
+
         _depositContract = beaconContract;
     }
 
-    function pushToBeacon(uint256 poolIndex,
+    function pushToBeacon(
+        uint256 poolIndex,
         bytes memory pubkey,
         bytes memory withdrawal_credentials,
         bytes memory signature,
-        bytes32 deposit_data_root) public onlyOwner {
-
+        bytes32 deposit_data_root
+    ) public onlyOwner {
         Pool storage pool = _pools[poolIndex];
 
-        require(pool.status == PoolStatus.PushWaiting, "Pool status not allow to push");
+        require(
+            pool.status == PoolStatus.PushWaiting,
+            "Pool status not allow to push"
+        );
         require(pool.balance >= 32 ether, "Not enough ether");
 
         pool.status = PoolStatus.OnGoing;
@@ -149,18 +138,27 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
 
         _aethContract.mint(address(this), ethersToSend);
 
-        pendingPools[msg.sender] = 0;
+        providerPendingPools[pool.provider] = 0;
 
-        IDepositContract(_depositContract).deposit{value : ethersToSend}(pubkey, withdrawal_credentials, signature, deposit_data_root);
+        IDepositContract(_depositContract).deposit{value: ethersToSend}(
+            pubkey,
+            withdrawal_credentials,
+            signature,
+            deposit_data_root
+        );
         emit PoolOnGoing(poolIndex);
     }
 
     /**
         Providers can call this function to create a new pool.
     */
-    function initializePool(bytes32 name) external {
-        require(pendingPools[msg.sender] == 0, "User already have a pending pool");
-        uint256 minimumStakingAmount = _systemParameters.PROVIDER_MINIMUM_STAKING();
+    function initializePool(bytes32 name) external unlocked(msg.sender) {
+        require(
+            providerPendingPools[msg.sender] == 0,
+            "User already have a pending pool"
+        );
+        uint256 minimumStakingAmount = _systemParameters
+        .PROVIDER_MINIMUM_STAKING();
         // freeze staked ankr
         require(_stakingContract.freeze(msg.sender, minimumStakingAmount));
 
@@ -173,19 +171,56 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         _pools.push(pool);
 
         uint256 index = _pools.length.sub(1);
-        pendingPools[msg.sender] = index;
+        providerPendingPools[msg.sender] = index;
 
-        emit PoolCreated(
-            index,
-            msg.sender
+        emit PoolCreated(index, msg.sender);
+    }
+
+    /**
+        Ethereum staking
+    */
+    function initializePoolWithETH(bytes32 name) external payable {
+        require(
+            providerPendingPools[msg.sender] == 0,
+            "User already have a pending pool"
         );
+        uint256 minimumStakingAmount = _systemParameters
+        .ETHEREUM_STAKING_AMOUNT();
+        // freeze staked ankr
+        require(
+            msg.value >= minimumStakingAmount,
+            "Minimum staking amount higher than value"
+        );
+
+        Pool memory pool;
+
+        pool.provider = msg.sender;
+        pool.name = name;
+        pool.startTime = block.timestamp;
+        pool.poolType = PoolType.ETH;
+
+        _pools.push(pool);
+
+        uint256 index = _pools.length.sub(1);
+        providerPendingPools[msg.sender] = index;
+
+        _stake(index);
+
+        _pools[index].stakes[msg.sender].negativeBalance = minimumStakingAmount;
+
+        emit PoolCreated(index, msg.sender);
+    }
+
+    function stake() public payable unlocked(msg.sender) {
+        require(nextPool < _pools.length, "There is no pool to stake");
+        _stake(nextPool);
     }
 
     /**
         Users can call to stake to given pool
         @param poolIndex uint256
     */
-    function stake(uint256 poolIndex) payable external {
+    function _stake(uint256 poolIndex) private {
         Pool storage pool = _pools[poolIndex];
 
         // Pool must be pending status to participate
@@ -194,14 +229,16 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         uint256 stakeAmount = msg.value;
 
         // value must be greater than minimum staking amount
-        require(stakeAmount >= _systemParameters.REQUESTER_MINIMUM_POOL_STAKING(), "Ethereum value must be greater than minimum staking amount");
+        require(
+            stakeAmount >= _systemParameters.REQUESTER_MINIMUM_POOL_STAKING(),
+            "Ethereum value must be greater than minimum staking amount"
+        );
 
         pool.balance = pool.balance.add(stakeAmount);
         if (pool.balance >= 32 ether) {
-
             pool.status = PoolStatus.PushWaiting;
 
-            pendingPools[msg.sender] = 0;
+            providerPendingPools[pool.provider] = 0;
 
             uint256 excessAmount = pool.balance.sub(32 ether);
 
@@ -210,124 +247,73 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
                 pool.balance = pool.balance.sub(excessAmount);
                 msg.sender.transfer(excessAmount);
             }
-        }
 
+            nextPool++;
+        }
 
         PoolStake storage userStake = pool.stakes[msg.sender];
 
         userStake.amount = userStake.amount.add(stakeAmount);
         pool.stakes[msg.sender] = userStake;
+        // we can do filters for duplication, but its not necessary
+        userStakePools[msg.sender].push(poolIndex);
 
         emit UserStaked(poolIndex, msg.sender, stakeAmount);
     }
 
-    function migrate(uint256 poolIndex, uint256 currentPoolBalance, uint256 currentSlashings, address payable newProvider) public onlyOwner {
-        Pool storage pool = _pools[poolIndex];
+    function unstake() public payable unlocked(msg.sender) {
+        uint256[] storage stakePools = userStakePools[msg.sender];
+        uint256 unstakeAmount = 0;
 
-        require(currentSlashings >= pool.lastSlashings, "Current slashings cannot be smaller than last slashings");
+        for (uint256 i = 0; i < stakePools.length; i++) {
+            Pool storage pool = _pools[stakePools[i]];
+            if (
+                pool.stakes[msg.sender].amount == 0 ||
+                pool.stakes[msg.sender].negativeBalance != 0 ||
+                pool.status != PoolStatus.Pending
+            ) continue;
 
-        address payable oldProvider = pool.provider;
+            unstakeAmount = unstakeAmount.add(pool.stakes[msg.sender].amount);
 
-        pool.provider = newProvider;
-
-        uint256 minimumStakingAmount = _systemParameters.PROVIDER_MINIMUM_STAKING();
-
-        require(_stakingContract.freeze(pool.provider, minimumStakingAmount));
-
-        uint256 slash = currentSlashings - pool.lastSlashings;
-
-        require(slash >= _systemParameters.SLASHINGS_FOR_MIGRATION(), "Slashing amount lower than system parameter");
-
-        uint256 currentReward = currentPoolBalance.add(currentSlashings).sub(32 ether, "Current reward: substraction");
-
-        uint256 reward = currentReward.sub(pool.lastReward, "Reward: substraction");
-
-        uint256 providerReward = reward.div(10);
-
-        uint256 compensatedAnkrAmount = 0;
-
-        // TODO: what if staked ankr cannot compensate the loss ?
-        if (slash > providerReward) {
-            uint256 difference = slash - providerReward;
-
-            compensatedAnkrAmount = _stakingContract.compensatePoolLoss(oldProvider, difference, pool.providerTokenStakeAmount);
-        } else if (slash < providerReward) {
-            // if provider has positive balance in reward
-            uint256 difference = providerReward - slash;
-            // unfreeze frozen staking amount
-            _stakingContract.unfreeze(oldProvider, pool.providerTokenStakeAmount);
-            // mint frozen aeth for provider
-            _aethContract.mintFrozen(oldProvider, difference);
+            pool.balance = pool.balance.sub(pool.stakes[msg.sender].amount);
+            delete pool.stakes[msg.sender];
         }
-
-        pool.lastSlashings = currentSlashings;
-        pool.lastReward = currentReward;
-        pool.providerTokenStakeAmount = minimumStakingAmount;
-        pool.migrationCount++;
-
-        emit PoolMigrated(poolIndex, newProvider, oldProvider, currentSlashings, currentPoolBalance, compensatedAnkrAmount);
-    }
-
-    /**
-        Users can call to unstake from given pool
-        until pool start
-        @param poolIndex uint256
-    */
-    function unstake(uint256 poolIndex) external payable {
-        Pool storage pool = _pools[poolIndex];
-        // TODO: validations
-        require(
-            pool.status == PoolStatus.Pending,
-            "You can only cancel your stake from a pending pool."
-        );
-        require(
-            pool.stakes[msg.sender].amount > 0,
-            "You don't have staked balance in this pool"
-        );
-        // require(
-        //     IAETH(_aethContract).burnFrom(
-        //         msg.sender,
-        //         pool.stakes[msg.sender].amount.div(2)
-        //     ),
-        //     "You need to approve this contract first."
-        // );
-
-        uint256 unstakeAmount = pool.stakes[msg.sender].amount;
-
         msg.sender.transfer(unstakeAmount);
-        pool.balance = pool.balance.sub(
-            pool.stakes[msg.sender].amount
-        );
-        delete pool.stakes[msg.sender];
 
-        emit UserStaked(poolIndex, msg.sender, unstakeAmount);
+        delete userStakePools[msg.sender];
+
+        emit UserUnstaked(msg.sender, unstakeAmount);
     }
 
-    function rewardMicropool(uint256 poolIndex, uint256 slashings)
-    public
-    payable
-    onlyOwner {
+    function rewardMicropool(
+        uint256 poolIndex,
+        uint256 balance,
+        uint256 slashings
+    ) public payable onlyOwner {
         Pool storage pool = _pools[poolIndex];
         require(pool.status == PoolStatus.OnGoing, "Pool cannot be rewarded");
 
         pool.status = PoolStatus.Completed;
 
-        require(slashings >= pool.lastSlashings, "Current slashings cannot be smaller than last slashings");
+        require(
+            slashings >= pool.lastSlashings,
+            "Current slashings cannot be smaller than last slashings"
+        );
 
         uint256 slash = slashings - pool.lastSlashings;
 
-        uint256 currentReward = pool.lastReward.add(slash);
+        uint256 currentReward = balance.add(slashings).sub(32 ether);
 
-        uint256 reward = currentReward - pool.lastReward;
+        uint256 providerReward = currentReward.sub(pool.lastReward).div(10);
 
-        uint256 providerReward = reward.div(10);
-
-        // TODO: what if staked ankr cannot compensate the loss ?
         if (slash > providerReward) {
             uint256 difference = slash - providerReward;
 
-            _stakingContract.compensatePoolLoss(pool.provider, difference, pool.providerTokenStakeAmount);
-            providerReward = 0;
+            _stakingContract.compensatePoolLoss(
+                pool.provider,
+                difference,
+                pool.providerTokenStakeAmount
+            );
         } else if (slash < providerReward) {
             // if provider has positive balance in reward
             providerReward = providerReward - slash;
@@ -344,17 +330,105 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         uint256 developerRewards = pool.lastReward.mul(3).div(100);
 
         pool.requesterRewards = requesterRewards;
+        pool.status = PoolStatus.Completed;
+        pool.endTime = now;
 
-        _stakingContract.reward{value : stakingRewards}(poolIndex);
+        _stakingContract.reward{value: stakingRewards}(poolIndex);
 
-        // TODO: Developer rewards
+        _aethContract.mintPool{value: requesterRewards}();
 
-        _aethContract.mintPool{value : requesterRewards}();
+        pool.stakes[pool.provider].negativeBalance = 0;
 
-        emit PoolReward(poolIndex, msg.value, slashings);
+        emit PoolReward(poolIndex, pool.lastReward, slashings);
     }
 
-    function updateAETHContract(address payable tokenContract) external onlyOwner {
+    function migrate(
+        uint256 poolIndex,
+        uint256 currentPoolBalance,
+        uint256 currentSlashings,
+        address payable newProvider
+    ) public onlyOwner {
+        Pool storage pool = _pools[poolIndex];
+
+        // slashings must be greater than last slashings
+        require(
+            currentSlashings >= pool.lastSlashings,
+            "Current slashings cannot be smaller than last slashings"
+        );
+
+        PoolType poolType = pool.poolType;
+
+        address payable oldProvider = pool.provider;
+
+        pool.provider = newProvider;
+
+        uint256 minimumStakingAmount = _systemParameters
+        .PROVIDER_MINIMUM_STAKING();
+
+        require(_stakingContract.freeze(pool.provider, minimumStakingAmount));
+
+        uint256 slash = currentSlashings.sub(pool.lastSlashings);
+
+        require(
+            slash >= _systemParameters.SLASHINGS_FOR_MIGRATION(),
+            "Slashing amount lower than system parameter"
+        );
+
+        uint256 currentReward = currentPoolBalance.add(currentSlashings).sub(
+            32 ether,
+            "Current reward: substraction"
+        );
+
+        uint256 reward = currentReward.sub(
+            pool.lastReward,
+            "Reward: substraction"
+        );
+
+        uint256 providerReward = reward.div(10);
+
+        if (pool.poolType == PoolType.ETH) {
+            pool.poolType = PoolType.Ankr;
+            pool.stakes[oldProvider].negativeBalance = 0;
+            // we will set current slashings as claimed amount to compensate pool loss
+            pool.stakes[oldProvider].claimedAmount = currentSlashings;
+        } else if (slash > providerReward) {
+            uint256 difference = slash - providerReward;
+
+            _stakingContract.compensatePoolLoss(
+                oldProvider,
+                difference,
+                pool.providerTokenStakeAmount
+            );
+        } else if (slash < providerReward) {
+            // if provider has positive balance in reward
+            uint256 difference = providerReward - slash;
+            // unfreeze frozen staking amount
+            _stakingContract.unfreeze(
+                oldProvider,
+                pool.providerTokenStakeAmount
+            );
+            // mint frozen aeth for provider
+            _aethContract.mintFrozen(oldProvider, difference);
+        }
+
+        pool.lastSlashings = currentSlashings;
+        pool.lastReward = currentReward;
+        pool.providerTokenStakeAmount = minimumStakingAmount;
+
+        emit PoolMigrated(
+            poolIndex,
+            newProvider,
+            oldProvider,
+            currentSlashings,
+            currentPoolBalance,
+            poolType
+        );
+    }
+
+    function updateAETHContract(address payable tokenContract)
+    external
+    onlyOwner
+    {
         _aethContract = IAETH(tokenContract);
     }
 
@@ -366,16 +440,30 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         _stakingContract = IStaking(stakingContract);
     }
 
-    function claimAeth(uint256 poolIndex) unlocked(msg.sender) external {
+    function claimAeth(uint256 poolIndex) external unlocked(msg.sender) {
         Pool storage pool = _pools[poolIndex];
 
-        require(pool.status == PoolStatus.Completed || pool.status == PoolStatus.OnGoing, "Pool not claimable");
+        require(
+            pool.status == PoolStatus.Completed ||
+            pool.status == PoolStatus.OnGoing,
+            "Pool not claimable"
+        );
 
         PoolStake storage poolStake = pool.stakes[msg.sender];
 
-        uint256 claimable = poolStake.amount.add(pool.requesterRewards).mul(poolStake.amount).div(32 ether).sub(poolStake.claimedAmount);
+        uint256 rewardAsRequester = pool
+        .requesterRewards
+        .mul(poolStake.amount)
+        .div(32 ether);
 
-        require(claimable > 0, "Claimable amount must be bigger than zero");
+        uint256 claimable = rewardAsRequester.add(poolStake.amount).sub(
+            poolStake.claimedAmount
+        );
+
+        require(
+            claimable > poolStake.negativeBalance,
+            "Claimable amount must be bigger than zero"
+        );
 
         poolStake.claimedAmount = poolStake.claimedAmount.add(claimable);
 
@@ -398,6 +486,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         uint256 endTime,
         uint256 lastReward,
         uint256 lastSlashings,
+        uint256 requesterRewards,
         bytes32 name,
         uint256 balance,
         address validator,
@@ -411,6 +500,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         endTime = pool.endTime;
         lastReward = pool.lastReward;
         lastSlashings = pool.lastSlashings;
+        requesterRewards = pool.requesterRewards;
         balance = pool.balance;
         provider = pool.provider;
         validator = pool.validator;
@@ -422,11 +512,18 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
         return _pools.length;
     }
 
-    function userStakeAmount(uint256 poolIndex, address addr) public view returns (uint256) {
+    function userStakeAmount(uint256 poolIndex, address addr)
+    public
+    view
+    returns (uint256)
+    {
         return _pools[poolIndex].stakes[addr].amount;
     }
 
-    function changeDepositContract(address payable depositContract) public onlyOwner {
+    function changeDepositContract(address payable depositContract)
+    public
+    onlyOwner
+    {
         _depositContract = depositContract;
     }
 

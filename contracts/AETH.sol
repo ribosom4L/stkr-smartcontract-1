@@ -21,12 +21,14 @@ contract AETH is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
     string private _symbol;
     uint8 private _decimals;
 
-    mapping (address => uint256) private _balances;
-    mapping (address => uint256) private _frozenBalances;
+    mapping(address => uint256) private _balances;
+    mapping(address => uint256) private _frozenBalances;
 
     bool public _claimable;
 
     address public _microPoolContract;
+
+    uint256 public ratio;
 
     modifier onlyMicroPoolContract() {
         require(_microPoolContract == _msgSender(), "Ownable: caller is not the micropool contract");
@@ -43,10 +45,12 @@ contract AETH is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
         __ERC20_init(name, symbol);
         _totalSupply = 0;
 
+        changeRatio(10**_decimals);
+
         _claimable = false;
     }
 
-    function updateMicroPoolContract(address microPoolContract) external onlyOwner{
+    function updateMicroPoolContract(address microPoolContract) external onlyOwner {
         _microPoolContract = microPoolContract;
     }
 
@@ -62,7 +66,7 @@ contract AETH is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
         _mint(account, amount);
     }
 
-    function mintPool() payable external {
+    function mintPool() payable external onlyMicroPoolContract {
         _mint(msg.sender, msg.value);
     }
 
@@ -103,7 +107,7 @@ contract AETH is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
         emit ClaimableToggle(_claimable);
     }
 
-    receive() external payable  {
+    receive() external payable {
         _mint(msg.sender, msg.value);
     }
 
@@ -113,4 +117,10 @@ contract AETH is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
             require(availableBalanceOf(from) >= amount, "Available balance is lower than transfer amount");
         }
     }
+
+    function changeRatio(uint256 _ratio) public onlyOwner {
+        ratio = _ratio;
+    }
+
+
 }

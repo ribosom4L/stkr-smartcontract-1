@@ -2,11 +2,10 @@ client/
 .idea/
 artifacts/
 cache/
-contracts/TODO.md
 node_modules/
-json_abi/
+build/
 
-.openzeppelin/.session
+.openzeppelin
 .DS_Store
 
 .env
