@@ -9,13 +9,6 @@ import "./lib/interfaces/IDepositContract.sol";
 
 interface IStkrPool {
 
-    enum DistributionType {
-        Provider,
-        Requester,
-        Staking,
-        Developer
-    }
-
     /* pool events */
     event PoolPushWaiting(uint256 indexed pool);
     event PoolOnGoing(uint256 indexed pool);
@@ -27,11 +20,11 @@ interface IStkrPool {
     event StakeConfirmed(address indexed staker, uint32 pool, uint64 amount);
 
     /* distribution events */
-    event RewardDistributed (address user, DistributionType type, uint256 amount);
+    event StakerRewardDistributed (uint32 pool, address user, uint256 amount);
 
     function stake() public payable;
     function proposeRewardOrSlashing(uint32 pool, address user, int256 amount) public;
-    function distributeRewards(uint32 pool, DistributionType type) public;
+    function distributeStakerRewards(uint32 pool) public;
 }
 
 contract StkrPool is IStkrPool, OwnableUpgradeSafe {
@@ -55,7 +48,8 @@ contract StkrPool is IStkrPool, OwnableUpgradeSafe {
         uint64 rewarded; /* its better to store balance in gwei because beacon chain also stores it in gwei */
         uint64 slashed;
         /* QUESTION: why do we need requester rewards because we can calculate it using our distribution formula? */
-        mapping(address => uint64) totalRewards;
+        mapping(address => uint64) providerShare;
+        mapping(address => uint64) stakerShare;
         /* we don't need provider with his staking amount also */
         /* we can collect gas from stakers and spend it on reward distribution */
         uint256[] gas;
@@ -87,8 +81,6 @@ contract StkrPool is IStkrPool, OwnableUpgradeSafe {
         uint64 amount; /* user can't stake less than 1 gwei */
         uint64 claimed; /* QUESTION: does claimed amount must be <= amount? (have not found this check in the code) */
     }
-
-    mapping(address => Stake) private _stakes;
 
     function stake() public payable {
         _stakeUntilPossible(msg.value);
@@ -126,10 +118,11 @@ contract StkrPool is IStkrPool, OwnableUpgradeSafe {
     function _closePendingPool() private {
         uint256 nextPoolIndex = _pools.length;
         /* we pay only 20k+5k for creation (1 byte in reserve), tbh we pay additional 15k for length creation when length is 0 */
+        Pool memory newPool = _pools[_pools.length - 1];
         _pools.push({status : PoolStatus.PushWaiting});
         for (uint i = 0; i < _pendingStakes.length; i++) {
             PendingStake memory pendingStake = _pendingStakes[i];
-            _stakes[pendingStake.staker].amount += pendingStake.amount;
+            newPool.stakerShare[pendingStake.staker] += pendingStake.amount;
             /* QUESTION: do we need to emit AETH creation here? */
             emit StakeConfirmed(pendingStake.staker, uint64(nextPoolIndex), pendingStake.amount);
         }
@@ -145,7 +138,7 @@ contract StkrPool is IStkrPool, OwnableUpgradeSafe {
         require(thatPool.status == PoolStatus.OnGoing, "can't reward non-ongoing pool");
         require(amount % 1e9 == 0, "amount shouldn't have a remainder");
         /* increase total rewards */
-        thatPool.totalRewards[user] += amount / 1e9;
+        thatPool.providerShare[user] += amount / 1e9;
         /* make sure provider has index */
         _ensurePoolParticipation(pool, user);
         if (amount > 0) {
@@ -156,39 +149,26 @@ contract StkrPool is IStkrPool, OwnableUpgradeSafe {
         _pools[pool] = thatPool;
     }
 
-    function distributeRewards(uint32 pool, DistributionType type) public {
-        Pool memory thatPool = _pools[pool];
-        require(thatPool.status == PoolStatus.Completed, "only completed pool can be distributed");
-        thatPool.status = PoolStatus.Closed;
-        HashSet memory participants = _participants[pool];
-        uint256 providersReward = calculateRewardsForPool(pool, type);
-        for (uint256 i = 0; i < participants.users.length; i++) {
-            address provider = participants.users[i + 1];
-            uint256 reward = thatPool.totalRewards[provider] / providersReward;
-            /* QUESTION: how are we going to distribute it? */
-            emit RewardDistributed(provider, DistributionType.Provider, reward * 1e9);
-        }
-        _pools[pool] = thatPool;
-    }
-
     uint64 constant PROVIDER_REWARD_SHARE = 10;
     uint64 constant REQUESTER_REWARD_SHARE = 77;
     uint64 constant STAKING_REWARD_SHARE = 10;
     uint64 constant DEVELOPER_REWARD_SHARE = 3;
 
-    function calculateRewardsForPool(uint32 pool, DistributionType type) pure public view returns (int64) {
+    function distributeStakerRewards(uint32 pool) {
         Pool memory thatPool = _pools[pool];
-        uint256 totalRewards = thatPool.rewarded + thatPool.slashed;
-        uint256 shareRatio = 0;
-        if (type == DistributionType.Provider) {
-            shareRatio = PROVIDER_REWARD_SHARE;
-        } else if (type == DistributionType.Requester) {
-            shareRatio = REQUESTER_REWARD_SHARE;
-        } else if (type == DistributionType.Staking) {
-            shareRatio = STAKING_REWARD_SHARE;
-        } else if (type == DistributionType.Developer) {
-            shareRatio = DEVELOPER_REWARD_SHARE;
+        require(thatPool.status == PoolStatus.Completed, "only completed pool can be distributed");
+        HashSet memory participants = _participants[pool];
+        /* stakers can get only 77% of their stakes */
+        uint256 totalStakerRewards = REQUESTER_REWARD_SHARE * (thatPool.rewarded + thatPool.slashed) / 100;
+        for (uint256 i = 0; i < participants.users.length; i++) {
+            address provider = participants.users[i + 1];
+            uint256 reward = thatPool.stakerShare[provider] / totalStakerRewards;
+            /* QUESTION: how are we going to distribute it? using [send] or [transfer]? */
+            emit StakerRewardDistributed(pool, provider, reward * 1e9);
         }
-        return int64(totalRewards * shareRatio / 100);
+        thatPool.status = PoolStatus.Closed;
+        _pools[pool] = thatPool;
     }
+
+    /* i think we need other distribution methods for other types */
 }
