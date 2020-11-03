@@ -156,7 +156,7 @@ contract StkrPool is IStkrPool, OwnableUpgradeSafe {
         _pools[pool] = thatPool;
     }
 
-    function distributePoolRewards(uint32 pool, DistributionType type) public {
+    function distributeRewards(uint32 pool, DistributionType type) public {
         Pool memory thatPool = _pools[pool];
         require(thatPool.status == PoolStatus.Completed, "only completed pool can be distributed");
         thatPool.status = PoolStatus.Closed;
