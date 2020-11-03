@@ -45,6 +45,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
     Pool[] private _pools;
     // Change name before production
     mapping(address => uint256) public providerPendingPools; // provider -> pool ID
+
     mapping(address => uint256[]) public userStakePools; // user -> pols that has stake
 
     IAETH public _aethContract;

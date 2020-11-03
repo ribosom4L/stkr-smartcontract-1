@@ -32,10 +32,15 @@ jobs:
             DEPOSIT_CONTRACT=${DEPOSIT_CONTRACT}
             DEPLOYMENT_KEY=${DEPLOYMENT_KEY}" >> ${CIRCLE_BRANCH}/.env;
             echo "Deploying files"
-            rsync -e "ssh -o StrictHostKeyChecking=no" -arvc ${CIRCLE_BRANCH}/ ${REMOTE_USER}@${REMOTE_ADDR}:${DEPLOY_PATH}/${CIRCLE_BRANCH}/ --delete
+            rsync -e "ssh -o StrictHostKeyChecking=no" -arvc \
+            ${CIRCLE_BRANCH}/ ${REMOTE_USER}@${REMOTE_ADDR}:${DEPLOY_PATH}/${CIRCLE_BRANCH}/ \
+            --delete \
+            --exclude=build \
+            --exclude=node_modules \
+            --exclude=.openzeppelin
       - run:
           name: "Run external script"
-          command: ssh -oStrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_ADDR} "cd ${DEPLOY_PATH}/${CIRCLE_BRANCH}; yarn install; npx truffle compile --all; npx truffle migrate --network goerli; node scripts/build_abi.js";
+          command: ssh  -t -oStrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_ADDR} "cd ${DEPLOY_PATH}/${CIRCLE_BRANCH}; yarn install; npx truffle compile --all; npx truffle migrate --network goerli; node scripts/build_abi.js";
   store_build:
     docker:
       - image: instrumentisto/rsync-ssh
