@@ -46,13 +46,13 @@ jobs:
             - "91:a7:51:e9:6e:28:43:62:a1:0c:7f:de:4e:e3:9b:c4"
       - run:
           name: "Get build from remote"
-         command: echo "build from remote"
+          command: echo "build from remote"
       - run:
           name: "Store artifacts"
-         command: echo "artifacts"
+          command: echo "artifacts"
       - run:
           name: "Upload build to cdn"
-         command: echo "Upload build to cdn"
+          command: echo "Upload build to cdn"
 
 
 workflows:
