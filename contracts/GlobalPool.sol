@@ -10,7 +10,7 @@ import "./lib/Lockable.sol";
 import "./lib/interfaces/IAETH.sol";
 import "./lib/interfaces/IStaking.sol";
 
-contract MicroPool is OwnableUpgradeSafe, Lockable {
+contract GlobalPool is OwnableUpgradeSafe, Lockable {
     using SafeMath for uint256;
 
     //    enum PoolStatus {Pending, PushWaiting, OnGoing, Completed, Canceled}
@@ -59,7 +59,7 @@ contract MicroPool is OwnableUpgradeSafe, Lockable {
 //        address validator; // validator address
 //        address payable provider; // provider address
 //    }
-//
+
 //    Pool[] private _pools;
 //    // Change name before production
 //    mapping(address => uint256[]) public userStakePools; // user -> pols that has stake
