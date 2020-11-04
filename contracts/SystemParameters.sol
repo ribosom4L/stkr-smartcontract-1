@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.6.8;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+import "./Governable.sol";
 
-contract SystemParameters is OwnableUpgradeSafe {
+contract SystemParameters is Governable {
 
     // Minimum ankr staking amount to be abel to initialize a pool
     uint256 public PROVIDER_MINIMUM_STAKING;

@@ -77,22 +77,22 @@ contract("MicroPool Migrating (ANKR Staking)", function(accounts) {
 
     oldProvider = owner;
 
-    await micropool.stake(1, {
+    await micropool.stake({
       value: helpers.amount(12),
       from:  accounts[2]
     });
 
-    await micropool.stake(1, {
+    await micropool.stake({
       value: helpers.amount(10),
       from:  accounts[3]
     });
 
-    await micropool.stake(1, {
+    await micropool.stake({
       value: helpers.amount(5),
       from:  accounts[4]
     });
 
-    await micropool.stake(1, {
+    await micropool.stake({
       value: helpers.amount(5),
       from:  accounts[5]
     });
