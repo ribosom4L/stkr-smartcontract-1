@@ -66,7 +66,7 @@ contract("MicroPool Creating and Staking (ANKR Staking)", function(accounts) {
   it("should allow users to participate to pool", async () => {
     firstStaking = helpers.amount(1);
 
-    await micropool.stake(1, {
+    await micropool.stake({
       value: firstStaking,
       from:  accounts[1]
     });
@@ -79,31 +79,31 @@ contract("MicroPool Creating and Staking (ANKR Staking)", function(accounts) {
     const value = await systemParameters.REQUESTER_MINIMUM_POOL_STAKING() / 2;
 
 
-    await expectRevert(micropool.stake(1, {
+    await expectRevert(micropool.stake({
       value: "0x" + value.toString(16),
       from:  accounts[1]
     }), "Ethereum value must be greater than minimum staking amount");
   });
 
   it("should send exceed amount when pool balance is more than 32 ether", async () => {
-    await micropool.stake(1, {
+    await micropool.stake({
       value: helpers.amount(10),
       from:  accounts[3]
     });
 
-    await micropool.stake(1, {
+    await micropool.stake({
       value: helpers.amount(5),
       from:  accounts[4]
     });
 
-    await micropool.stake(1, {
+    await micropool.stake({
       value: helpers.amount(5),
       from:  accounts[5]
     });
 
     const value = helpers.amount(12);
 
-    await micropool.stake(1, {
+    await micropool.stake({
       value,
       from: accounts[2]
     });
@@ -122,10 +122,10 @@ contract("MicroPool Creating and Staking (ANKR Staking)", function(accounts) {
   it("staking requests should reverted after 32 ethereum stake", async () => {
     const value = helpers.amount(1);
 
-    await expectRevert(micropool.stake(1, {
+    await expectRevert(micropool.stake({
       value,
       from: accounts[3]
-    }), "Cannot stake to this pool");
+    }), "There is no pool to stake");
   });
 
   it("owner should be able to send push request", async () => {
