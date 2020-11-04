@@ -9,6 +9,9 @@ import "./lib/interfaces/IDepositContract.sol";
 
 interface IStkrPool {
 
+    uint256 constant public PROVIDER_SLASH_THRESHOLD = 2 ether;
+    address constant public DEVELOPER_ADDRESS = 0xb827bCA9CF96f58a7BEd49D9b5cbd84fEd72b03F;
+
     /* pool events */
     event PoolPushWaiting(uint256 indexed pool);
     event PoolOnGoing(uint256 indexed pool);
@@ -19,11 +22,16 @@ interface IStkrPool {
     event StakePending(address indexed staker, uint32 pool, uint64 amount);
     event StakeConfirmed(address indexed staker, uint32 pool, uint64 amount);
 
+    /* provider events (once provider reach PROVIDER_SLASH_THRESHOLD negative balance we must slash him) */
+    event ProviderSlashed(address indexed provider);
+
     /* distribution events */
-    event StakerRewardDistributed (uint32 pool, address user, uint256 amount);
+    event RewardClaimed (uint32 pool, address user, uint256 amount);
 
     function stake() public payable;
+
     function proposeRewardOrSlashing(uint32 pool, address user, int256 amount) public;
+
     function distributeStakerRewards(uint32 pool) public;
 }
 
@@ -36,23 +44,23 @@ contract StkrPool is IStkrPool, OwnableUpgradeSafe {
         PushWaiting,
         OnGoing,
         Completed,
-        Closed,
         /* QUESTION: does it possible to cancel pool? how does cancellation work? */
         Canceled
     }
 
-    /* 1+6*8=49 (2 words, 40k/10k) */
+    /* 1+8*2=17 (1 word, 20k/5k), 32-17=15 bytes */
     struct Pool {
         PoolStatus status;
         /* global pools don't need names */
         uint64 rewarded; /* its better to store balance in gwei because beacon chain also stores it in gwei */
         uint64 slashed;
         /* QUESTION: why do we need requester rewards because we can calculate it using our distribution formula? */
-        mapping(address => uint64) providerShare;
-        mapping(address => uint64) stakerShare;
+        mapping(address => uint64) providerShare; // might be negative
+        mapping(address => uint64) stakerShare; // +2 eth
+        mapping(address => uint64) claimedRewards;
+        // providerShare+stakerShare = -1.5+2 = 0.5
+
         /* we don't need provider with his staking amount also */
-        /* we can collect gas from stakers and spend it on reward distribution */
-        uint256[] gas;
     }
 
     /* list with active pools */
@@ -76,12 +84,6 @@ contract StkrPool is IStkrPool, OwnableUpgradeSafe {
     /* current pending gwei amount for next pool */
     uint64 private _pendingAmount;
 
-    /* 2*8=16 (1 word, 20k/5k), in reserve 16 bytes */
-    struct Stake {
-        uint64 amount; /* user can't stake less than 1 gwei */
-        uint64 claimed; /* QUESTION: does claimed amount must be <= amount? (have not found this check in the code) */
-    }
-
     function stake() public payable {
         _stakeUntilPossible(msg.value);
     }
@@ -97,7 +99,6 @@ contract StkrPool is IStkrPool, OwnableUpgradeSafe {
             _pendingStakes.push({sender : msg.sender, amount : possibleStakeAmount});
             _pendingAmount += possibleStakeAmount / 1e9;
             /* lets remember this user as possible pool participant */
-            _ensurePoolParticipation(pendingPoolIndex, msg.sender);
             emit StakePending(msg.sender, uint64(pendingPoolIndex), possibleStakeAmount / 1e9);
             /* check pool close condition */
             if (msgValue >= pendingRemained) {
@@ -118,8 +119,8 @@ contract StkrPool is IStkrPool, OwnableUpgradeSafe {
     function _closePendingPool() private {
         uint256 nextPoolIndex = _pools.length;
         /* we pay only 20k+5k for creation (1 byte in reserve), tbh we pay additional 15k for length creation when length is 0 */
-        Pool memory newPool = _pools[_pools.length - 1];
         _pools.push({status : PoolStatus.PushWaiting});
+        Pool memory newPool = _pools[_pools.length - 1];
         for (uint i = 0; i < _pendingStakes.length; i++) {
             PendingStake memory pendingStake = _pendingStakes[i];
             newPool.stakerShare[pendingStake.staker] += pendingStake.amount;
@@ -132,21 +133,21 @@ contract StkrPool is IStkrPool, OwnableUpgradeSafe {
         emit PoolPushWaiting(nextPoolIndex);
     }
 
-    function proposeRewardOrSlashing(uint32 pool, address user, int256 amount) public {
+    function proposeRewardOrSlashing(uint32 pool, address user, uint256 rewarded, uint256 slashed, bytes32 transactionHash) public onlyOwner {
         /* QUESTION: do we need to store proofs from beacon chain? (for example, transaction hash or slot number) */
         Pool memory thatPool = _pools[pool];
         require(thatPool.status == PoolStatus.OnGoing, "can't reward non-ongoing pool");
-        require(amount % 1e9 == 0, "amount shouldn't have a remainder");
+        require(rewarded % 1e9 == 0, "rewarded amount shouldn't have a remainder");
+        require(slashed % 1e9 == 0, "slashed amount shouldn't have a remainder");
         /* increase total rewards */
-        thatPool.providerShare[user] += amount / 1e9;
+        thatPool.providerShare[user] += (rewarded - slashed) / 1e9;
         /* make sure provider has index */
-        _ensurePoolParticipation(pool, user);
-        if (amount > 0) {
-            thatPool.rewarded += thatPool;
-        } else {
-            thatPool.slashed += - thatPool;
-        }
+        thatPool.rewarded += rewarded / 1e9;
+        thatPool.slashed += slashed / 1e9;
         _pools[pool] = thatPool;
+        /* implement provider ban logic */
+        /* emit reward or slashing proposed event */
+        /* add aeth migration logic */
     }
 
     uint64 constant PROVIDER_REWARD_SHARE = 10;
@@ -154,21 +155,46 @@ contract StkrPool is IStkrPool, OwnableUpgradeSafe {
     uint64 constant STAKING_REWARD_SHARE = 10;
     uint64 constant DEVELOPER_REWARD_SHARE = 3;
 
-    function distributeStakerRewards(uint32 pool) {
+    function calcStakerRewards(address user, uint32 pool) public pure view returns (uint64) {
         Pool memory thatPool = _pools[pool];
-        require(thatPool.status == PoolStatus.Completed, "only completed pool can be distributed");
-        HashSet memory participants = _participants[pool];
+        uint256 poolRewards = thatPool.rewarded + thatPool.slashed;
         /* stakers can get only 77% of their stakes */
-        uint256 totalStakerRewards = REQUESTER_REWARD_SHARE * (thatPool.rewarded + thatPool.slashed) / 100;
-        for (uint256 i = 0; i < participants.users.length; i++) {
-            address provider = participants.users[i + 1];
-            uint256 reward = thatPool.stakerShare[provider] / totalStakerRewards;
-            /* QUESTION: how are we going to distribute it? using [send] or [transfer]? */
-            emit StakerRewardDistributed(pool, provider, reward * 1e9);
-        }
-        thatPool.status = PoolStatus.Closed;
-        _pools[pool] = thatPool;
+        uint256 totalProviderRewards = PROVIDER_REWARD_SHARE * poolRewards / 100;
+        uint256 totalStakerRewards = REQUESTER_REWARD_SHARE * poolRewards / 100;
+        /* calculate total rewards = provider rewards + staker rewards - claimed rewards */
+        uint256 providerReward = thatPool.providerShare[user] / totalProviderRewards;
+        uint256 stakerReward = thatPool.stakerShare[user] / totalStakerRewards;
+        uint256 claimedReward = thatPool.claimedRewards[user];
+        /* return user rewards in gwei */
+        return providerReward + stakerReward - claimedReward;
     }
 
-    /* i think we need other distribution methods for other types */
+    function claimStakerRewards(address user, uint32 pool) {
+        uint64 totalRewards = calcStakerRewards(user, pool);
+        /* increase total claimed amount and fire events */
+        thatPool.claimedRewards[user] += totalRewards;
+        uint256 aethToDistribute = totalRewards * 1e9;
+        /* distribute AETH tokens */
+        emit RewardClaimed(pool, user, aethToDistribute);
+    }
+
+    function calcDeveloperRewards() public pure view returns (uint64) {
+        Pool memory thatPool = _pools[pool];
+        require(thatPool.status == PoolStatus.Completed, "only completed pool can be distributed");
+        uint256 poolRewards = thatPool.rewarded + thatPool.slashed;
+        /* developers get 3% of all rewards */
+        uint256 developerReward = DEVELOPER_REWARD_SHARE * poolRewards / 100;
+        uint256 claimedReward = thatPool.claimedRewards[DEVELOPER_ADDRESS];
+        /* return user rewards in gwei */
+        return developerReward - claimedReward;
+    }
+
+    function claimDeveloperRewards(uint32 pool) onlyOwner {
+        uint64 totalRewards = calcStakerRewards(DEVELOPER_ADDRESS, pool);
+        /* increase total claimed amount and fire events */
+        thatPool.claimedRewards[DEVELOPER_ADDRESS] += totalRewards;
+        uint256 aethToDistribute = totalRewards * 1e9;
+        /* distribute AETH tokens */
+        emit RewardClaimed(pool, DEVELOPER_ADDRESS, aethToDistribute);
+    }
 }
