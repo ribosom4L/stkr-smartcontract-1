@@ -58,10 +58,29 @@ contract StkrPool is IStkrPool, OwnableUpgradeSafe {
         mapping(address => uint64) providerShare; // might be negative
         mapping(address => uint64) stakerShare; // +2 eth
         mapping(address => uint64) claimedRewards;
+
+        mapping(address => bool) exitedProviders;
         // providerShare+stakerShare = -1.5+2 = 0.5
+
+        // if provider has share then don't allow to claim more then providerShare+stakerShare+claimedRewards-2ether
+
+        // 2 ethereum
+        // 1 slashing ~ 1/32 affective balance
+        // add ankr as security deposit
+
+        // 2 ethereum / slash amount
+        // check slashing amount for slot proposal
 
         /* we don't need provider with his staking amount also */
     }
+
+    function iWantToExitFromPool(uint32 pool) public {
+        _pools[pool].exitedProviders[msg.sender] = true;
+        emit ProviderExited();
+    }
+
+    // How to exit from pool proposal:
+    // 1. we exit provider from pool by sending transaction to our smart contract
 
     /* list with active pools */
     Pool[] private _pools;
