@@ -40,13 +40,6 @@ contract StkrPool is OwnableUpgradeSafe {
     /* distribution events */
     event RewardClaimed (uint32 pool, address user, uint256 amount);
 
-    uint256 public PROVIDER_SLASH_THRESHOLD = 2 ether;
-    address public DEVELOPER_ADDRESS = 0xb827bCA9CF96f58a7BEd49D9b5cbd84fEd72b03F;
-    uint64 public PROVIDER_REWARD_SHARE = 10;
-    uint64 public REQUESTER_REWARD_SHARE = 77;
-    uint64 public STAKING_REWARD_SHARE = 10;
-    uint64 public DEVELOPER_REWARD_SHARE = 3;
-
     enum PoolStatus {
         /* pending pool just doesn't exist */
         PushWaiting,
@@ -56,19 +49,12 @@ contract StkrPool is OwnableUpgradeSafe {
         Canceled
     }
 
-    /* 1+8*2=17 (1 word, 20k/5k), 32-17=15 bytes */
-    struct Pool {
-        PoolStatus status;
-        uint64 rewarded; /* its better to store balance in gwei because beacon chain also stores it in gwei */
-        uint64 slashed;
-        /* QUESTION: why do we need requester rewards because we can calculate it using our distribution formula? */
-        mapping(address => uint64) providerShare; // might be negative
-        mapping(address => uint64) stakerShare; // +2 eth
-        mapping(address => uint64) claimedRewards;
-        // providerShare+stakerShare = -1.5+2 = 0.5
-
-        /* we don't need provider with his staking amount also */
-    }
+    uint256 public PROVIDER_SLASH_THRESHOLD = 2 ether;
+    address public DEVELOPER_ADDRESS = 0xb827bCA9CF96f58a7BEd49D9b5cbd84fEd72b03F;
+    uint64 public PROVIDER_REWARD_SHARE = 10;
+    uint64 public REQUESTER_REWARD_SHARE = 77;
+    uint64 public STAKING_REWARD_SHARE = 10;
+    uint64 public DEVELOPER_REWARD_SHARE = 3;
 
     /* list with active pools */
     Pool[] private _pools;
@@ -91,11 +77,31 @@ contract StkrPool is OwnableUpgradeSafe {
     /* current pending gwei amount for next pool */
     uint64 private _pendingAmount;
 
-    constructor() public {}
+    /* 1+8*2=17 (1 word, 20k/5k), 32-17=15 bytes */
+    struct Pool {
+        PoolStatus status;
+        uint64 rewarded; /* its better to store balance in gwei because beacon chain also stores it in gwei */
+        uint64 slashed;
+        /* QUESTION: why do we need requester rewards because we can calculate it using our distribution formula? */
+        mapping(address => uint64) providerETHShare; // might be negative
+        mapping(address => uint64) stakerShare; // +2 eth
+        mapping(address => uint64) claimedRewards;
+
+        mapping(address => uint64) providerANKRShare; // might be negative
+        // providerShare+stakerShare = -1.5+2 = 0.5
+
+        /* we don't need provider with his staking amount also */
+    }
 
     function stake() public payable {
         _stakeUntilPossible(msg.value);
     }
+
+    // TODO: implement
+    function registerProviderANKR() {}
+
+    // TODO: implement
+    function registerProviderAETH() {}
 
     function _stakeUntilPossible(uint256 msgValue) private {
         require(msg.value % 1e9 == 0, "amount shouldn't have a remainder");

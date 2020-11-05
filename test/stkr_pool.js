@@ -1,16 +1,11 @@
-const fs               = require("fs");
-const path             = require("path");
-const helpers          = require("./helpers/helpers");
-const { expectRevert } = require("@openzeppelin/test-helpers");
-const StkrPool         = artifacts.require("StkrPool");
+const fs                            = require("fs");
+const path                          = require("path");
+const helpers                       = require("./helpers/helpers");
+const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
+const StkrPool                      = artifacts.require("StkrPool");
 
 contract("Global Pool", function(accounts) {
-  let ankr;
-  let staking;
-  let micropool;
-  let owner;
-  let systemParameters;
-  let firstStaking;
+  let pool;
   let depositData;
 
   before(async function() {
@@ -24,4 +19,30 @@ contract("Global Pool", function(accounts) {
 
     owner = accounts[0];
   });
-}
+
+  it("should let users to stake", async () => {
+    const tx = await pool.stake({
+      from:  accounts[0],
+      value: helpers.amount(10)
+    });
+
+    expectEvent(tx, 'StakePending', {staker: accounts[0], pool: "0", amount: helpers.gwei(10)})
+  });
+
+  it('should close pool after 32 eth', async() => {
+    const tx = await pool.stake({
+      from:  accounts[0],
+      value: helpers.amount(35)
+    });
+
+    console.log(tx.logs)
+  })
+  //
+  // it('should let users to stake', function() {
+  //
+  // })
+  //
+  // it('should let users to stake', function() {
+  //
+  // })
+});
