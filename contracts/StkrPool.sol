@@ -68,6 +68,38 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
     IStaking private _stakingContract;
 
     SystemParameters private _systemParameters;
+    /* 1+8*2=17 (1 word, 20k/5k), 32-17=15 bytes */
+    struct Pool {
+        PoolStatus status;
+        uint64 rewarded; /* its better to store balance in gwei because beacon chain also stores it in gwei */
+        uint64 slashed;
+        /* QUESTION: why do we need requester rewards because we can calculate it using our distribution formula? */
+        mapping(address => uint64) providerShare; // might be negative
+        mapping(address => uint64) stakerShare; // +2 eth
+        mapping(address => uint64) claimedRewards;
+
+        mapping(address => bool) exitedProviders;
+        // providerShare+stakerShare = -1.5+2 = 0.5
+
+        // if provider has share then don't allow to claim more then providerShare+stakerShare+claimedRewards-2ether
+
+        // 2 ethereum
+        // 1 slashing ~ 1/32 affective balance
+        // add ankr as security deposit
+
+        // 2 ethereum / slash amount
+        // check slashing amount for slot proposal
+
+        /* we don't need provider with his staking amount also */
+    }
+
+    function iWantToExitFromPool(uint32 pool) public {
+        _pools[pool].exitedProviders[msg.sender] = true;
+        emit ProviderExited();
+    }
+
+    // How to exit from pool proposal:
+    // 1. we exit provider from pool by sending transaction to our smart contract
 
     /* list with active pools */
     Pool[] private _pools;
