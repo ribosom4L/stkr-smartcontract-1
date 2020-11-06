@@ -112,12 +112,12 @@ contract Staking is OwnableUpgradeSafe, Lockable {
         // FIXME
         stake.weight = allowance;
 
-        //        if (stake.weight > 0) {
-        //            stake.weight = stake.weight.mul(block.number).add(allowance.mul(stake.lastBlock)) / stake.lastBlock.add(block.number);
-        //        }
-        //        else {
-        //            stake.weight = allowance;
-        //        }
+        if (stake.weight > 0) {
+            stake.weight = stake.weight.mul(block.number).add(allowance.mul(stake.lastBlock)) / stake.lastBlock.add(block.number);
+        }
+        else {
+            stake.weight = allowance;
+        }
 
         stake.lastBlock = stake.lastBlock.add(block.number);
         stake.available = stake.available.add(allowance);
