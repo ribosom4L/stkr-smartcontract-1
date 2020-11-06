@@ -2,8 +2,13 @@
 pragma solidity ^0.6.8;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/math/Math.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
+import "./lib/interfaces/IDepositContract.sol";
+import "./SystemParameters.sol";
+import "./lib/Lockable.sol";
+import "./lib/interfaces/IAETH.sol";
+import "./lib/interfaces/IStaking.sol";
 
 import "./lib/interfaces/IDepositContract.sol";
 
@@ -21,7 +26,7 @@ interface IStkrPool {
 
 }
 
-contract StkrPool is OwnableUpgradeSafe {
+contract StkrPool is OwnableUpgradeSafe, Lockable {
     using SafeMath for uint;
 
     /* stake events */
@@ -49,23 +54,32 @@ contract StkrPool is OwnableUpgradeSafe {
         Canceled
     }
 
-    uint256 public PROVIDER_SLASH_THRESHOLD = 2 ether;
-    address public DEVELOPER_ADDRESS = 0xb827bCA9CF96f58a7BEd49D9b5cbd84fEd72b03F;
-    uint64 public PROVIDER_REWARD_SHARE = 10;
-    uint64 public REQUESTER_REWARD_SHARE = 77;
-    uint64 public STAKING_REWARD_SHARE = 10;
-    uint64 public DEVELOPER_REWARD_SHARE = 3;
+    enum PoolType {ANKR, ETH}
+
+    uint256 private PROVIDER_SLASH_THRESHOLD = 2 ether;
+    address private DEVELOPER_ADDRESS = 0xb827bCA9CF96f58a7BEd49D9b5cbd84fEd72b03F;
+    uint64 private PROVIDER_REWARD_SHARE = 10;
+    uint64 private REQUESTER_REWARD_SHARE = 77;
+    uint64 private STAKING_REWARD_SHARE = 10;
+    uint64 private DEVELOPER_REWARD_SHARE = 3;
+
+    IAETH private _aethContract;
+
+    IStaking private _stakingContract;
+
+    SystemParameters private _systemParameters;
 
     /* list with active pools */
     Pool[] private _pools;
+
+    /* (pool index => participants) */
+    mapping(uint256 => HashSet) _participants;
 
     /* this structure stores hash set */
     struct HashSet {
         mapping(address => uint256) index;
         address[] users;
     }
-    /* (pool index => participants) */
-    mapping(uint256 => HashSet) _participants;
 
     /* 20+8=28 (1 word, 20k/5k) */
     struct PendingStake {
@@ -82,7 +96,7 @@ contract StkrPool is OwnableUpgradeSafe {
         PoolStatus status;
         uint64 rewarded; /* its better to store balance in gwei because beacon chain also stores it in gwei */
         uint64 slashed;
-        /* QUESTION: why do we need requester rewards because we can calculate it using our distribution formula? */
+        // Question: we should know the provider before deposit on contract. because
         mapping(address => uint64) providerETHShare; // might be negative
         mapping(address => uint64) stakerShare; // +2 eth
         mapping(address => uint64) claimedRewards;
@@ -98,10 +112,12 @@ contract StkrPool is OwnableUpgradeSafe {
     }
 
     // TODO: implement
-    function registerProviderANKR() {}
+    function topUpSecureDepositWithAnkr() {}
 
-    // TODO: implement
-    function registerProviderAETH() {}
+    function topUpSecureDepositWithEth(uint64 poolIndex) public payable {
+        require(value % 1e9 == 0, "amount shouldn't have a remainder");
+        _pools[poolIndex].providerETHShare += msg.value;
+    }
 
     function _stakeUntilPossible(uint256 msgValue) private {
         require(msg.value % 1e9 == 0, "amount shouldn't have a remainder");
@@ -135,7 +151,6 @@ contract StkrPool is OwnableUpgradeSafe {
     }
 
     function _closePendingPool() private {
-        /* TODO: REENTRENCY PROTECTION */
         uint256 nextPoolIndex = _pools.length;
         /* we pay only 20k+5k for creation (1 byte in reserve), tbh we pay additional 15k for length creation when length is 0 */
         Pool memory _pool;
@@ -163,6 +178,7 @@ contract StkrPool is OwnableUpgradeSafe {
         require(rewarded % 1e9 == 0, "rewarded amount shouldn't have a remainder");
         require(slashed % 1e9 == 0, "slashed amount shouldn't have a remainder");
         /* increase total rewards */
+        // Question: why we have provider share here? share must exists before rewarding
         thatPool.providerShare[user] += uint64((rewarded - slashed) / 1e9);
         /* make sure provider has index */
         thatPool.rewarded += rewarded / 1e9;
@@ -216,5 +232,21 @@ contract StkrPool is OwnableUpgradeSafe {
         uint256 aethToDistribute = totalRewards * 1e9;
         /* distribute AETH tokens */
         emit RewardClaimed(pool, DEVELOPER_ADDRESS, aethToDistribute);
+    }
+
+    function poolCount() public view returns (uint256) {
+        return _pools.length;
+    }
+
+    function updateAETHContract(address payable tokenContract) external onlyOwner {
+        _aethContract = IAETH(tokenContract);
+    }
+
+    function updateParameterContract(address paramContract) external onlyOwner {
+        _systemParameters = SystemParameters(paramContract);
+    }
+
+    function updateStakingContract(address stakingContract) external onlyOwner {
+        _stakingContract = IStaking(stakingContract);
     }
 }
