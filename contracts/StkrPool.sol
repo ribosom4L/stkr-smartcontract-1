@@ -13,17 +13,6 @@ import "./lib/interfaces/IStaking.sol";
 import "./lib/interfaces/IDepositContract.sol";
 
 interface IStkrPool {
-
-    //    function createETHPool() external payable;
-    //    function createANKRPool() external payable;
-
-    //    function stake() external payable;
-    //
-    //    function proposeRewardOrSlashing(uint32 pool, address user, int256 amount) external;
-    //
-    //    function claimStakerRewards(uint32 pool) external;
-
-
 }
 
 contract StkrPool is OwnableUpgradeSafe, Lockable {
@@ -45,56 +34,96 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
     /* distribution events */
     event RewardClaimed (uint32 pool, address user, uint256 amount);
 
-    enum PoolStatus {
-        /* pending pool just doesn't exist */
-        PushWaiting,
-        OnGoing,
-        Completed,
-        /* QUESTION: does it possible to cancel pool? how does cancellation work? */
-        Canceled
-    }
+    uint256 public PROVIDER_SLASH_THRESHOLD = 2 ether;
+    address public DEVELOPER_ADDRESS = 0xb827bCA9CF96f58a7BEd49D9b5cbd84fEd72b03F;
+    uint64 public PROVIDER_REWARD_SHARE = 10;
+    uint64 public REQUESTER_REWARD_SHARE = 77;
+    uint64 public STAKING_REWARD_SHARE = 10;
+    uint64 public DEVELOPER_REWARD_SHARE = 3;
 
-    enum PoolType {ANKR, ETH}
-
-    uint256 private PROVIDER_SLASH_THRESHOLD = 2 ether;
-    address private DEVELOPER_ADDRESS = 0xb827bCA9CF96f58a7BEd49D9b5cbd84fEd72b03F;
-    uint64 private PROVIDER_REWARD_SHARE = 10;
-    uint64 private REQUESTER_REWARD_SHARE = 77;
-    uint64 private STAKING_REWARD_SHARE = 10;
-    uint64 private DEVELOPER_REWARD_SHARE = 3;
+    uint256 public PROVIDER_EXIT_CONFIRMATION = 24; // 12 * 2
 
     IAETH private _aethContract;
-
+    SystemParameters private _systemParameters;
     IStaking private _stakingContract;
 
-    SystemParameters private _systemParameters;
-    /* 1+8*2=17 (1 word, 20k/5k), 32-17=15 bytes */
-    struct Pool {
-        PoolStatus status;
-        uint64 rewarded; /* its better to store balance in gwei because beacon chain also stores it in gwei */
-        uint64 slashed;
-        /* QUESTION: why do we need requester rewards because we can calculate it using our distribution formula? */
-        mapping(address => uint64) providerShare; // might be negative
-        mapping(address => uint64) stakerShare; // +2 eth
-        mapping(address => uint64) claimedRewards;
-
-        mapping(address => bool) exitedProviders;
-        // providerShare+stakerShare = -1.5+2 = 0.5
-
-        // if provider has share then don't allow to claim more then providerShare+stakerShare+claimedRewards-2ether
-
-        // 2 ethereum
-        // 1 slashing ~ 1/32 affective balance
-        // add ankr as security deposit
-
-        // 2 ethereum / slash amount
-        // check slashing amount for slot proposal
-
-        /* we don't need provider with his staking amount also */
+    enum SecureDepositKind {
+        ETH, ANKR
     }
 
-    function iWantToExitFromPool(uint32 pool) public {
-        _pools[pool].exitedProviders[msg.sender] = true;
+    /* if _secureDeposit <= _latestSingleReward then the provider is banned */
+    mapping(bytes32 => int256) _secureDeposit;
+    uint256 private _latestSingleReward;
+
+    function isProviderBanned(address provider) public view returns (bool) {
+        if (_secureDeposit[abi.encodePacked(provider, SecureDepositKind.ETH)] <= _latestSingleReward) {
+            return false;
+        }
+        uint256 ankrRate = getEthToAnkrRate();
+        if (_secureDeposit[abi.encodePacked(provider, SecureDepositKind.ANKR)] / ankrToEthRate <= _latestSingleReward) {
+            return false;
+        }
+        return true;
+    }
+
+    function compensateBeaconDepositFromInsuranceFund(bytes depositData, uint256 compensateAmount) {
+        // send funds to beacon chain
+    }
+
+    function slashProviderWithAnkrDeposit(address provider, uint256 slashingAmountInEther) {
+        _stakingRewards -= slashingAmountInEther;
+        uint256 slashingAmountInAnkr = slashingAmountInEther * getEthToAnkrRate();
+        // sell ankr for ethereum
+
+        // sum(eth2_balance) == sum(aeth_balance - aeth_insurance_fund)
+
+        // eth2_balance 0.001 eth -> 31.999
+
+        // if (eth2_balance < 20 ether) then we compensate it from insurance fund
+
+        // eth2_balance -= slashingAmount
+        // aeth_insurance_fund += slashingAmount (deducted from provider)
+        // aeth_balance -= slashingAmount
+
+        // increase insurance pool
+        _insurancePool += slashingAmountInEther;
+        // beacon validator balance become 16 ethereum
+    }
+
+    uint256 private _insurancePool;
+
+    function getEthToAnkrRate() returns (uint256) {
+        return 47_619;
+    }
+
+    // 0. wait until he become a validator
+    // 1. call exit
+    // 2. disable his machine
+    // 3. claim all aeth
+
+    // providerShare+stakerShare = -1.5+2 = 0.5
+    // if provider has share then don't allow to claim more then providerShare+stakerShare+claimedRewards-2ether
+    // 2 ethereum
+    // 1 slashing ~ 1/32 affective balance
+    // add ankr as security deposit
+    // 2 ethereum / slash amount
+    // check slashing amount for slot proposal
+    /* we don't need provider with his staking amount also */
+    // 32 * currentPushPoolIndex
+    // globalStakedAmount // 32
+
+    uint256 private _stakingRewards;
+    uint256 private _beaconOffset;
+
+    /* QUESTION: why do we need requester rewards because we can calculate it using our distribution formula? */
+    mapping(address => uint64) providerShare; // might be negative
+    mapping(address => uint64) stakerShare; // +2 eth
+    mapping(address => uint64) claimedRewards;
+
+    mapping(address => uint256) private _exitedProviders;
+
+    function exitAsProvider() public {
+        _exitedProviders[msg.sender] = block.number;
         emit ProviderExited();
     }
 
@@ -122,22 +151,6 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
     PendingStake[] private _pendingStakes;
     /* current pending gwei amount for next pool */
     uint64 private _pendingAmount;
-
-    /* 1+8*2=17 (1 word, 20k/5k), 32-17=15 bytes */
-    struct Pool {
-        PoolStatus status;
-        uint64 rewarded; /* its better to store balance in gwei because beacon chain also stores it in gwei */
-        uint64 slashed;
-        // Question: we should know the provider before deposit on contract. because
-        mapping(address => uint64) providerETHShare; // might be negative
-        mapping(address => uint64) stakerShare; // +2 eth
-        mapping(address => uint64) claimedRewards;
-
-        mapping(address => uint64) providerANKRShare; // might be negative
-        // providerShare+stakerShare = -1.5+2 = 0.5
-
-        /* we don't need provider with his staking amount also */
-    }
 
     function stake() public payable {
         _stakeUntilPossible(msg.value);
@@ -198,7 +211,7 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
             emit StakeConfirmed(pendingStake.staker, uint32(nextPoolIndex), pendingStake.amount);
         }
         /* releases (N+1)*10k + 10k gas */
-         delete _pendingStakes;
+        delete _pendingStakes;
         _pendingAmount = 0;
         emit PoolPushWaiting(nextPoolIndex);
     }
