@@ -24,6 +24,7 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
 
     /* provider events (once provider reach PROVIDER_SLASH_THRESHOLD negative balance we must slash him) */
     event ProviderSlashed(address indexed provider);
+    event ProviderExited(address indexed provider);
 
     /* pool events */
     event PoolPushWaiting(uint256 indexed pool);
@@ -33,68 +34,6 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
 
     /* distribution events */
     event RewardClaimed (uint32 pool, address user, uint256 amount);
-
-    uint256 public PROVIDER_SLASH_THRESHOLD = 2 ether;
-    address public DEVELOPER_ADDRESS = 0xb827bCA9CF96f58a7BEd49D9b5cbd84fEd72b03F;
-    uint64 public PROVIDER_REWARD_SHARE = 10;
-    uint64 public REQUESTER_REWARD_SHARE = 77;
-    uint64 public STAKING_REWARD_SHARE = 10;
-    uint64 public DEVELOPER_REWARD_SHARE = 3;
-
-    uint256 public PROVIDER_EXIT_CONFIRMATION = 24; // 12 * 2
-
-    IAETH private _aethContract;
-    SystemParameters private _systemParameters;
-    IStaking private _stakingContract;
-
-    enum SecureDepositKind {
-        ETH, ANKR
-    }
-
-    /* if _secureDeposit <= _latestSingleReward then the provider is banned */
-    mapping(bytes32 => int256) _secureDeposit;
-    uint256 private _latestSingleReward;
-
-    function isProviderBanned(address provider) public view returns (bool) {
-        if (_secureDeposit[abi.encodePacked(provider, SecureDepositKind.ETH)] <= _latestSingleReward) {
-            return false;
-        }
-        uint256 ankrRate = getEthToAnkrRate();
-        if (_secureDeposit[abi.encodePacked(provider, SecureDepositKind.ANKR)] / ankrToEthRate <= _latestSingleReward) {
-            return false;
-        }
-        return true;
-    }
-
-    function compensateBeaconDepositFromInsuranceFund(bytes depositData, uint256 compensateAmount) {
-        // send funds to beacon chain
-    }
-
-    function slashProviderWithAnkrDeposit(address provider, uint256 slashingAmountInEther) {
-        _stakingRewards -= slashingAmountInEther;
-        uint256 slashingAmountInAnkr = slashingAmountInEther * getEthToAnkrRate();
-        // sell ankr for ethereum
-
-        // sum(eth2_balance) == sum(aeth_balance - aeth_insurance_fund)
-
-        // eth2_balance 0.001 eth -> 31.999
-
-        // if (eth2_balance < 20 ether) then we compensate it from insurance fund
-
-        // eth2_balance -= slashingAmount
-        // aeth_insurance_fund += slashingAmount (deducted from provider)
-        // aeth_balance -= slashingAmount
-
-        // increase insurance pool
-        _insurancePool += slashingAmountInEther;
-        // beacon validator balance become 16 ethereum
-    }
-
-    uint256 private _insurancePool;
-
-    function getEthToAnkrRate() returns (uint256) {
-        return 47_619;
-    }
 
     // 0. wait until he become a validator
     // 1. call exit
@@ -112,26 +51,41 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
     // 32 * currentPushPoolIndex
     // globalStakedAmount // 32
 
+    enum SecureDepositKind {
+        ETH, ANKR
+    }
+
+    uint256 public PROVIDER_SLASH_THRESHOLD = 2 ether;
+    address public DEVELOPER_ADDRESS = 0xb827bCA9CF96f58a7BEd49D9b5cbd84fEd72b03F;
+    uint64 public PROVIDER_REWARD_SHARE = 10;
+    uint64 public REQUESTER_REWARD_SHARE = 77;
+    uint64 public STAKING_REWARD_SHARE = 10;
+    uint64 public DEVELOPER_REWARD_SHARE = 3;
+
+    uint256 public PROVIDER_EXIT_CONFIRMATION = 24; // 12 * 2
+
+    IAETH private _aethContract;
+    SystemParameters private _systemParameters;
+    IStaking private _stakingContract;
+
+    address payable _depositContract;
+
+    /* if _secureDeposit <= _latestSingleReward then the provider is banned */
+    mapping(bytes32 => int256) private _secureDeposit;
+    uint256 private _latestSingleReward;
+
+    uint256 private _insurancePool;
+
     uint256 private _stakingRewards;
     uint256 private _beaconOffset;
 
-    /* QUESTION: why do we need requester rewards because we can calculate it using our distribution formula? */
-    mapping(address => uint64) providerShare; // might be negative
-    mapping(address => uint64) stakerShare; // +2 eth
-    mapping(address => uint64) claimedRewards;
+    mapping(address => uint64) private providerShare;
+    mapping(address => uint64) private slashings;
+
+    mapping(address => uint64) private stakerShare; // +2 eth
+    mapping(address => uint64) private claimedRewards;
 
     mapping(address => uint256) private _exitedProviders;
-
-    function exitAsProvider() public {
-        _exitedProviders[msg.sender] = block.number;
-        emit ProviderExited();
-    }
-
-    // How to exit from pool proposal:
-    // 1. we exit provider from pool by sending transaction to our smart contract
-
-    /* list with active pools */
-    Pool[] private _pools;
 
     /* (pool index => participants) */
     mapping(uint256 => HashSet) _participants;
@@ -152,16 +106,71 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
     /* current pending gwei amount for next pool */
     uint64 private _pendingAmount;
 
+    function getEthToAnkrRate() returns (uint256) {
+        return 47_619;
+    }
+
     function stake() public payable {
         _stakeUntilPossible(msg.value);
+    }
+
+
+    // How to exit from pool proposal:
+    // 1. we exit provider from pool by sending transaction to our smart contract
+    function exitAsProvider() public {
+        _exitedProviders[msg.sender] = block.number;
+        emit ProviderExited(msg.sender);
     }
 
     // TODO: implement
     function topUpSecureDepositWithAnkr() {}
 
-    function topUpSecureDepositWithEth(uint64 poolIndex) public payable {
+    function topUpSecureDepositWithEth() public payable {
         require(value % 1e9 == 0, "amount shouldn't have a remainder");
-        _pools[poolIndex].providerETHShare += msg.value;
+        providerShare[msg.sender] += mgs.value;
+    }
+
+    function isProviderBanned(address provider) public view returns (bool) {
+        if (_secureDeposit[abi.encodePacked(provider, SecureDepositKind.ETH)] <= _latestSingleReward) {
+            return false;
+        }
+        uint256 ankrRate = getEthToAnkrRate();
+        if (_secureDeposit[abi.encodePacked(provider, SecureDepositKind.ANKR)] / ankrToEthRate <= _latestSingleReward) {
+            return false;
+        }
+        return true;
+    }
+
+    function compensateBeaconDepositFromInsuranceFund(bytes depositData, uint256 compensateAmount) {
+        // send funds to beacon chain
+    }
+
+    function slashProviderWithETH(address provider, uint256 amount) {
+
+    }
+
+    function slashProviderWithANKR(address provider, uint256 amount) {
+
+    }
+
+    function slashProviderWithAnkrDeposit(address provider, uint256 slashingAmountInEther) {
+        _stakingRewards -= slashingAmountInEther;
+        uint256 slashingAmountInAnkr = slashingAmountInEther * getEthToAnkrRate();
+        // sell ankr for ethereum
+
+        // sum(eth2_balance) == sum(aeth_balance - aeth_insurance_fund)
+
+        // eth2_balance 0.001 eth -> 31.999
+
+        // if (eth2_balance < 20 ether) then we compensate it from insurance fund
+
+        // eth2_balance -= slashingAmount
+        // aeth_insurance_fund += slashingAmount (deducted from provider)
+        // aeth_balance -= slashingAmount
+
+        // increase insurance pool
+        _insurancePool += slashingAmountInEther;
+        // beacon validator balance become 16 ethereum
     }
 
     function _stakeUntilPossible(uint256 msgValue) private {
