@@ -208,14 +208,15 @@ contract Staking is OwnableUpgradeSafe, Lockable {
         emit RewardIncome(poolIndex, msg.value);
     }
 
-    function compensatePoolLoss(address provider, uint256 amount, uint256 providerStakeAmount) external onlyMicroPoolContract returns (uint256) {
+    function compensatePoolLoss(address provider, uint256 amount, uint256 providerStakeAmount) external onlyMicroPoolContract returns (bool, uint256) {
         UserStake storage stake = _stakes[provider];
 
         // ankr amount equals to needed ether
         uint256 ankrAmount = amount.mul(_marketPlaceContract.ankrEthRate());
 
-        // TODO: this should be solved
-        require(stake.frozen >= amount, "Insufficient staking balance");
+        if (stake.frozen >= amount) {
+            return (false, ankrAmount);
+        }
 
         stake.frozen = stake.frozen.sub(providerStakeAmount);
         stake.available = stake.available.add(providerStakeAmount).sub(ankrAmount);
@@ -229,11 +230,15 @@ contract Staking is OwnableUpgradeSafe, Lockable {
 
         emit Compensate(provider, ankrAmount, amount);
 
-        return ankrAmount;
+        return (true, ankrAmount);
     }
 
     function totalStakesOf(address staker) public view returns (uint256) {
         return _stakes[staker].available.add(_stakes[staker].frozen);
+    }
+
+    function frozenStakesOf(address staker) public view returns (uint256) {
+        return _stakes[staker].frozen;
     }
 
     function claimableStakerReward(address _staker) public view returns (uint256) {
