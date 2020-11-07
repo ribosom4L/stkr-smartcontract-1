@@ -8,4 +8,6 @@ interface IStaking {
     function unfreeze(address user, uint256 amount) external returns (bool);
 
     function reward(uint256 poolIndex) payable external;
+
+    function frozenStakesOf(address staker) external returns (uint256);
 }

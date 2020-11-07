@@ -17,6 +17,8 @@ contract SystemParameters is OwnableUpgradeSafe {
     // Ethereum staking amount
     uint256 public ETHEREUM_STAKING_AMOUNT;
 
+    uint256 public EXIT_BLOCKS;
+
     // TODO: allow only multiplies of requester minimum staking amount
 
     function initialize() external initializer {
@@ -24,5 +26,6 @@ contract SystemParameters is OwnableUpgradeSafe {
         REQUESTER_MINIMUM_POOL_STAKING = 100 finney;
         SLASHINGS_FOR_MIGRATION = 0.1 ether;
         ETHEREUM_STAKING_AMOUNT = 4 ether;
+        EXIT_BLOCKS = 24;
     }
 }
