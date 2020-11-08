@@ -7,7 +7,6 @@ import "./lib/Lockable.sol";
 import "./lib/interfaces/IAETH.sol";
 import "./lib/interfaces/IMarketPlace.sol";
 
-// TODO: user can join late (reward should be reduced)
 contract Staking is OwnableUpgradeSafe, Lockable {
     using SafeMath for uint256;
 
@@ -40,7 +39,7 @@ contract Staking is OwnableUpgradeSafe, Lockable {
     event Compensate(address indexed provider, uint256 ankrAmount, uint256 etherAmount);
 
     event RewardClaim(
-        address payable staker,
+        address staker,
         uint256 amount
     );
 
@@ -64,7 +63,9 @@ contract Staking is OwnableUpgradeSafe, Lockable {
 
     IERC20 private _ankrContract;
 
-    address private _microPoolContract;
+    address private _stkrPoolContract;
+
+    address private _swapContract;
 
     uint256 private totalRewards;
 
@@ -73,13 +74,13 @@ contract Staking is OwnableUpgradeSafe, Lockable {
 
     uint256 private totalStakes;
 
-    function initialize(address ankrContract, address microPoolContract, address aethContract) public initializer {
+    function initialize(address ankrContract, address stkrPoolContract, address aethContract) public initializer {
         OwnableUpgradeSafe.__Ownable_init();
 
         _startBlock = block.number;
 
         _ankrContract = IERC20(ankrContract);
-        _microPoolContract = microPoolContract;
+        _stkrPoolContract = stkrPoolContract;
         AETHContract = IAETH(aethContract);
     }
 
@@ -89,7 +90,7 @@ contract Staking is OwnableUpgradeSafe, Lockable {
     }
 
     modifier onlyMicroPoolContract() {
-        require(_microPoolContract == _msgSender(), "Ownable: caller is not the micropool contract");
+        require(_stkrPoolContract == _msgSender(), "Ownable: caller is not the micropool contract");
         _;
     }
 
@@ -107,8 +108,8 @@ contract Staking is OwnableUpgradeSafe, Lockable {
 
         uint256 blockNum = block.number;
         uint weight = allowance.mul(blockNum);
-        // FIXME
-        _stakes[user] = _stakes[user].add(allowance);
+
+         _stakes[user] = _stakes[user].add(allowance);
         _weight[user] = _weight[user].add(weight);
 
         totalStakes = totalStakes.add(allowance);
@@ -120,7 +121,7 @@ contract Staking is OwnableUpgradeSafe, Lockable {
     // this function will called by micro pool contract to freeze staked balance and claim allowance if exists
     function freeze(address user, uint256 amount)
     public
-    addressAllowed(_microPoolContract)
+    addressAllowed(_stkrPoolContract)
     unlocked(msg.sender)
     returns (bool)
     {
@@ -159,7 +160,7 @@ contract Staking is OwnableUpgradeSafe, Lockable {
 
     function unfreeze(address addr, uint256 amount)
     public
-    addressAllowed(_microPoolContract)
+    addressAllowed(_stkrPoolContract)
     unlocked(addr)
     returns (bool)
     {
@@ -167,6 +168,12 @@ contract Staking is OwnableUpgradeSafe, Lockable {
 
         emit Unfreeze(addr, amount);
         return true;
+    }
+
+    function setClaimed(address staker, uint256 amount) public addressAllowed(_swapContract) {
+        _claimed[staker] = _claimed[staker].add(amount);
+
+        emit RewardClaim(staker, amount);
     }
 
     //TODO: Reward from swap contract
@@ -200,29 +207,11 @@ contract Staking is OwnableUpgradeSafe, Lockable {
 //        return (true, ankrAmount);
 //    }
 
-    function claimRewards() public payable unlocked(msg.sender) {
-        // TODO: Claim from swap contract
-
-
-//        require(claimableAfter > 0, "Contract not claimable yet");
-//
-//        uint256 claimableReward = claimableStakerReward(msg.sender);
-//
-//        require(claimableReward > 0, "There is no rewards to claim");
-//
-//        UserStake storage stake = _stakes[msg.sender];
-//        stake.claimedRewardAmount = stake.claimedRewardAmount.add(claimableReward);
-//
-//        require(msg.sender.send(claimableReward), "Rewards could not sent");
-//
-//        emit RewardClaim(msg.sender, claimableReward);
-    }
-
     function setClaimableBlock(uint256 blockNumber) public onlyOwner {
         claimableAfter = blockNumber;
     }
 
-    function totalStakesOf(address staker) public view returns (uint256) {
+    function stakesOf(address staker) public view returns (uint256) {
         return _stakes[staker];
     }
 
@@ -246,15 +235,18 @@ contract Staking is OwnableUpgradeSafe, Lockable {
         AETHContract = IAETH(aethContract);
     }
 
-    function updateAnkrContract(address ankrContract) public onlyOwner {
-        _ankrContract = IERC20(ankrContract);
-    }
 
-    function updateMicroPoolContract(address microPoolContract)
+
+
+    function updateStkrPoolContract(address stkrPoolContract)
     public
     onlyOwner
     {
-        _microPoolContract = microPoolContract;
+        _stkrPoolContract = stkrPoolContract;
+    }
+
+    function updateSwapContract(address swapContract) public onlyOwner {
+        _swapContract = swapContract;
     }
 
     function realWeight() public view returns(uint256) {
