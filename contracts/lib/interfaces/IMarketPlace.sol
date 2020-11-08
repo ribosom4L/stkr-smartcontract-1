@@ -1,4 +1,4 @@
-pragma solidity ^0.6.8;
+pragma solidity ^0.6.11;
 
 interface IMarketPlace {
     function ethUsdRate() external returns (uint256);

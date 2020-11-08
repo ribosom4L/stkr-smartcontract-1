@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "compile": "truffle compile --all -s ASSERTIONS=1",
-    "migrate:goerli": "truffle migrate --network goerli | node scripts/build_abi.js",
+    "migrate": "truffle migrate",
     "test": "truffle test"
   },
   "keywords": [],
@@ -17,14 +17,13 @@
     "ethers": "^5.0.9"
   },
   "dependencies": {
-    "truffle": "^5.1.48",
-    "truffle-hdwallet-provider": "^1.0.17",
-    "web3": "^1.2.11",
     "@openzeppelin/cli": "^2.8.2",
     "@openzeppelin/contracts": "^3.2.0",
     "@openzeppelin/contracts-ethereum-package": "^3.0.0",
     "@openzeppelin/truffle-upgrades": "^1.1.1",
     "@openzeppelin/upgrades": "^2.8.0",
+    "@uniswap/v2-core": "^1.0.1",
+    "@uniswap/v2-periphery": "^1.1.0-beta.0",
     "bignumber.js": "^9.0.0",
     "dotenv": "^8.2.0",
     "prettier-plugin-solidity": "^1.0.0-alpha.56",

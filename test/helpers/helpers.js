@@ -76,6 +76,10 @@ amount = data => {
   return String(web3.utils.toWei(String(data)));
 };
 
+gwei = data => {
+  return String(web3.utils.toWei(String(data), 'gwei'));
+};
+
 module.exports = {
   advanceTime,
   advanceBlock,
@@ -83,5 +87,6 @@ module.exports = {
   takeSnapshot,
   revertToSnapshot,
   makeHex,
-  amount
+  amount,
+  gwei
 };

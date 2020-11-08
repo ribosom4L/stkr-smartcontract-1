@@ -12,8 +12,7 @@ fs.readdirSync(buildPath).forEach(val => {
   data[contractName] = {}
 
   for (const networkData of Object.entries(networks)) {
-    const address = networkData[1].address
-    data[contractName][networkData[0]] = address
+    data[contractName][networkData[0]] = networkData[1].address
   }
 })
 
