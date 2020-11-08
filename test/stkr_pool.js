@@ -4,7 +4,7 @@ const helpers                       = require("./helpers/helpers");
 const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const StkrPool                      = artifacts.require("StkrPool");
 
-contract("Global Pool", function(accounts) {
+contract("Stkr Pool", function(accounts) {
   let pool;
   let depositData;
 

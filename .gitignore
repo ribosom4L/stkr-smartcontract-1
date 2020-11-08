@@ -7,7 +7,7 @@ node_modules/
 build/
 build/contracts/*.abi
 
-.openzeppelin/.session
+.openzeppelin/**
 .DS_Store
 
 .openzeppelin/unknown-*.json
