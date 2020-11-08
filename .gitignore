@@ -4,8 +4,11 @@ artifacts/
 cache/
 node_modules/
 build/
+build/contracts/*.abi
 
-.openzeppelin
+.openzeppelin/**
 .DS_Store
+
+.openzeppelin/unknown-*.json
 
 .env
