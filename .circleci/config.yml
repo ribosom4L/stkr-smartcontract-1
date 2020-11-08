@@ -76,6 +76,6 @@ workflows:
                 - develop
                 - goerli
       - store_build:
-          context: contracts
+          context: STRK_Smart_Contract_GOERLI
           requires:
             - deploy
