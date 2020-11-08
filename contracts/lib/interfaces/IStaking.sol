@@ -12,4 +12,6 @@ interface IStaking {
     function reward(uint256 poolIndex) payable external;
 
     function frozenStakesOf(address staker) external view returns (uint256);
+
+    function stakesOf(address staker) external view returns (uint256);
 }
