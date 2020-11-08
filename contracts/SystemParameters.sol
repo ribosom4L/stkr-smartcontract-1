@@ -11,9 +11,6 @@ contract SystemParameters is OwnableUpgradeSafe {
     // Minimum staking amount for pool participants
     uint256 public REQUESTER_MINIMUM_POOL_STAKING; // 0.1 ETH
 
-    // Minimum slashing amount for migration as ether
-    uint256 public SLASHINGS_FOR_MIGRATION;
-
     // Ethereum staking amount
     uint256 public ETHEREUM_STAKING_AMOUNT;
 
@@ -24,7 +21,6 @@ contract SystemParameters is OwnableUpgradeSafe {
     function initialize() external initializer {
         PROVIDER_MINIMUM_STAKING = 100000 ether;
         REQUESTER_MINIMUM_POOL_STAKING = 100 finney;
-        SLASHINGS_FOR_MIGRATION = 0.1 ether;
         ETHEREUM_STAKING_AMOUNT = 4 ether;
         EXIT_BLOCKS = 24;
     }
