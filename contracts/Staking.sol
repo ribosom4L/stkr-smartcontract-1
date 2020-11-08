@@ -2,7 +2,6 @@
 pragma solidity ^0.6.8;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SignedSafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "./lib/Lockable.sol";
 import "./lib/interfaces/IAETH.sol";
@@ -11,7 +10,6 @@ import "./lib/interfaces/IMarketPlace.sol";
 // TODO: user can join late (reward should be reduced)
 contract Staking is OwnableUpgradeSafe, Lockable {
     using SafeMath for uint256;
-    using SignedSafeMath for int256;
 
     event Stake(
         address indexed staker,
@@ -54,25 +52,25 @@ contract Staking is OwnableUpgradeSafe, Lockable {
 
         uint256 claimedRewardAmount;
     }
+    mapping(address => UserStake) public _stakes;
 
     // rewards will be claimable after selected block, rewards will calculated based on this too
-    uint256 public claimableAfter;
+    uint256 private claimableAfter;
 
     // start of contract
-    uint256 public startBlock;
+    uint256 private startBlock;
 
-    IAETH public AETHContract;
+    IAETH private AETHContract;
 
     IMarketPlace _marketPlaceContract;
 
-    IERC20 public _ankrContract;
+    IERC20 private _ankrContract;
 
-    address public _microPoolContract;
+    address private _microPoolContract;
 
-    mapping(address => UserStake) public _stakes;
+    uint256 private totalRewards;
 
-    uint256 public totalRewards;
-    uint256 public totalStakes;
+    uint256 private totalStakes;
 
     function initialize(address ankrContract, address microPoolContract, address aethContract) public initializer {
         OwnableUpgradeSafe.__Ownable_init();
@@ -206,6 +204,10 @@ contract Staking is OwnableUpgradeSafe, Lockable {
         totalRewards = totalRewards.add(msg.value);
 
         emit RewardIncome(poolIndex, msg.value);
+    }
+
+    function compensateLoss(address provider, uint256 ethAmount) external onlyMicroPoolContract returns (bool result, uint256 ankrAmount, uint256 remainingEthAmount) {
+
     }
 
     function compensatePoolLoss(address provider, uint256 amount, uint256 providerStakeAmount) external onlyMicroPoolContract returns (bool, uint256) {
