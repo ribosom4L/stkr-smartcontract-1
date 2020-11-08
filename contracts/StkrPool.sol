@@ -63,6 +63,8 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
 
     address _depositContract;
 
+    address[] private _pendingTemp;
+
     modifier notExitRecently(address provider) {
         require(block.number > _exits[provider].add(_systemParameters.EXIT_BLOCKS()), "Recently exited");
         _;
@@ -74,8 +76,7 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
         _depositContract = 0x00000000219ab540356cBB839Cbe05303d7705Fa;
     }
 
-    function pushToBeacon(uint256 poolIndex,
-        bytes memory pubkey,
+    function pushToBeacon(bytes memory pubkey,
         bytes memory withdrawal_credentials,
         bytes memory signature,
         bytes32 deposit_data_root) public onlyOwner {
@@ -117,18 +118,14 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
             emit StakeConfirmed(staker, userStake);
         }
 
-        uint256[] memory newPendingArray;
-
         // we should remove stakers from pending array length is: i
-        for (uint256 j = i; j < _pendingUserStakes.length; j++) {
-            newPendingArray.push(_pendingUserStakes[j]);
+        for (uint256 j = i; j < _pendingStakers.length; j++) {
+            _pendingTemp.push(_pendingStakers[j]);
         }
-        // we are deleting
-        delete _pendingStakers;
-        delete _pendingUserStakes;
-        _pendingUserStakes = newPendingArray;
 
-        emit PoolOnGoing(deposit_data_root);
+        _pendingStakers = _pendingTemp;
+        delete _pendingTemp;
+        emit PoolOnGoing(pubkey);
     }
 
     function stake() public notExitRecently(msg.sender) unlocked(msg.sender) payable {
@@ -153,14 +150,14 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
 
     function topUpETH() public notExitRecently(msg.sender) payable {
         _etherBalances[msg.sender] = _etherBalances[msg.sender].add(msg.value);
-        _stake(msg.value, msg.sender);
+        _stake(msg.sender, msg.value);
         emit TopUpETH(msg.sender, msg.value);
     }
 
     function topUpANKR(uint256 amount) public notExitRecently(msg.sender) payable {
         /* Approve ankr & freeze ankr */
         require(_stakingContract.freeze(msg.sender, amount), "Could not freeze ANKR tokens");
-        emit TopUpANKR(amount, msg.value);
+        emit TopUpANKR(msg.sender, msg.value);
     }
 
     // slash provider with ethereum balance
@@ -172,7 +169,7 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
             return;
         }
 
-        remaining = _slashANKR(remaining);
+        remaining = _slashANKR(provider, remaining);
 
         _slashings[provider] = _slashings[provider].add(remaining);
         /*Do we need event if remaining balance higher than zero?*/
@@ -186,7 +183,7 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
         _claim(msg.sender);
     }
 
-    function claimFor(address staker) notExitRecently(staker) {
+    function claimFor(address staker) public notExitRecently(staker) {
         _claim(staker);
     }
 
@@ -213,13 +210,13 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
 
         // TODO: provider checks
         _pendingUserStakes[msg.sender] = 0;
-        require(msg.sender.transfer(pendingStakes), "Cannot send stakes");
-
+        (bool result,) = msg.sender.call{value: pendingStakes}('');
+        require(result, "could not send ethers");
         emit Unstake(msg.sender, pendingStakes);
     }
 
     function _availableEtherBalanceOf(address provider) private view returns (int256) {
-        return _etherBalanceOf(provider) - _slashingsOf(provider);
+        return int256(_etherBalanceOf(provider) - _slashingsOf(provider));
     }
 
     function _etherBalanceOf(address provider) private view returns (uint256) {
@@ -238,7 +235,12 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
         Slash eth, returns remaining needs to be slashed
     */
     function _slashETH(address provider, uint256 amount) private returns (uint256 remaining) {
-        uint256 toBeSlashed = amount.min(_availableEtherBalanceOf(provider));
+
+        uint256 available = _availableEtherBalanceOf(provider) > 0 ? uint256(_availableEtherBalanceOf(provider)) : 0;
+
+        uint256 toBeSlashed = amount.min(available);
+        if (toBeSlashed == 0) return amount;
+
         _slashings[provider] = _slashings[provider].add(toBeSlashed);
         remaining = amount.sub(toBeSlashed);
 
@@ -246,10 +248,10 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
     }
 
     function _slashANKR(address provider, uint256 amount) private returns (uint256 ankrAmount) {
-        bool result = 0;
-        uint256 remaining = 0;
-        (result, ankrAmount, remaining) = _stakingContract.compensatePoolLoss(provider, amount);
-        emit ProviderANKRSlash(provider, remaining);
+        bool result;
+        uint256 remaining;
+        (result, ankrAmount, remaining) = _stakingContract.compensateLoss(provider, amount);
+        emit ProviderANKRSlash(provider, ankrAmount, amount.sub(remaining));
     }
 
     function poolCount() public view returns (uint256) {
