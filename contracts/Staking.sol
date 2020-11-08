@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.6.8;
+pragma solidity ^0.6.11;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
@@ -227,16 +227,9 @@ contract Staking is OwnableUpgradeSafe, Lockable {
         return _claimed[staker];
     }
 
-    function updateMarketPlaceContract(address marketPlaceContract) external onlyOwner {
-        _marketPlaceContract = IMarketPlace(marketPlaceContract);
-    }
-
     function updateAETHContract(address aethContract) public onlyOwner {
         AETHContract = IAETH(aethContract);
     }
-
-
-
 
     function updateStkrPoolContract(address stkrPoolContract)
     public

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.6.8;
+pragma solidity ^0.6.11;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/Math.sol";
@@ -70,10 +70,12 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
         _;
     }
 
-    function initialize() public initializer {
+    function initialize(IAETH aethContract, SystemParameters parameters, address depositContract) public initializer {
         __Ownable_init();
 
-        _depositContract = 0x00000000219ab540356cBB839Cbe05303d7705Fa;
+        _depositContract = depositContract;
+        _aethContract = aethContract;
+        _systemParameters = parameters;
     }
 
     function pushToBeacon(bytes memory pubkey,

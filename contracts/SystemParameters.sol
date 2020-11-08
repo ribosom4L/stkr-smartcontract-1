@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.6.8;
+pragma solidity ^0.6.11;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 
