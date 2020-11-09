@@ -40,6 +40,7 @@ contract GlobalPool is Lockable, Pausable {
     mapping (address => uint256) private _userStakes;
 
     mapping (address => uint256) private _rewards;
+    mapping (address => uint256) private _claims;
 
     mapping(address => uint256) private _etherBalances;
     mapping(address => uint256) private _slashings;
@@ -195,7 +196,7 @@ contract GlobalPool is Lockable, Pausable {
 
     function claimableRewardOf(address staker) public view returns (uint256) {
         uint256 blocked = _etherBalances[staker];
-        uint256 reward = _rewards[staker];
+        uint256 reward = _rewards[staker].sub(_claims[staker]);
 
         return blocked >= reward ? 0 : reward.sub(blocked);
     }
@@ -204,7 +205,9 @@ contract GlobalPool is Lockable, Pausable {
         uint256 claimable = claimableRewardOf(staker);
         require(claimable > 0, "claimable reward zero");
 
-        _rewards[staker] = _rewards[staker].sub(_etherBalances[staker]);
+        _rewards[staker] = _rewards[staker];
+        _claims[staker] = _claims[staker].add(claimable);
+
         _aethContract.transfer(staker, claimable);
 
         emit RewardClaimed(staker, claimable);

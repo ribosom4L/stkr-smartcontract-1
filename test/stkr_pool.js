@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const helpers = require("./helpers/helpers");
 const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
-const StkrPool = artifacts.require("StkrPool");
+const StkrPool = artifacts.require("GlobalPool");
 const AEth = artifacts.require("AETH");
 
 contract("Stkr Pool", function(accounts) {
@@ -111,10 +111,14 @@ contract("Stkr Pool", function(accounts) {
     await pool.claim();
     assert.equal(Number(await aEth.balanceOf(accounts[0])), helpers.wei(20));
 
-    await pool.claim({from: accounts[1]});
+    await pool.claim({ from: accounts[1] });
     assert.equal(Number(await aEth.balanceOf(accounts[1])), helpers.wei(29));
 
-    await pool.claim({from: accounts[3]});
+    await pool.claim({ from: accounts[3] });
     assert.equal(Number(await aEth.balanceOf(accounts[3])), helpers.wei(15));
+  });
+
+  it("Should revert for zero balance", async () => {
+    expectRevert(pool.claim({ from: accounts[3] }), "claimable reward zero");
   });
 });
