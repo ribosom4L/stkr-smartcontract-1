@@ -138,7 +138,11 @@ contract GlobalPool is Lockable, Pausable {
     }
 
     function _stake(address staker, uint256 value) private {
-        require(value > 0, "Value must be greater than zero");
+        uint256 minimumStaking = _systemParameters.REQUESTER_MINIMUM_POOL_STAKING();
+
+        require(value >= minimumStaking, "Value must be greater than zero");
+        require(value % minimumStaking == 0, "Value must be multiple of minimum staking amount");
+
         if (_pendingUserStakes[staker] == 0) {
             _pendingStakers.push(staker);
         }
