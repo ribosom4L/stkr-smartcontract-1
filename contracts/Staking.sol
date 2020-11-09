@@ -63,7 +63,7 @@ contract Staking is OwnableUpgradeSafe, Lockable {
 
     IERC20 private _ankrContract;
 
-    address private _stkrPoolContract;
+    address private _globalPoolContract;
 
     address private _swapContract;
 
@@ -74,13 +74,13 @@ contract Staking is OwnableUpgradeSafe, Lockable {
 
     uint256 private totalStakes;
 
-    function initialize(address ankrContract, address stkrPoolContract, address aethContract) public initializer {
+    function initialize(address ankrContract, address globalPoolContract, address aethContract) public initializer {
         OwnableUpgradeSafe.__Ownable_init();
 
         _startBlock = block.number;
 
         _ankrContract = IERC20(ankrContract);
-        _stkrPoolContract = stkrPoolContract;
+        _globalPoolContract = globalPoolContract;
         AETHContract = IAETH(aethContract);
     }
 
@@ -90,7 +90,7 @@ contract Staking is OwnableUpgradeSafe, Lockable {
     }
 
     modifier onlyMicroPoolContract() {
-        require(_stkrPoolContract == _msgSender(), "Ownable: caller is not the micropool contract");
+        require(_globalPoolContract == _msgSender(), "Ownable: caller is not the micropool contract");
         _;
     }
 
@@ -121,7 +121,7 @@ contract Staking is OwnableUpgradeSafe, Lockable {
     // this function will called by micro pool contract to freeze staked balance and claim allowance if exists
     function freeze(address user, uint256 amount)
     public
-    addressAllowed(_stkrPoolContract)
+    addressAllowed(_globalPoolContract)
     unlocked(msg.sender)
     returns (bool)
     {
@@ -160,7 +160,7 @@ contract Staking is OwnableUpgradeSafe, Lockable {
 
     function unfreeze(address addr, uint256 amount)
     public
-    addressAllowed(_stkrPoolContract)
+    addressAllowed(_globalPoolContract)
     unlocked(addr)
     returns (bool)
     {
@@ -227,11 +227,11 @@ contract Staking is OwnableUpgradeSafe, Lockable {
         return _claimed[staker];
     }
 
-    function updateStkrPoolContract(address stkrPoolContract)
+    function updateGlobalPoolContract(address globalPoolContract)
     public
     onlyOwner
     {
-        _stkrPoolContract = stkrPoolContract;
+        _globalPoolContract = globalPoolContract;
     }
 
     function updateSwapContract(address swapContract) public onlyOwner {

@@ -37,5 +37,5 @@ module.exports = async (deployer) => {
     { deployer }
   );
 
-  await tokenContract.updateStkrPoolContract(stkrPool.address);
+  await tokenContract.updateGlobalPoolContract(stkrPool.address);
 };
