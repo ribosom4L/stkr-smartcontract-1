@@ -18,7 +18,7 @@ contract SystemParameters is Governable {
 
     function initialize() external initializer {
         PROVIDER_MINIMUM_STAKING = 100000 ether;
-        REQUESTER_MINIMUM_POOL_STAKING = 100 finney;
+        REQUESTER_MINIMUM_POOL_STAKING = 500 finney;
         ETHEREUM_STAKING_AMOUNT = 4 ether;
         EXIT_BLOCKS = 24;
     }
