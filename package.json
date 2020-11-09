@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "compile": "truffle compile --all -s ASSERTIONS=1",
-    "migrate": "truffle migrate",
+    "compile": "truffle compile --all",
+    "migrate": "truffle compile --all; truffle migrate",
     "build": "node scripts/build_abi.js",
     "test": "truffle test"
   },
