@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: GPL-3.0-only
 pragma solidity 0.6.11;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
@@ -23,7 +23,7 @@ contract AETH is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
     // if ratio is 0.9, this variable should be  9e17
     uint256 private _ratio;
 
-    modifier onlyglobalPoolContract() {
+    modifier onlyGlobalPoolContract() {
         require(_globalPoolContract == _msgSender(), "Ownable: caller is not the micropool contract");
         _;
     }
@@ -36,7 +36,7 @@ contract AETH is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
         _ratio = 1e18;
     }
 
-    function mint(address account, uint256 amount) external onlyglobalPoolContract {
+    function mint(address account, uint256 amount) external onlyGlobalPoolContract {
         _mint(account, amount.mul(_ratio).div(1e18));
     }
 
