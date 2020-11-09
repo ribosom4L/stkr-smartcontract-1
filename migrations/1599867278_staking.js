@@ -1,5 +1,5 @@
 const StakingContract   = artifacts.require("Staking");
-const StkrPool = artifacts.require("StkrPool");
+const StkrPool = artifacts.require("GlobalPool");
 const ANKRContract      = artifacts.require("ANKR");
 const TokenContract     = artifacts.require("AETH");
 
