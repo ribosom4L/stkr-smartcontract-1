@@ -1,4 +1,4 @@
-const StkrPool        = artifacts.require("StkrPool");
+const StkrPool        = artifacts.require("GlobalPool");
 const TokenContract    = artifacts.require("AETH");
 const SystemParameters = artifacts.require("SystemParameters");
 const DepositContract  = artifacts.require("DepositContract");
