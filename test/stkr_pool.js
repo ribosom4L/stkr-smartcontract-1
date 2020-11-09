@@ -107,6 +107,10 @@ contract("Stkr Pool", function(accounts) {
     assert.equal(Number(await pool.pendingStakesOf(accounts[3])), helpers.wei(0));
   });
 
+  it("Stakers should not be able to unstake confirmed stakes", async () => {
+    expectRevert(pool.unstake({ from: accounts[3] }), "No pending stakes")
+  });
+
   it("Should claim correct amounts of aeth", async () => {
     await pool.claim();
     assert.equal(Number(await aEth.balanceOf(accounts[0])), helpers.wei(20));
