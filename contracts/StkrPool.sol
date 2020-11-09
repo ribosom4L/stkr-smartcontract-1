@@ -3,7 +3,6 @@ pragma solidity ^0.6.11;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/Math.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "./lib/interfaces/IDepositContract.sol";
 import "./SystemParameters.sol";
@@ -11,8 +10,9 @@ import "./lib/Lockable.sol";
 import "./lib/interfaces/IAETH.sol";
 import "./lib/interfaces/IStaking.sol";
 import "./lib/interfaces/IDepositContract.sol";
+import "./lib/Pausable.sol";
 
-contract StkrPool is OwnableUpgradeSafe, Lockable {
+contract StkrPool is Lockable, Pausable {
     using SafeMath for uint256;
     using Math for uint256;
 
@@ -23,8 +23,8 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
 
     /* pool events */
     //    event PoolPushWaiting(bytes32 indexed pool); // we dont have pending pools anymore
-    event PoolOnGoing(bytes indexed pool);
-    event PoolCompleted(bytes indexed pool);
+    event PoolOnGoing(bytes pool);
+    event PoolCompleted(bytes pool);
     //    event PoolClosed(bytes32 indexed pool);
 
     event ProviderExited(address indexed provider, uint256 exitBlock);
@@ -76,11 +76,13 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
         _depositContract = depositContract;
         _aethContract = aethContract;
         _systemParameters = parameters;
+        _paused["topUpETH"] = true;
+        _paused["topUpANKR"] = true;
     }
 
-    function pushToBeacon(bytes memory pubkey,
-        bytes memory withdrawal_credentials,
-        bytes memory signature,
+    function pushToBeacon(bytes calldata pubkey,
+        bytes calldata withdrawal_credentials,
+        bytes calldata signature,
         bytes32 deposit_data_root) public onlyOwner {
 
         require(_pendingAmount >= 32 ether, "pending ethers not enough");
@@ -150,13 +152,13 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
         emit StakePending(staker, value);
     }
 
-    function topUpETH() public notExitRecently(msg.sender) payable {
+    function topUpETH() public whenNotPaused("topUpETH") notExitRecently(msg.sender) payable {
         _etherBalances[msg.sender] = _etherBalances[msg.sender].add(msg.value);
         _stake(msg.sender, msg.value);
         emit TopUpETH(msg.sender, msg.value);
     }
 
-    function topUpANKR(uint256 amount) public notExitRecently(msg.sender) payable {
+    function topUpANKR(uint256 amount) public whenNotPaused("topUpANKR") notExitRecently(msg.sender) payable {
         /* Approve ankr & freeze ankr */
         require(_stakingContract.freeze(msg.sender, amount), "Could not freeze ANKR tokens");
         emit TopUpANKR(msg.sender, msg.value);
@@ -178,7 +180,9 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
     }
 
     function providerExit() public {
+        require(_availableEtherBalanceOf(msg.sender) > 0, "Provider balance should be positive for exit");
         _exits[msg.sender] = block.number;
+        emit ProviderExited(msg.sender, block.number);
     }
 
     function claim() public notExitRecently(msg.sender) {
@@ -210,10 +214,8 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
         uint256 pendingStakes = _pendingUserStakes[msg.sender];
         require(pendingStakes > 0, "No pending stakes");
 
-        // TODO: provider checks
         _pendingUserStakes[msg.sender] = 0;
-        (bool result,) = msg.sender.call{value: pendingStakes}('');
-        require(result, "could not send ethers");
+        require(msg.sender.send(pendingStakes), "could not send ethers");
         emit Unstake(msg.sender, pendingStakes);
     }
 
@@ -260,6 +262,10 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
         return _totalStakes.div(32 ether);
     }
 
+    function pendingStakesOf(address staker) public view returns (uint256) {
+        return _pendingUserStakes[staker];
+    }
+
     function updateAETHContract(address payable tokenContract) external onlyOwner {
         _aethContract = IAETH(tokenContract);
     }
@@ -271,4 +277,6 @@ contract StkrPool is OwnableUpgradeSafe, Lockable {
     function updateStakingContract(address stakingContract) external onlyOwner {
         _stakingContract = IStaking(stakingContract);
     }
+
+    uint256[50] private __gap;
 }

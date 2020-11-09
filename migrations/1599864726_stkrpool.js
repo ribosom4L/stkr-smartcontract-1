@@ -13,7 +13,7 @@ module.exports = async (deployer) => {
 
   switch (deployer.network) {
     case 'ganache': {}
-    case 'local': {}
+    case 'test': {}
     case 'develop': {
       beaconAddr = (await deployer.deploy(DepositContract)).address
       break;
