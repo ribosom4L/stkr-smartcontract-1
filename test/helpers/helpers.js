@@ -1,3 +1,7 @@
+const fs = require("fs");
+const path = require("path");
+
+
 advanceTime = (time) => {
   return new Promise((resolve, reject) => {
     web3.currentProvider.send({
@@ -72,13 +76,22 @@ makeHex = data => {
   return web3.utils.padRight(web3.utils.asciiToHex(data), 64);
 };
 
-amount = data => {
+wei = data => {
   return String(web3.utils.toWei(String(data)));
 };
 
 gwei = data => {
   return String(web3.utils.toWei(String(data), 'gwei'));
 };
+
+pushToBeacon = async (pool) => {
+  const data = fs.readFileSync(path.join(__dirname, "depositdata"), "utf8")
+    .slice(8);
+
+  const depositData = web3.eth.abi.decodeParameters(["bytes", "bytes", "bytes", "bytes32"], data);
+
+  return pool.pushToBeacon(depositData[0], depositData[1], depositData[2], depositData[3]);
+}
 
 module.exports = {
   advanceTime,
@@ -87,6 +100,7 @@ module.exports = {
   takeSnapshot,
   revertToSnapshot,
   makeHex,
-  amount,
-  gwei
+  pushToBeacon,
+  gwei,
+  wei
 };
