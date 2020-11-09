@@ -13,28 +13,28 @@ import "./lib/interfaces/IDepositContract.sol";
 import "./lib/Pausable.sol";
 
 contract StkrPool is Lockable, Pausable {
+
     using SafeMath for uint256;
     using Math for uint256;
 
+    /* staker events */
     event StakePending(address indexed staker, uint256 amount);
     event StakeConfirmed(address indexed staker, uint256 amount);
-
-    event Unstake(address indexed staker, uint256 amount);
+    event StakeRemoved(address indexed staker, uint256 amount);
 
     /* pool events */
-    //    event PoolPushWaiting(bytes32 indexed pool); // we dont have pending pools anymore
     event PoolOnGoing(bytes pool);
     event PoolCompleted(bytes pool);
-    //    event PoolClosed(bytes32 indexed pool);
 
-    event ProviderExited(address indexed provider, uint256 exitBlock);
-    event ProviderANKRSlash(address indexed provider, uint256 ankrAmount, uint256 etherEquivalence);
-    event ProviderETHSlash(address indexed provider, uint256 amount);
+    /* provider events */
+    event ProviderSlashedAnkr(address indexed provider, uint256 ankrAmount, uint256 etherEquivalence);
+    event ProviderSlashedEth(address indexed provider, uint256 amount);
+    event ProviderToppedUpEth(address indexed provider, uint256 amount);
+    event ProviderToppedUpAnkr(address indexed provider, uint256 amount);
+    event ProviderExited(address indexed provider);
 
-    event TopUpETH(address indexed provider, uint256 amount);
-    event TopUpANKR(address indexed provider, uint256 amount);
-
-    event RewardClaim(address indexed staker, uint256 amount);
+    /* rewards (AETH) */
+    event RewardClaimed(address indexed staker, uint256 amount);
 
     mapping (address => uint256) private _pendingUserStakes;
     mapping (address => uint256) private _userStakes;
@@ -155,13 +155,13 @@ contract StkrPool is Lockable, Pausable {
     function topUpETH() public whenNotPaused("topUpETH") notExitRecently(msg.sender) payable {
         _etherBalances[msg.sender] = _etherBalances[msg.sender].add(msg.value);
         _stake(msg.sender, msg.value);
-        emit TopUpETH(msg.sender, msg.value);
+        emit ProviderToppedUpEth(msg.sender, msg.value);
     }
 
     function topUpANKR(uint256 amount) public whenNotPaused("topUpANKR") notExitRecently(msg.sender) payable {
         /* Approve ankr & freeze ankr */
         require(_stakingContract.freeze(msg.sender, amount), "Could not freeze ANKR tokens");
-        emit TopUpANKR(msg.sender, msg.value);
+        emit ProviderToppedUpAnkr(msg.sender, msg.value);
     }
 
     // slash provider with ethereum balance
@@ -182,7 +182,7 @@ contract StkrPool is Lockable, Pausable {
     function providerExit() public {
         require(_availableEtherBalanceOf(msg.sender) > 0, "Provider balance should be positive for exit");
         _exits[msg.sender] = block.number;
-        emit ProviderExited(msg.sender, block.number);
+        emit ProviderExited(msg.sender);
     }
 
     function claim() public notExitRecently(msg.sender) {
@@ -207,7 +207,7 @@ contract StkrPool is Lockable, Pausable {
         _rewards[staker] = _rewards[staker].sub(_etherBalances[staker]);
         _aethContract.transfer(staker, claimable);
 
-        emit RewardClaim(staker, claimable);
+        emit RewardClaimed(staker, claimable);
     }
 
     function unstake() public payable unlocked(msg.sender) notExitRecently(msg.sender) {
@@ -216,7 +216,7 @@ contract StkrPool is Lockable, Pausable {
 
         _pendingUserStakes[msg.sender] = 0;
         require(msg.sender.send(pendingStakes), "could not send ethers");
-        emit Unstake(msg.sender, pendingStakes);
+        emit StakeRemoved(msg.sender, pendingStakes);
     }
 
     function _availableEtherBalanceOf(address provider) private view returns (int256) {
@@ -248,14 +248,14 @@ contract StkrPool is Lockable, Pausable {
         _slashings[provider] = _slashings[provider].add(toBeSlashed);
         remaining = amount.sub(toBeSlashed);
 
-        emit ProviderETHSlash(provider, toBeSlashed);
+        emit ProviderSlashedEth(provider, toBeSlashed);
     }
 
     function _slashANKR(address provider, uint256 amount) private returns (uint256 ankrAmount) {
         bool result;
         uint256 remaining;
         (result, ankrAmount, remaining) = _stakingContract.compensateLoss(provider, amount);
-        emit ProviderANKRSlash(provider, ankrAmount, amount.sub(remaining));
+        emit ProviderSlashedAnkr(provider, ankrAmount, amount.sub(remaining));
     }
 
     function poolCount() public view returns (uint256) {
