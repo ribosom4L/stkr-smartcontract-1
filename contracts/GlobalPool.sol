@@ -12,7 +12,7 @@ import "./lib/interfaces/IStaking.sol";
 import "./lib/interfaces/IDepositContract.sol";
 import "./lib/Pausable.sol";
 
-contract StkrPool is Lockable, Pausable {
+contract GlobalPool is Lockable, Pausable {
 
     using SafeMath for uint256;
     using Math for uint256;
