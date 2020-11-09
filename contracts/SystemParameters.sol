@@ -1,16 +1,25 @@
-//SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.6.8;
+// SPDX-License-Identifier: GPL-3.0-only
+pragma solidity ^0.6.11;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+import "./Governable.sol";
 
-contract SystemParameters {
-    
+contract SystemParameters is Governable {
+
     // Minimum ankr staking amount to be abel to initialize a pool
-    uint256 public PROVIDER_MINIMUM_STAKING = 100000;
+    uint256 public PROVIDER_MINIMUM_STAKING;
 
     // Minimum staking amount for pool participants
-    uint256 public REQUESTER_MINIMUM_POOL_STAKING = 100 finney; // 0.1 ETH
+    uint256 public REQUESTER_MINIMUM_POOL_STAKING; // 0.1 ETH
 
-    // Minimum slashing amount for migration as ether
-    uint256 public SLASHINGS_FOR_MIGRATION = 1 ether;
+    // Ethereum staking amount
+    uint256 public ETHEREUM_STAKING_AMOUNT;
+
+    uint256 public EXIT_BLOCKS;
+
+    function initialize() external initializer {
+        PROVIDER_MINIMUM_STAKING = 100000 ether;
+        REQUESTER_MINIMUM_POOL_STAKING = 500 finney;
+        ETHEREUM_STAKING_AMOUNT = 4 ether;
+        EXIT_BLOCKS = 24;
+    }
 }

@@ -1,17 +1,14 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.6.8;
+// SPDX-License-Identifier: GPL-3.0-only
+pragma solidity ^0.6.11;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SignedSafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "./lib/Lockable.sol";
 import "./lib/interfaces/IAETH.sol";
 import "./lib/interfaces/IMarketPlace.sol";
 
-// TODO: user can join late (reward should be reduced)
 contract Staking is OwnableUpgradeSafe, Lockable {
     using SafeMath for uint256;
-    using SignedSafeMath for int256;
 
     event Stake(
         address indexed staker,
@@ -39,48 +36,51 @@ contract Staking is OwnableUpgradeSafe, Lockable {
         uint256 amount
     );
 
-    event Compensate(address provider, uint256 amount);
+    event Compensate(address indexed provider, uint256 ankrAmount, uint256 etherAmount);
 
     event RewardClaim(
-        address payable staker,
+        address staker,
         uint256 amount
     );
 
-    struct UserStake {
-        uint256 available;
-        uint256 frozen;
-        uint256 lastBlock;
-        uint256 weight;
+    uint256 private _startBlock;
 
-        uint256 claimedRewardAmount;
-    }
+    // stakes of users
+    mapping (address => uint256) private _stakes;
+    // weight = stake * block number + previous weight
+    // at the and of the staking, weight will be equal to last block * stake amount - current weight
+    mapping (address => uint256) private _weight;
+    mapping (address => uint256) private _frozen;
+    // claimed reward amounts
+    mapping (address => uint256) private _claimed;
 
     // rewards will be claimable after selected block, rewards will calculated based on this too
-    uint256 public claimableAfter;
+    uint256 private claimableAfter;
 
-    // start of contract
-    uint256 public startBlock;
-
-    IAETH public AETHContract;
+    IAETH private AETHContract;
 
     IMarketPlace _marketPlaceContract;
 
-    IERC20 public _ankrContract;
+    IERC20 private _ankrContract;
 
-    address public _microPoolContract;
+    address private _globalPoolContract;
 
-    mapping(address => UserStake) public _stakes;
+    address private _swapContract;
 
-    uint256 public totalRewards;
-    uint256 public totalStakes;
+    uint256 private totalRewards;
 
-    function initialize(address ankrContract, address microPoolContract, address aethContract) public initializer {
+    // real total weight = last block * totalStakes
+    uint256 private totalWeight;
+
+    uint256 private totalStakes;
+
+    function initialize(address ankrContract, address globalPoolContract, address aethContract) public initializer {
         OwnableUpgradeSafe.__Ownable_init();
 
-        startBlock = block.number;
+        _startBlock = block.number;
 
         _ankrContract = IERC20(ankrContract);
-        _microPoolContract = microPoolContract;
+        _globalPoolContract = globalPoolContract;
         AETHContract = IAETH(aethContract);
     }
 
@@ -90,7 +90,7 @@ contract Staking is OwnableUpgradeSafe, Lockable {
     }
 
     modifier onlyMicroPoolContract() {
-        require(_microPoolContract == _msgSender(), "Ownable: caller is not the micropool contract");
+        require(_globalPoolContract == _msgSender(), "Ownable: caller is not the micropool contract");
         _;
     }
 
@@ -106,56 +106,30 @@ contract Staking is OwnableUpgradeSafe, Lockable {
 
         require(_ankrContract.transferFrom(user, address(this), allowance), "Allowance Claim Error: Tokens could not transferred from ankr contract");
 
+        uint256 blockNum = block.number;
+        uint weight = allowance.mul(blockNum);
 
-        UserStake storage stake = _stakes[user];
-
-        // FIXME
-        stake.weight = allowance;
-
-//        if (stake.weight > 0) {
-//            stake.weight = stake.weight.mul(block.number).add(allowance.mul(stake.lastBlock)) / stake.lastBlock.add(block.number);
-//        }
-//        else {
-//            stake.weight = allowance;
-//        }
-
-        stake.lastBlock = stake.lastBlock.add(block.number);
-        stake.available = stake.available.add(allowance);
+         _stakes[user] = _stakes[user].add(allowance);
+        _weight[user] = _weight[user].add(weight);
 
         totalStakes = totalStakes.add(allowance);
-
+        totalWeight = totalWeight.add(weight);
         emit Stake(user, block.number, allowance);
-
         return allowance;
     }
 
     // this function will called by micro pool contract to freeze staked balance and claim allowance if exists
     function freeze(address user, uint256 amount)
     public
-    addressAllowed(_microPoolContract)
+    addressAllowed(_globalPoolContract)
     unlocked(msg.sender)
     returns (bool)
     {
         claimAnkrAndStake(user);
-        UserStake storage userStake = _stakes[user];
-
-        userStake.available = userStake.available.sub(amount, "Insufficient funds");
-
-        userStake.frozen = userStake.frozen.add(amount);
+        _frozen[user] = _frozen[user].add(amount);
 
         emit Freeze(user, amount);
         return true;
-    }
-
-    function updateAnkrContract(address ankrContract) public onlyOwner {
-        _ankrContract = IERC20(ankrContract);
-    }
-
-    function updateMicroPoolContract(address microPoolContract)
-    public
-    onlyOwner
-    {
-        _microPoolContract = microPoolContract;
     }
 
     function transferToken(address to, uint256 amount) private {
@@ -163,82 +137,113 @@ contract Staking is OwnableUpgradeSafe, Lockable {
     }
 
     function unstake() public unlocked(msg.sender) returns (bool) {
-        UserStake storage stake = _stakes[msg.sender];
-        require(stake.available > 0, "You dont have stake balance");
+        uint256 stake = _stakes[msg.sender];
+        uint256 frozen = _stakes[msg.sender];
+        uint256 available = stake.sub(frozen);
 
-        uint256 available = stake.available.add(stake.frozen);
+        require(available > 0, "You dont have stake balance");
 
-        stake.available = 0;
+        uint256 weight = _weight[msg.sender];
+        uint256 frozenWeight = weight.mul(frozen).div(stake);
 
-        if (stake.frozen > 0) {
-            // FIXME: int safemath
-            stake.weight = stake.weight.mul(stake.available.div(available.add(stake.frozen)));
-        }
-        else {
-            stake.weight = 0;
-            stake.lastBlock = 0;
-        }
+        _stakes[msg.sender] = frozen;
+        _weight[msg.sender] = frozenWeight;
 
         totalStakes = totalStakes.sub(available);
 
         transferToken(msg.sender, available);
 
-        emit Unfreeze(msg.sender, available);
+        emit Unstake(msg.sender, available);
 
         return true;
     }
 
     function unfreeze(address addr, uint256 amount)
     public
-    addressAllowed(_microPoolContract)
+    addressAllowed(_globalPoolContract)
     unlocked(addr)
     returns (bool)
     {
-        UserStake storage userStake = _stakes[addr];
-        userStake.frozen = userStake.frozen.sub(amount, "Insufficient funds");
-        userStake.available = userStake.available.add(amount);
+        _frozen[msg.sender] = _frozen[msg.sender].sub(amount, "Insufficient funds");
 
         emit Unfreeze(addr, amount);
         return true;
     }
 
-    function reward(uint256 poolIndex) payable external onlyMicroPoolContract {
-        totalRewards = totalRewards.add(msg.value);
+    function setClaimed(address staker, uint256 amount) public addressAllowed(_swapContract) {
+        _claimed[staker] = _claimed[staker].add(amount);
 
-        emit RewardIncome(poolIndex, msg.value);
+        emit RewardClaim(staker, amount);
     }
 
-    function compensatePoolLoss(address provider, uint256 amount) external onlyMicroPoolContract {
-        UserStake storage stake = _stakes[provider];
-        // TODO: this should be solved
-        require(stake.frozen >= amount, "Insufficient balance");
+    //TODO: Reward from swap contract
 
-        uint256 ankrAmount = amount.mul(_marketPlaceContract.ankrEthRate());
+    function compensateLoss(address provider, uint256 ethAmount) external onlyMicroPoolContract returns (bool result, uint256 ankrAmount, uint256 remainingEthAmount) {
 
-        // FIXME: int safemath
-        stake.weight = stake.weight.mul(amount).div(totalStakesOf(provider));
-        stake.frozen = stake.frozen.sub(ankrAmount);
-
-        totalStakes = totalStakes.sub(ankrAmount);
-
-        _marketPlaceContract.swapAndBurn(ankrAmount);
-
-        AETHContract.burn(ankrAmount);
-
-        emit Compensate(provider, ankrAmount);
     }
 
-    function totalStakesOf(address staker) public view returns (uint256) {
-        return _stakes[staker].available + _stakes[staker].frozen;
+//    function compensatePoolLoss(address provider, uint256 amount, uint256 providerStakeAmount) external onlyMicroPoolContract returns (bool, uint256) {
+//        UserStake storage stake = _stakes[provider];
+//
+//        // ankr amount equals to needed ether
+//        uint256 ankrAmount = amount.mul(_marketPlaceContract.ankrEthRate());
+//
+//        if (stake.frozen >= amount) {
+//            return (false, ankrAmount);
+//        }
+//
+//        stake.frozen = stake.frozen.sub(providerStakeAmount);
+//        stake.available = stake.available.add(providerStakeAmount).sub(ankrAmount);
+//        stake.weight = stake.weight.mul(amount).div(totalStakesOf(provider));
+//
+//        totalStakes = totalStakes.sub(ankrAmount);
+//
+//        _ankrContract.transfer(address(_marketPlaceContract), ankrAmount);
+//
+//        _marketPlaceContract.burnAeth(amount);
+//
+//        emit Compensate(provider, ankrAmount, amount);
+//
+//        return (true, ankrAmount);
+//    }
+
+    function setClaimableBlock(uint256 blockNumber) public onlyOwner {
+        claimableAfter = blockNumber;
     }
 
-    function claimableStakerReward(address _staker) public view returns(uint256) {
-        UserStake memory staker = _stakes[_staker];
+    function stakesOf(address staker) public view returns (uint256) {
+        return _stakes[staker];
+    }
 
-        // TODO: Time based calculation
+    function frozenStakesOf(address staker) public view returns (uint256) {
+        return _frozen[staker];
+    }
 
-        uint256 totalEarned = totalRewards.mul(totalStakesOf(_staker)).div(totalStakes);
-        return totalEarned - staker.claimedRewardAmount;
+    function rewardOf(address staker) public view returns (uint256) {
+        return totalStakes.mul(stakerWeight(staker)).div(realWeight()).sub(_claimed[staker]);
+    }
+
+    function claimedOf(address staker) public view returns (uint256) {
+        return _claimed[staker];
+    }
+
+    function updateGlobalPoolContract(address globalPoolContract)
+    public
+    onlyOwner
+    {
+        _globalPoolContract = globalPoolContract;
+    }
+
+    function updateSwapContract(address swapContract) public onlyOwner {
+        _swapContract = swapContract;
+    }
+
+    function realWeight() public view returns(uint256) {
+        return totalStakes.mul(block.number).sub(totalWeight);
+    }
+
+    function stakerWeight(address staker) public view returns(uint256) {
+        return _stakes[staker].mul(block.number).sub(_weight[staker]);
     }
 
     function updateMarketPlaceContract(address marketPlaceContract) external onlyOwner {
@@ -247,24 +252,5 @@ contract Staking is OwnableUpgradeSafe, Lockable {
 
     function updateAETHContract(address aethContract) public onlyOwner {
         AETHContract = IAETH(aethContract);
-    }
-
-    function setClaimableBlock(uint256 blockNumber) public onlyOwner {
-        claimableAfter = blockNumber;
-    }
-
-    function claimRewards() public payable unlocked(msg.sender)  {
-        require(claimableAfter > 0, "Contract not claimable yet");
-
-        uint256 claimableReward = claimableStakerReward(msg.sender);
-
-        require(claimableReward > 0, "There is no rewards to claim");
-
-        UserStake storage stake = _stakes[msg.sender];
-        stake.claimedRewardAmount = stake.claimedRewardAmount.add(claimableReward);
-
-        require(msg.sender.send(claimableReward), "Rewards could not sent");
-
-        emit RewardClaim(msg.sender, claimableReward);
     }
 }

@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.6.8;
+// SPDX-License-Identifier: GPL-3.0-only
+pragma solidity 0.6.11;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
@@ -270,6 +270,6 @@ contract ANKR is IERC20, Context {
     }
 
     function faucet() external {
-        _mint(msg.sender, 100000 * 10 ** uint256(_decimals));
+        _mint(msg.sender, 100000 ether);
     }
 }
