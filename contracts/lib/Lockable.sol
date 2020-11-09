@@ -9,4 +9,6 @@ abstract contract Lockable {
         _;
         _locks[addr] = false;
     }
+
+    uint256[50] private __gap;
 }

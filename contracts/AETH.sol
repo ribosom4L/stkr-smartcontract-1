@@ -37,7 +37,7 @@ contract AETH is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
     }
 
     function updateRatio(uint256 newRatio) public onlyOwner {
-        require(newRatio < _ratio, "New ratio cannot be smaller than old ratio");
+        require(newRatio < _ratio, "New ratio cannot be greater than old ratio");
         _ratio = newRatio;
         emit RatioUpdate(_ratio);
     }
@@ -57,4 +57,6 @@ contract AETH is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
     function burn(uint256 amount) external {
         _burn(msg.sender, amount);
     }
+
+    uint256[50] private __gap;
 }
