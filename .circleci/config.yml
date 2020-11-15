@@ -1,81 +1,96 @@
 version: 2
+
+tests: &tests
+  docker:
+    - image: tarampampam/node:13-alpine
+  steps:
+    - checkout
+    - setup_remote_docker
+    - attach_workspace:
+        at: '.'
+    - run:
+        name: "Installing dependencies"
+        command: yarn install
+    - run:
+        name: "Compiling contracts"
+        command: yarn compile
+    - run:
+        name: "Running tests"
+        command: yarn test
+    - persist_to_workspace:
+        root: '.'
+        paths:
+          - '.'
+
+migrate: &migrate
+  docker:
+    - image: bigbadalien/awscli-node-kops-kubectl:0.3
+  steps:
+    - checkout
+    - attach_workspace:
+        at: '.'
+    - run:
+        name: "Fetch old build"
+        command: |
+          echo "Fetching assets from $DOMAIN"
+          aws s3 cp s3://$ASSETS_DOMAIN/contracts/$CIRCLE_BRANCH/ . \
+          --acl bucket-owner-full-control --recursive --cache-control "public,max-age=600,s-maxage=3600" \
+          --quiet
+          ls
+    - run:
+        name: "Migrate"
+        command: |
+          yarn install
+          yarn compile
+          npx truffle migrate --network goerli
+          yarn build:addresses
+    - run:
+        name: "Upload"
+        command: |
+          mkdir dist
+          mv build dist/.
+          mv .openzeppelin dist/.
+          mv addresses.json dist/.
+          aws s3 cp dist/ s3://$ASSETS_DOMAIN/contracts/$CIRCLE_BRANCH/ \
+          --acl bucket-owner-full-control --recursive --cache-control "public,max-age=600,s-maxage=3600"
+    - persist_to_workspace:
+        root: '.'
+        paths:
+          - '.'
+
 jobs:
   test:
-    docker:
-      - image: tarampampam/node:13-alpine
-    steps:
-      - checkout
-      - setup_remote_docker
-      - attach_workspace:
-          at: '.'
-      - run:
-          name: "Test"
-          command: |
-            yarn install
-            yarn compile
-            yarn test
-  deploy:
-    docker:
-      - image: instrumentisto/rsync-ssh
-    steps:
-      - checkout
-      - add_ssh_keys:
-          fingerprints:
-            - "91:a7:51:e9:6e:28:43:62:a1:0c:7f:de:4e:e3:9b:c4"
-      - run:
-          name: "Deploy to server"
-          command: |
-            cd ..
-            mv project ${CIRCLE_BRANCH}
-            echo "Creating env"
-            echo "NETWORK=${NETWORK}
-            DEPOSIT_CONTRACT=${DEPOSIT_CONTRACT}
-            DEPLOYMENT_KEY=${DEPLOYMENT_KEY}" >> ${CIRCLE_BRANCH}/.env;
-            echo "Deploying files"
-            rsync -e "ssh -o StrictHostKeyChecking=no" -arvc \
-            ${CIRCLE_BRANCH}/ ${REMOTE_USER}@${REMOTE_ADDR}:${DEPLOY_PATH}/${CIRCLE_BRANCH}/ \
-            --delete \
-            --exclude=build \
-            --exclude=node_modules \
-            --exclude=.openzeppelin
-      - run:
-          name: "Run external script"
-          command: ssh  -t -oStrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_ADDR} "cd ${DEPLOY_PATH}/${CIRCLE_BRANCH}; yarn install; npx truffle compile --all; NODE_OPTIONS="--max-old-space-size=4096" npx truffle migrate --network goerli; node scripts/build_abi.js";
-  store_build:
-    docker:
-      - image: instrumentisto/rsync-ssh
-    steps:
-      - checkout
-      - add_ssh_keys:
-          fingerprints:
-            - "91:a7:51:e9:6e:28:43:62:a1:0c:7f:de:4e:e3:9b:c4"
-      - run:
-          name: "Get build from remote"
-          command: echo "build from remote"
-      - run:
-          name: "Store artifacts"
-          command: echo "artifacts"
-      - run:
-          name: "Upload build to cdn"
-          command: echo "Upload build to cdn"
-
+    <<: *tests
+  migrate-develop:
+    <<: *migrate
+  migrate-goerli:
+    <<: *migrate
 
 workflows:
   version: 2
-  build-deploy:
+  stkr_smartcontracts:
     jobs:
-      - test:
-          context: STRK_Smart_Contract_GOERLI
-      - deploy:
-          context: STRK_Smart_Contract_GOERLI
+      - test
+      - migrate-develop:
+          context:
+            - cicd
+            - STRK_Smart_Contract_GOERLI
+            - stkr_build_develop
+          requires:
+            - test
+          filters:
+            branches:
+              ignore:
+                - master
+                - goerli
+      - migrate-goerli:
+          context:
+            - cicd
+            - STRK_Smart_Contract_GOERLI
+            - stkr_build_goerli
           requires:
             - test
           filters:
             branches:
               only:
-                - develop
                 - goerli
-      - store_build:
-          context: STRK_Smart_Contract_GOERLI
-          requires:
-            - deploy
