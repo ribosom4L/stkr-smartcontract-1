@@ -1,7 +1,7 @@
 pragma solidity 0.6.11;
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 
-contract Pausable is  OwnableUpgradeSafe{
+contract Pausable is  OwnableUpgradeSafe {
     mapping (bytes32 => bool) internal _paused;
 
     modifier whenNotPaused(bytes32 action) {

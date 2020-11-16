@@ -4,9 +4,9 @@ pragma solidity 0.6.11;
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
-import "./lib/Lockable.sol";
+import "../lib/Lockable.sol";
 
-contract AETH is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
+contract AETH_R1 is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
     using SafeMath for uint256;
 
     event RatioUpdate(uint256 newRatio);
