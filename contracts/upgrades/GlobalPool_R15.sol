@@ -13,7 +13,7 @@ import "../lib/interfaces/IStaking.sol";
 import "../lib/interfaces/IDepositContract.sol";
 import "../lib/Pausable.sol";
 
-contract GlobalPool_R15 is Lockable, Pausable {
+contract GlobalPool_R13 is Lockable, Pausable {
 
     using SafeMath for uint256;
     using Math for uint256;
@@ -95,7 +95,7 @@ contract GlobalPool_R15 is Lockable, Pausable {
         uint256 mintAmount = _aethContract.mint(address(this), 32 ether);
 
         uint256 _amount = 0;
-        uint256 i = _pendingStakers.length >= _lastPendingStakerPointer ? _lastPendingStakerPointer : _lastPendingStakerPointer.sub(1);
+        uint256 i = _lastPendingStakerPointer > 0 ? _lastPendingStakerPointer.sub(1) : 0;
 
         while (_amount < 32 ether) {
             address staker = _pendingStakers[i];
@@ -138,8 +138,8 @@ contract GlobalPool_R15 is Lockable, Pausable {
         }
 
         // clear pending stakers
-        _clearPendingStakers(i);
-
+        //        clearEmptyPendingStakers()
+        _lastPendingStakerPointer = i;
         // send funds to deposit contract
         IDepositContract(_depositContract).deposit{value : 32 ether}(pubkey, withdrawal_credentials, signature, deposit_data_root);
 
@@ -320,18 +320,18 @@ contract GlobalPool_R15 is Lockable, Pausable {
         _stakingContract = IStaking(stakingContract);
     }
 
-    function _clearPendingStakers(uint256 i) private {
-        uint256 arrLen = _pendingStakers.length;
-        if (arrLen.sub(i) > 5) {
-            _lastPendingStakerPointer = i;
-            return;
-        }
+    function clearEmptyPendingStakers() public onlyOwner {
         // we should remove stakers from pending array length is: i
-        for (uint256 j = i; j < _pendingStakers.length; j++) {
-            _pendingTemp.push(_pendingStakers[j]);
+        for (uint256 j = 0; j < _pendingStakers.length; j++) {
+            address staker = _pendingStakers[j];
+            if (_pendingUserStakes[staker] > 0) {
+                _pendingTemp.push(_pendingStakers[j]);
+            }
         }
 
+        delete _pendingStakers;
         _pendingStakers = _pendingTemp;
+
         delete _pendingTemp;
         delete _lastPendingStakerPointer;
     }
