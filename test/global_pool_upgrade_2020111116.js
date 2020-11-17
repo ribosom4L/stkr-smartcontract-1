@@ -125,4 +125,83 @@ contract("2020 11 16 Upgrade Global Pool", function(accounts) {
     await helpers.advanceBlocks(30);
     const tx = await pool.unstake({ from: accounts[3] })
   });
+
+  it("should send deposit", async () => {
+
+    await pool.stake({
+      from: accounts[0],
+      value: helpers.wei(23)
+    });
+
+    await pool.stake({
+      from: accounts[9],
+      value: helpers.wei(13)
+    });
+
+    let tx = await helpers.pushToBeacon(pool);
+
+    await pool.stake({
+      from: accounts[0],
+      value: helpers.wei(3)
+    });
+
+    await pool.stake({
+      from: accounts[1],
+      value: helpers.wei(7)
+    });
+
+    await pool.stake({
+      from: accounts[2],
+      value: helpers.wei(7)
+    });
+
+    await pool.stake({
+      from: accounts[3],
+      value: helpers.wei(3)
+    });
+
+    await pool.stake({
+      from: accounts[4],
+      value: helpers.wei(3)
+    });
+
+    await pool.stake({
+      from: accounts[5],
+      value: helpers.wei(7)
+    });
+
+    await pool.stake({
+      from: accounts[6],
+      value: helpers.wei(7)
+    });
+
+    await pool.stake({
+      from: accounts[7],
+      value: helpers.wei(3)
+    });
+
+    await pool.stake({
+      from: accounts[4],
+      value: helpers.wei(3)
+    });
+
+    await pool.stake({
+      from: accounts[5],
+      value: helpers.wei(7)
+    });
+
+    await pool.stake({
+      from: accounts[6],
+      value: helpers.wei(7)
+    });
+
+    await pool.stake({
+      from: accounts[7],
+      value: helpers.wei(13)
+    });
+
+    tx = await helpers.pushToBeacon(pool);
+
+
+  });
 });
