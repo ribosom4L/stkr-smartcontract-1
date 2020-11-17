@@ -13,7 +13,7 @@ import "../lib/interfaces/IStaking.sol";
 import "../lib/interfaces/IDepositContract.sol";
 import "../lib/Pausable.sol";
 
-contract GlobalPool_R13 is Lockable, Pausable {
+contract GlobalPool_R14 is Lockable, Pausable {
 
     using SafeMath for uint256;
     using Math for uint256;
