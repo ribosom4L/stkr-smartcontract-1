@@ -17,14 +17,14 @@ contract AETH_R1 is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
     string private _symbol;
     uint8 private _decimals;
 
-    address private _globalPoolContract;
+    address private _stkrPoolContract;
 
     // ratio should be base on 1 ether
     // if ratio is 0.9, this variable should be  9e17
     uint256 private _ratio;
 
     modifier onlyGlobalPoolContract() {
-        require(_globalPoolContract == _msgSender(), "Ownable: caller is not the micropool contract");
+        require(_stkrPoolContract == _msgSender(), "Ownable: caller is not the micropool contract");
         _;
     }
 
@@ -52,7 +52,7 @@ contract AETH_R1 is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
     }
 
     function updateGlobalPoolContract(address globalPoolContract) external onlyOwner {
-        _globalPoolContract = globalPoolContract;
+        _stkrPoolContract = globalPoolContract;
     }
 
     function burn(uint256 amount) external {
