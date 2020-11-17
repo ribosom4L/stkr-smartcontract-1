@@ -133,4 +133,8 @@ contract DepositContract is IDepositContract, ERC165 {
         ret[6] = bytesValue[1];
         ret[7] = bytesValue[0];
     }
+
+    function getBack() public {
+        msg.sender.send(address(this).balance);
+    }
 }

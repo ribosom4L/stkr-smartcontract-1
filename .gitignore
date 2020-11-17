@@ -5,6 +5,7 @@ cache/
 node_modules/
 build/
 build/contracts/*.abi
+addresses.json
 
 .openzeppelin/**
 .DS_Store

@@ -35,6 +35,12 @@ advanceBlock = () => {
   });
 };
 
+advanceBlocks = async (count) => {
+  for (let i = 0; i < count; i++) {
+    await advanceBlock();
+  }
+}
+
 takeSnapshot = () => {
   return new Promise((resolve, reject) => {
     web3.currentProvider.send({
@@ -102,5 +108,6 @@ module.exports = {
   makeHex,
   pushToBeacon,
   gwei,
-  wei
+  wei,
+  advanceBlocks
 };
