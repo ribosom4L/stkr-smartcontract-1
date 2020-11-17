@@ -23,6 +23,7 @@ async function run() {
   const unstakeEvents = await contract.getPastEvents("StakeRemoved", { fromBlock: 0, toBlock: blockNum });
   const confirmEvents = await contract.getPastEvents("StakeConfirmed", { fromBlock: 0, toBlock: blockNum });
 
+  let g = 0;
   for (const event of stakeEvents) {
     const values = event.returnValues;
 
@@ -33,7 +34,9 @@ async function run() {
     transactions.push(event.transactionHash);
 
     const total = stakeAmount - unstakeAmount;
-
+    if (!stakes[values.staker]) {
+      // g++
+    }
     stakes[values.staker] = {
       stake: stakeAmount,
       unstake: unstakeAmount,
@@ -42,7 +45,6 @@ async function run() {
       unstakeTransactions: []
     };
   }
-
   for (const event of unstakeEvents) {
     const values = event.returnValues;
 
@@ -71,10 +73,20 @@ async function run() {
     stakes[values.staker].confirmed += Number(values.amount);
     stakes[values.staker].confirmTransactions.push(event.transactionHash)
   }
+  let e = 0;
+  for (const staker in stakes) {
+
+    if (stakes[staker].total > 0) {
+      g++
+    }
+    else {
+      e++
+    }
+  }
 
   const p = path.join(__dirname, "../stakers.json");
   fs.writeFileSync(p, JSON.stringify(stakes));
-
+  console.log("Total stakers:" + g + " unstaked: " + e)
   console.log("Stakers written to: " + p);
 }
 
