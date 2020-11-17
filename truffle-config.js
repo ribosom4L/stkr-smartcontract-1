@@ -3,7 +3,7 @@ require("dotenv").config();
 const HDWalletProvider = require("truffle-hdwallet-provider");
 const privateKey       = process.env.DEPLOYMENT_KEY;
 
-const mainnetProvider = process.env.MAINNET_PROVIDER || `https://mainnet.infura.io/v3/167ee585da3c42e4a2a9c42476f9000f`
+const mainnetProvider = process.env.MAINNET_PROVIDER
 
 module.exports = {
   networks: {
@@ -23,6 +23,7 @@ module.exports = {
                          `https://eth-goerli-01.dccn.ankr.com`
                        ),
       network_id:    5, // goerli's id
+      confirmations: 1,
       gas:           8000000, // goerli has a lower block limit than mainnet
       timeoutBlocks: 50, // # of blocks before a deployment times out  (minimum/default:
                          // 50)
