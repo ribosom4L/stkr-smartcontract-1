@@ -26,7 +26,6 @@ module.exports = {
       gas:           8000000, // goerli has a lower block limit than mainnet
       timeoutBlocks: 50, // # of blocks before a deployment times out  (minimum/default:
                          // 50)
-      gasPrice: 130000000,
       skipDryRun:    true, // Skip dry run before migrations? (defaultü false for public
       networkCheckTimeout: 10000000
 
