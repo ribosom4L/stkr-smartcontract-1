@@ -95,7 +95,7 @@ contract GlobalPool_R1 is Lockable, Pausable {
         uint256 mintAmount = _aethContract.mint(address(this), 32 ether);
 
         uint256 _amount = 0;
-        uint256 i = _lastPendingStakerPointer;
+        uint256 i = _lastPendingStakerPointer > 0 ? _lastPendingStakerPointer.sub(1) : 0;
 
         while (_amount < 32 ether) {
             address staker = _pendingStakers[i];
