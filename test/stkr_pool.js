@@ -1,9 +1,12 @@
 const fs = require("fs");
 const path = require("path");
 const helpers = require("./helpers/helpers");
+const { deployProxy } = require("@openzeppelin/truffle-upgrades");
 const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const StkrPool = artifacts.require("GlobalPool");
 const AEth = artifacts.require("AETH");
+const Parameters = artifacts.require("SystemParameters");
+const DepositContract = artifacts.require("DepositContract");
 
 contract("Stkr Pool", function(accounts) {
   let pool;
@@ -12,8 +15,15 @@ contract("Stkr Pool", function(accounts) {
   let aEth;
 
   before(async function() {
-    pool = await StkrPool.deployed();
-    aEth = await AEth.deployed();
+    // ** old pool instance
+    const depositContract = await DepositContract.deployed();
+    const parameters = await Parameters.deployed();
+
+    aEth = await deployProxy(AEth, ["aEthereum", "aEth"])
+
+    pool = await deployProxy(StkrPool, [aEth.address, parameters.address, depositContract.address]);
+
+    await aEth.updateGlobalPoolContract(pool.address, { from: accounts[0] });
 
     const data = fs.readFileSync(path.join(__dirname, "/helpers/depositdata"), "utf8")
       .slice(8);
@@ -46,7 +56,7 @@ contract("Stkr Pool", function(accounts) {
     expectEvent(tx, "PoolOnGoing", { pool: depositData[0] });
   });
 
-  it("should distribute calculate pending stake amounts correctly", async () => {
+  it("should calculate pending stake amounts correctly", async () => {
     await pool.stake({
       from: accounts[0],
       value: helpers.wei(3)
@@ -108,7 +118,7 @@ contract("Stkr Pool", function(accounts) {
   });
 
   it("Stakers should not be able to unstake confirmed stakes", async () => {
-    expectRevert(pool.unstake({ from: accounts[3] }), "No pending stakes")
+    expectRevert(pool.unstake({ from: accounts[3] }), "No pending stakes");
   });
 
   it("Should claim correct amounts of aeth", async () => {

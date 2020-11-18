@@ -6,9 +6,11 @@ interface IAETH is IERC20 {
 
     function updateMicroPoolContract(address microPoolContract) external;
 
+    function ratio() external returns (uint256);
+
     function mintFrozen(address account, uint256 amount) external;
 
-    function mint(address account, uint256 amount) external;
+    function mint(address account, uint256 amount) external returns(uint256);
 
     function mintPool() payable external;
 

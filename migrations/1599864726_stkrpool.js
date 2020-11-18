@@ -27,7 +27,7 @@ module.exports = async (deployer) => {
       break;
     }
     default: {
-      throw new Error('Unknown network: ' + deployer.network)
+      beaconAddr = (await deployer.deploy(DepositContract)).address
     }
   }
 
