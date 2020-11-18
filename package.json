@@ -8,6 +8,7 @@
     "migrate": "truffle compile --all; truffle migrate",
     "build:addresses": "node scripts/build_abi.js",
     "generate": "truffle compile --all && typechain --target truffle './build/**/*.json'",
+    "stakers": "node scripts/get_stakers.js",
     "test": "truffle test"
   },
   "keywords": [],
