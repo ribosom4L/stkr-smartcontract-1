@@ -53,6 +53,10 @@ migrate: &migrate
           mv addresses.json dist/.
           aws s3 cp dist/ s3://$ASSETS_DOMAIN/contracts/$CIRCLE_BRANCH/ \
           --acl bucket-owner-full-control --recursive --cache-control "public,max-age=600,s-maxage=3600"
+          echo "Invalidating CDN network"
+          INVALIDATION_ID=`aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths '/*' | jq -r '.Invalidation.Id'`
+          echo "Invalidation ID is $INVALIDATION_ID"
+          echo "CDN Invalidation request is sent."
     - persist_to_workspace:
         root: '.'
         paths:
