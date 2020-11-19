@@ -19,7 +19,7 @@ module.exports = async (deployer) => {
       break;
     }
     case 'goerli': {
-      beaconAddr = "0x07b39F4fDE4A38bACe212b546dAc87C58DfE3fDC"
+      beaconAddr = "0x8c5fecdc472e27bc447696f431e425d02dd46a8c"
       break;
     }
     case 'mainnet': {
@@ -27,7 +27,7 @@ module.exports = async (deployer) => {
       break;
     }
     default: {
-      throw new Error('Unknown network: ' + deployer.network)
+      beaconAddr = (await deployer.deploy(DepositContract)).address
     }
   }
 
