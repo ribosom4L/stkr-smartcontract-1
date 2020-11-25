@@ -142,8 +142,6 @@ contract GlobalPool_R17 is Lockable, Pausable {
             emit StakeConfirmed(staker, userStake);
         }
 
-        // clear pending stakers
-        //        clearEmptyPendingStakers()
         _lastPendingStakerPointer = i;
         // send funds to deposit contract
         IDepositContract(_depositContract).deposit{value : 32 ether}(pubkey, withdrawal_credentials, signature, deposit_data_root);
@@ -187,13 +185,6 @@ contract GlobalPool_R17 is Lockable, Pausable {
         emit ProviderToppedUpEth(msg.sender, msg.value);
     }
 
-    function topUpANKR(uint256 amount) public whenNotPaused("topUpANKR") notExitRecently(msg.sender) payable {
-        /* Approve ankr & freeze ankr */
-        require(_configContract.getConfig("PROVIDER_MINIMUM_ANKR_STAKING") <= amount, "Value must be greater than minimum amount");
-        require(_stakingContract.freeze(msg.sender, amount), "Could not freeze ANKR tokens");
-        emit ProviderToppedUpAnkr(msg.sender, msg.value);
-    }
-
     // slash provider with ethereum balance
     function slash(address provider, uint256 amount) public unlocked(provider) onlyOwner {
         require(amount > 0, "Amount should be greater than zero");
@@ -206,7 +197,6 @@ contract GlobalPool_R17 is Lockable, Pausable {
         remaining = _slashANKR(provider, remaining);
 
         _slashings[provider] = _slashings[provider].add(remaining);
-        /*Do we need event if remaining balance higher than zero?*/
     }
 
     function providerExit() public {
@@ -234,7 +224,6 @@ contract GlobalPool_R17 is Lockable, Pausable {
         uint256 claimable = claimableRewardOf(staker);
         require(claimable > 0, "claimable reward zero");
 
-        _rewards[staker] = _rewards[staker];
         _claims[staker] = _claims[staker].add(claimable);
 
         _aethContract.transfer(staker, claimable);
