@@ -63,8 +63,9 @@ contract AETH_R2 is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
         return _symbol;
     }
 
-    function changeSymbol(string memory symbol) public onlyOwner {
+    function changeSymbolAndName(string memory symbol, string memory name) public onlyOwner {
         _symbol = symbol;
+        _name = name;
     }
 
     uint256[50] private __gap;
