@@ -3,10 +3,10 @@ pragma solidity 0.6.11;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
+import "../lib/openzeppelin/ERC20UpgradeSafe.sol";
 import "../lib/Lockable.sol";
 
-contract AETH_R1 is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
+contract AETH_R2 is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
     using SafeMath for uint256;
 
     event RatioUpdate(uint256 newRatio);
@@ -57,6 +57,14 @@ contract AETH_R1 is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
 
     function burn(uint256 amount) external {
         _burn(msg.sender, amount);
+    }
+
+    function symbol() public view override returns (string memory)  {
+        return _symbol;
+    }
+
+    function changeSymbol(string memory symbol) public onlyOwner {
+        _symbol = symbol;
     }
 
     uint256[50] private __gap;
