@@ -3,7 +3,7 @@ pragma solidity 0.6.11;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
+import "../lib/openzeppelin/ERC20UpgradeSafe.sol";
 import "../lib/Lockable.sol";
 
 contract AETH_R1 is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
