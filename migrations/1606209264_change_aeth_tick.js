@@ -7,5 +7,5 @@ const AETH_R2 = artifacts.require('AETH_R2');
 module.exports = async function (deployer, accounts) {
   const existing = await AETH.deployed();
   const instance = await upgradeProxy(existing.address, AETH_R2, { deployer });
-  await instance.changeSymbolAndName("aETH", "aEther")
+  await instance.changeSymbolAndName("ankrETH", "Ankr Ethereum")
 };
