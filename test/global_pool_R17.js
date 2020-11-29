@@ -33,10 +33,6 @@ contract("2020 11 16 Upgrade Global Pool", function(accounts) {
     }
   });
 
-  it("claim should be disabled", async () => {
-    await expectRevert(pool.claim(), "This action currently paused");
-  });
-
   it("should providers enabled for eth top up", async () => {
     await expectRevert(pool.topUpETH(), "Value must be greater than minimum amount");
   });
