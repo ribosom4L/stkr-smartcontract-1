@@ -7,5 +7,6 @@ const GlobalPool_R20 = artifacts.require('GlobalPool_R20');
 module.exports = async function (deployer, accounts) {
   const existing = await GlobalPool.deployed();
   const instance = await upgradeProxy(existing.address, GlobalPool_R20, { deployer });
-  await instance.togglePause(web3.utils.fromAscii('claim'))
+  if (deployer.network === 'mainnet')
+    await instance.togglePause(web3.utils.fromAscii('claim'))
 };
