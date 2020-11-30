@@ -160,7 +160,8 @@ contract GlobalPool_R20 is Lockable, Pausable {
         _lastPendingStakerPointer = i;
 
         // mint aETH
-        _aethContract.mint(address(this), uint256(32 ether).sub(_pendingProviderBalance));
+        _aethContract.mint(address(this), uint256(32 ether).sub(_pendingProviderBalance).mul(_ratio).div(1e18));
+
         // send funds to deposit contract
         IDepositContract(_depositContract).deposit{value : 32 ether}(pubkey, withdrawal_credentials, signature, deposit_data_root);
 
@@ -210,10 +211,14 @@ contract GlobalPool_R20 is Lockable, Pausable {
     }
 
     function providerExit() public {
-        require(availableEtherBalanceOf(msg.sender) > 0, "Provider balance should be positive for exit");
+        int256 available = availableEtherBalanceOf(msg.sender);
+        require(available > 0, "Provider balance should be positive for exit");
         _exits[msg.sender] = block.number;
 
         _etherBalances[msg.sender] = 0;
+        _slashings[msg.sender] = 0;
+
+        _aethContract.mint(msg.sender, uint256(available));
 
         emit ProviderExited(msg.sender);
     }
