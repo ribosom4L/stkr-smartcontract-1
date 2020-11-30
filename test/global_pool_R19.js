@@ -223,8 +223,7 @@ contract("2020 11 30 Upgrade Global Pool", function(accounts) {
         let stake = stakes[i][user] || 0
         let topUp = topUps[i][user] || 0
 
-        const calcClaimable = stake
-        assert.equal(claimable, calcClaimable);
+        assert.equal(claimable, stake);
       }
 
       for (const user in userTotals) {
