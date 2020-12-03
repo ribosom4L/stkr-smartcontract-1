@@ -40,6 +40,8 @@ module.exports = {
         ),
       network_id:    1,
       gas:           8000000,
+      confirmations: 1,
+      gasPrice: 4200000000000,
       timeoutBlocks: 50,
       skipDryRun:    true,
       networkCheckTimeout: 10000000
