@@ -266,5 +266,6 @@ contract("2020 11 30 Upgrade Global Pool", function(accounts) {
   //   assert(false)
   // })
 
-  // it ('should mint corret amount with ratio', () => {})
+  it ('should mint corret amount with ratio', () => {
+  })
 });
