@@ -1,9 +1,10 @@
 const fs = require("fs");
 const path = require("path");
 const helpers = require("./helpers/helpers");
-const { deployProxy } = require("@openzeppelin/truffle-upgrades");
+const { deployProxy, upgradeProxy } = require("@openzeppelin/truffle-upgrades");
 const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
-const StkrPool = artifacts.require("GlobalPool");
+const GlobalPool = artifacts.require("GlobalPool");
+const GlobalPool_R20 = artifacts.require("GlobalPool_R20");
 const AEth = artifacts.require("AETH");
 const Parameters = artifacts.require("SystemParameters");
 const DepositContract = artifacts.require("DepositContract");
@@ -21,7 +22,9 @@ contract("Stkr Pool", function(accounts) {
 
     aEth = await deployProxy(AEth, ["aEthereum", "aEth"])
 
-    pool = await deployProxy(StkrPool, [aEth.address, parameters.address, depositContract.address]);
+    pool = await deployProxy(GlobalPool, [aEth.address, parameters.address, depositContract.address]);
+
+    pool = await upgradeProxy(pool.address, GlobalPool_R20);
 
     await aEth.updateGlobalPoolContract(pool.address, { from: accounts[0] });
 

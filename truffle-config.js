@@ -21,7 +21,7 @@ module.exports = {
                        new HDWalletProvider(
                          privateKey,
                          `https://eth-goerli-01.dccn.ankr.com`
-                       ),
+                         ),
       network_id:    5, // goerli's id
       confirmations: 1,
       gas:           8000000, // goerli has a lower block limit than mainnet

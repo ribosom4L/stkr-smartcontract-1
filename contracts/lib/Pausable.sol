@@ -13,5 +13,9 @@ contract Pausable is  OwnableUpgradeSafe {
         _paused[action] = !_paused[action];
     }
 
+    function isPaused(bytes32 action) public view returns(bool) {
+        return _paused[action];
+    }
+
     uint256[50] private __gap;
 }
