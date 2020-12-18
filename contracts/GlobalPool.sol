@@ -166,7 +166,7 @@ contract GlobalPool is Lockable, Pausable {
     function topUpANKR(uint256 amount) public whenNotPaused("topUpANKR") notExitRecently(msg.sender) payable {
         /* Approve ankr & freeze ankr */
         require(_stakingContract.freeze(msg.sender, amount), "Could not freeze ANKR tokens");
-        emit ProviderToppedUpAnkr(msg.sender, msg.value);
+        emit ProviderToppedUpAnkr(msg.sender, amount);
     }
 
     // slash provider with ethereum balance

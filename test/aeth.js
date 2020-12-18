@@ -4,7 +4,7 @@ const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const GlobalPool = artifacts.require("GlobalPool");
 const AETH = artifacts.require("AETH");
 const AETH_R4 = artifacts.require("AETH_R4");
-const { upgradeProxy } = require("@openzeppelin/truffle-upgrades");
+const { upgradeProxy, admin } = require("@openzeppelin/truffle-upgrades");
 
 contract("ankrETH", function(accounts) {
   let pool, aeth;
