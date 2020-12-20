@@ -84,9 +84,9 @@ workflows:
             - test
           filters:
             branches:
-              ignore:
-                - master
-                - goerli
+              only:
+                - develop
+                - test-fix
       - migrate-goerli:
           context:
             - cicd
