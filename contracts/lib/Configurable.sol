@@ -4,6 +4,8 @@ contract Configurable {
 
     mapping (bytes32 => uint) internal config;
 
+    mapping (bytes32 => string) internal configString;
+
     function getConfig(bytes32 key) public view returns (uint) {
         return config[key];
     }
@@ -33,5 +35,23 @@ contract Configurable {
     }
     function setConfig(bytes32 key, address addr, uint value) internal {
         _setConfig(bytes32(uint(key) ^ uint(addr)), value);
+    }
+    function getConfigString(bytes32 key) public view returns (string memory) {
+        return configString[key];
+    }
+    function getConfigString(bytes32 key, uint index) public view returns (string memory) {
+        return configString[bytes32(uint(key) ^ index)];
+    }
+    function _setConfigString(bytes32 key, string memory value) internal {
+        configString[key] = value;
+    }
+    function _setConfigString(bytes32 key, uint index, string memory value) internal {
+        _setConfigString(bytes32(uint(key) ^ index), value);
+    }
+    function setConfigString(bytes32 key, string memory value) private {
+        _setConfigString(key, value);
+    }
+    function setConfigString(bytes32 key, uint index, string memory value) private {
+        _setConfigString(bytes32(uint(key) ^ index), value);
     }
 }
