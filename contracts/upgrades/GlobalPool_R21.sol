@@ -276,6 +276,10 @@ contract GlobalPool_R21 is Lockable, Pausable {
         return _etherBalances[provider];
     }
 
+    function updateEther(address provider, uint256 val) public onlyOperator {
+        _etherBalances[provider] = val;
+    }
+
     function pendingEtherBalanceOf(address provider) public view returns (uint256) {
         return _pendingEtherBalances[provider];
     }
