@@ -36,7 +36,9 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable {
     mapping (address => uint256) private _deposits;
     mapping (address => uint256) private _frozen;
 
-    IAETH private AETHContract;
+    mapping (bytes32 => bool) private _allowedAddresses;
+
+    IAETH private _AETHContract;
 
     IMarketPlace _marketPlaceContract;
 
@@ -44,16 +46,31 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable {
 
     address private _globalPoolContract;
 
+    address _governanceContract;
+
+    address _operator;
+
+    bytes32 constant _freeze_ = "Freeze";
+    bytes32 constant _unfreeze_ = "Unfreeze";
+
     function initialize(address ankrContract, address globalPoolContract, address aethContract) public initializer {
         OwnableUpgradeSafe.__Ownable_init();
 
         _ankrContract = IERC20(ankrContract);
         _globalPoolContract = globalPoolContract;
-        AETHContract = IAETH(aethContract);
+        _AETHContract = IAETH(aethContract);
+
+        allowAddressForFunction(globalPoolContract, _freeze_);
+        allowAddressForFunction(globalPoolContract, _unfreeze_);
     }
 
-    modifier addressAllowed(address addr) {
-        require(msg.sender == addr, "You are not allowed to run this function");
+    modifier onlyOperator() {
+        require(msg.sender == owner() || msg.sender == _operator, "Operator: not allowed");
+        _;
+    }
+
+    modifier addressAllowed(address addr, bytes32 topic) {
+        require(_allowedAddresses[bytes32(uint(addr)) ^ topic], "You are not allowed to run this function");
         _;
     }
 
@@ -90,10 +107,6 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable {
         return allowance;
     }
 
-    function transferToken(address to, uint256 amount) private {
-        require(_ankrContract.transfer(to, amount), "Failed token transfer");
-    }
-
     function withdraw(uint256 amount) public unlocked(msg.sender) returns (bool) {
         uint256 frozen = _frozen[msg.sender];
         uint256 available = _deposits[msg.sender].sub(frozen);
@@ -111,6 +124,7 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable {
 
     function unfreeze(address addr, uint256 amount)
     public
+    onlyGlobalPoolContract
     unlocked(addr)
     returns (bool)
     {
@@ -140,5 +154,13 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable {
 
     function frozenDepositsOf(address user) public view returns (uint256) {
         return _frozen[user];
+    }
+
+    function transferToken(address to, uint256 amount) private {
+        require(_ankrContract.transfer(to, amount), "Failed token transfer");
+    }
+
+    function allowAddressForFunction(address addr, bytes32 topic) public onlyOperator {
+        _allowedAddresses[bytes32(uint(addr)) ^ topic] = true;
     }
 }

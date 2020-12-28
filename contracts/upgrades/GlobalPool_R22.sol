@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.6.11;
+pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/Math.sol";
@@ -13,7 +14,7 @@ import "../lib/interfaces/IStaking.sol";
 import "../lib/interfaces/IDepositContract.sol";
 import "../lib/Pausable.sol";
 
-contract GlobalPool_R21 is Lockable, Pausable {
+contract GlobalPool_R22 is Lockable, Pausable {
 
     using SafeMath for uint256;
     using Math for uint256;
@@ -88,10 +89,32 @@ contract GlobalPool_R21 is Lockable, Pausable {
         _paused["topUpANKR"] = true;
     }
 
+    function multipleDeposit(bytes[] calldata pubkey,
+        bytes[] calldata withdrawal_credentials,
+        bytes[] calldata signature,
+        bytes32[] calldata deposit_data_root) public onlyOperator {
+        uint256 pubkeyLength = pubkey.length;
+        require(
+            pubkeyLength == withdrawal_credentials.length &&
+            pubkeyLength == signature.length &&
+            pubkeyLength == deposit_data_root.length, "Multiple Deposit: Array lengths must be equal");
+
+        for(uint32 i = 0; i < pubkeyLength; i++) {
+            _deposit(pubkey[i], withdrawal_credentials[i], signature[i], deposit_data_root[i]);
+        }
+    }
+
     function pushToBeacon(bytes calldata pubkey,
         bytes calldata withdrawal_credentials,
         bytes calldata signature,
         bytes32 deposit_data_root) public onlyOperator {
+        _deposit(pubkey, withdrawal_credentials, signature, deposit_data_root);
+    }
+
+    function _deposit(bytes calldata pubkey,
+        bytes calldata withdrawal_credentials,
+        bytes calldata signature,
+        bytes32 deposit_data_root) private {
 
         require(_pendingAmount >= 32 ether, "pending ethers not enough");
         // substract 32 ether from pending amount
@@ -274,10 +297,6 @@ contract GlobalPool_R21 is Lockable, Pausable {
 
     function etherBalanceOf(address provider) public view returns (uint256) {
         return _etherBalances[provider];
-    }
-
-    function updateEther(address provider, uint256 val) public onlyOperator {
-        _etherBalances[provider] = val;
     }
 
     function pendingEtherBalanceOf(address provider) public view returns (uint256) {
