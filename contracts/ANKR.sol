@@ -13,9 +13,9 @@ contract ANKR is IERC20, Context {
     mapping (address => mapping (address => uint256)) private _allowances;
     uint256 private _totalSupply;
 
-    string private _name;
-    string private _symbol;
-    uint8 private _decimals;
+    string private _name = "Ankr Token";
+    string private _symbol = "ANKR";
+    uint8 private _decimals = 18;
 
     address private _microPoolContract;
 
@@ -131,7 +131,6 @@ contract ANKR is IERC20, Context {
         return true;
     }
 
-    // TODO: only micropool and ... contracts can call this
     function burnFrom(address sender, uint256 amount) external returns (bool) {
         _burn(sender, amount);
         _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "ERC20: transfer amount exceeds allowance"));
