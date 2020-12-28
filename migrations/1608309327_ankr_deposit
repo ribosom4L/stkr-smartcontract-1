@@ -8,13 +8,18 @@ const GlobalPool_R21 = artifacts.require("GlobalPool_R21")
 const { deployProxy, upgradeProxy } = require("@openzeppelin/truffle-upgrades");
 
 module.exports = async (_deployer) => {
+  let ankrAddress;
   if (_deployer.network !== "mainnet") {
     await _deployer.deploy(Ankr)
+    ankrAddress = (await Ankr.deployed()).address
   }
-  const ankr = await Ankr.deployed()
+  else {
+    ankrAddress = "0x8290333ceF9e6D528dD5618Fb97a76f268f3EDD4"
+  }
+
   let pool = await GlobalPool.deployed()
   const aeth = await AETH.deployed()
-  const ankrDeposit = await deployProxy(AnkrDeposit, [ankr.address, pool.address, aeth.address])
+  const ankrDeposit = await deployProxy(AnkrDeposit, [ankrAddress, pool.address, aeth.address])
   pool = await upgradeProxy(pool.address, GlobalPool_R21, { deployer: _deployer });
   await pool.updateStakingContract(ankrDeposit.address)
 

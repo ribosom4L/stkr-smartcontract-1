@@ -4,7 +4,9 @@ const helpers = require("./helpers/helpers");
 const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const GlobalPool = artifacts.require("GlobalPool");
 const Config = artifacts.require("Config");
-const GlobalPool_R20 = artifacts.require("GlobalPool_R20");
+const GlobalPool_R21 = artifacts.require("GlobalPool_R21");
+const DepositContract = artifacts.require("DepositContract");
+
 const { upgradeProxy } = require("@openzeppelin/truffle-upgrades");
 const AnkrETH = artifacts.require("AETH");
 
@@ -17,8 +19,14 @@ contract("2020 11 30 Upgrade Global Pool", function(accounts) {
   before(async function() {
     ankrETH = await AnkrETH.deployed();
     config = await Config.deployed();
-    poolOld = await GlobalPool.deployed();
-    pool = await upgradeProxy(poolOld.address, GlobalPool_R20);
+    const deposit = await DepositContract.deployed();
+    pool = await GlobalPool_R21.new();
+    pool.initialize(ankrETH.address, config.address, deposit.address)
+    // pool = await upgradeProxy(poolOld.address, GlobalPool_R21);
+    await pool.updateConfigContract(config.address)
+    await pool.togglePause(web3.utils.fromAscii("topUpETH"));
+    // pool.togglePause("Stake");
+    await ankrETH.updateGlobalPoolContract(pool.address)
 
     const data = fs.readFileSync(path.join(__dirname, "/helpers/depositdata"), "utf8")
       .slice(8);
@@ -262,10 +270,16 @@ contract("2020 11 30 Upgrade Global Pool", function(accounts) {
     assert.equal(availableEtherBalanceAfter, 0)
   });
 
-  // it ('slashings should be correctly calculated and affected to provider\'s balance', async () => {
-  //   assert(false)
-  // })
+  it("should store correct amount for providers", async () => {
+    await ankrETH.updateRatio(helpers.wei(0.5))
+    const availableEtherBalanceBefore = Number(web3.utils.fromWei(await pool.availableEtherBalanceOf(accounts[8])))
+    await pool.topUpETH({
+      from: accounts[8],
+      value: helpers.wei(32)
+    });
+    await helpers.pushToBeacon(pool);
 
-  it ('should mint corret amount with ratio', () => {
+    const availableEtherBalanceAfter = Number(web3.utils.fromWei(await pool.availableEtherBalanceOf(accounts[8])))
+    assert.equal(availableEtherBalanceAfter - availableEtherBalanceBefore, 32)
   })
 });

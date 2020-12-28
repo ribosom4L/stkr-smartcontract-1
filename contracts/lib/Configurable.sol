@@ -1,7 +1,6 @@
 pragma solidity ^0.6.11;
 
 contract Configurable {
-
     mapping (bytes32 => uint) internal config;
 
     mapping (bytes32 => string) internal configString;
@@ -42,16 +41,10 @@ contract Configurable {
     function getConfigString(bytes32 key, uint index) public view returns (string memory) {
         return configString[bytes32(uint(key) ^ index)];
     }
-    function _setConfigString(bytes32 key, string memory value) internal {
+    function setConfigString(bytes32 key, string memory value) internal {
         configString[key] = value;
     }
-    function _setConfigString(bytes32 key, uint index, string memory value) internal {
-        _setConfigString(bytes32(uint(key) ^ index), value);
-    }
-    function setConfigString(bytes32 key, string memory value) private {
-        _setConfigString(key, value);
-    }
-    function setConfigString(bytes32 key, uint index, string memory value) private {
-        _setConfigString(bytes32(uint(key) ^ index), value);
+    function setConfigString(bytes32 key, uint index, string memory value) internal {
+        setConfigString(bytes32(uint(key) ^ index), value);
     }
 }

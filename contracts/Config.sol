@@ -9,6 +9,14 @@ contract Config is Governable {
 
     mapping (bytes32 => uint256) private _config;
 
+    function initialize() external initializer {
+        super.initialize(msg.sender);
+         setConfig("PROVIDER_MINIMUM_ANKR_STAKING", 100000 ether);
+         setConfig("PROVIDER_MINIMUM_ETH_STAKING", 2 ether);
+         setConfig("REQUESTER_MINIMUM_POOL_STAKING", 500 finney);
+         setConfig("EXIT_BLOCKS", 24);
+    }
+
     function setConfig(bytes32 config, uint256 value) public governance {
         _config[config] = value;
     }

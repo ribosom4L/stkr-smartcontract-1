@@ -170,7 +170,7 @@ contract GlobalPool_R22 is Lockable, Pausable {
             }
             // set pending user stakes to zero
             _pendingUserStakes[staker] = 0;
-            _etherBalances[staker] = _etherBalances[staker].add(_pendingEtherBalances[staker].mul(_ratio).div(1e18));
+            _etherBalances[staker] = _etherBalances[staker].add(_pendingEtherBalances[staker]);
 
             // add provider stake to pending provider balance
             _pendingProviderBalance = _pendingProviderBalance.add(providerStake);
