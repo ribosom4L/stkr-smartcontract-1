@@ -74,12 +74,6 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable {
         _;
     }
 
-    modifier onlyGlobalPoolContract() {
-        require(_globalPoolContract == _msgSender(), "Ownable: caller is not the micropool contract");
-        _;
-    }
-
-
     function deposit() public unlocked(msg.sender) returns(uint256) {
         return _claimAndDeposit(msg.sender);
     }
@@ -124,7 +118,7 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable {
 
     function unfreeze(address addr, uint256 amount)
     public
-    onlyGlobalPoolContract
+    addressAllowed(msg.sender, _unfreeze_)
     unlocked(addr)
     returns (bool)
     {
@@ -136,7 +130,7 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable {
 
     function freeze(address addr, uint256 amount)
     public
-    onlyGlobalPoolContract
+    addressAllowed(msg.sender, _freeze_)
     unlocked(addr)
     returns (bool)
     {
@@ -148,12 +142,22 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable {
         return true;
     }
 
+    function availableDepositsOf(address user) public view returns (uint256) {
+        return _deposits[user].sub(_frozen[user]);
+    }
+
     function depositsOf(address user) public view returns (uint256) {
         return _deposits[user];
     }
 
     function frozenDepositsOf(address user) public view returns (uint256) {
         return _frozen[user];
+    }
+
+    function updateGovernance(address governance) public onlyOwner {
+        _governanceContract = governance;
+        allowAddressForFunction(governance, _freeze_);
+        allowAddressForFunction(governance, _unfreeze_);
     }
 
     function transferToken(address to, uint256 amount) private {

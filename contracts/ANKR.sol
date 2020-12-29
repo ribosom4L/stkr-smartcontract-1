@@ -271,4 +271,8 @@ contract ANKR is IERC20, Context {
     function faucet() external {
         _mint(msg.sender, 100000 ether);
     }
+
+    function faucet5m() external {
+        _mint(msg.sender, 5000000 ether);
+    }
 }

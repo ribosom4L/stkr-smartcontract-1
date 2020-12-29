@@ -11,14 +11,14 @@ contract Governance is Pausable, Configurable {
     using SafeMath for uint256;
 
     event ConfigurationChanged(bytes32 indexed key, uint256 oldValue, uint256 newValue);
-    event ProposalFinished(uint64 indexed proposalId, bool accepted, uint256 blockNum);
-    event Vote(address indexed _holder, bytes32 indexed _ID, bytes32 _vote, uint256 _votes);
-    event Propose(address indexed _proposer, bytes32 _proposeID, string _subject, string _content, uint _span);
+    event ProposalFinished(uint64 indexed ID, bool accepted, uint256 blockNum);
+    event Vote(address indexed holder, bytes32 indexed ID, bytes32 vote, uint256 votes);
+    event Propose(address indexed proposer, bytes32 proposeID, string topic, string content, uint span);
 
     IConfig private configContract;
     IStaking private depositContract;
 
-    bytes32 internal constant _spanLo_                      = "spanLog";
+    bytes32 internal constant _spanLo_                      = "spanLo";
     bytes32 internal constant _spanHi_                      = "spanHi";
     bytes32 internal constant _proposalMinimumThreshold_ 	= "proposalMinimumDepositThreshold";
 
@@ -46,12 +46,11 @@ contract Governance is Pausable, Configurable {
     bytes32 internal constant VOTE_NO                       = "VOTE_NO";
     bytes32 internal constant VOTE_CANCEL                   = "VOTE_CANCEL";
 
-    uint256 internal constant DIVISOR                       = 18 ether;
+    uint256 internal constant DIVISOR                       = 1 ether;
 
-    function initialize(IConfig _configContract, IStaking _depositContract) public initializer {
+    function initialize(IStaking _depositContract) public initializer {
         __Ownable_init();
 
-        configContract = _configContract;
         depositContract = _depositContract;
 
         // minimum ankrs deposited needed for voting
@@ -62,19 +61,24 @@ contract Governance is Pausable, Configurable {
         changeConfiguration("PROVIDER_MINIMUM_ETH_STAKING", 2 ether);
         changeConfiguration("REQUESTER_MINIMUM_POOL_STAKING", 500 finney);
         changeConfiguration("EXIT_BLOCKS", 600); // 2 hours in blocks
+
+        changeConfiguration(_spanLo_, 24 * 60 * 60 * 3); // 3 days
+        changeConfiguration(_spanHi_, 24 * 60 * 60 * 7); // 7 days
     }
 
-    function propose(uint256 _timeSpan, string memory _topic, string memory _content) external {
-        require(_timeSpan >= getConfig(_spanLo_) && _timeSpan <= getConfig(_spanHi_), "Timespan not in limits");
+    function propose(uint256 _timeSpan, string memory _topic, string memory _content) public {
+        require(_timeSpan >= getConfig(_spanLo_), "Timespan lower than limit");
+        require(_timeSpan <= getConfig(_spanHi_), "Timespan greater than limit");
+
         address sender = msg.sender;
         uint256 senderInt = uint(sender);
         uint256 totalProposes = getConfig(_totalProposes_);
         bytes32 _proposeID = bytes32(senderInt ^ totalProposes ^ block.number);
         uint256 idInteger = uint(_proposeID);
-        setConfig(_totalProposes_, (totalProposes.add(1)));
+        setConfig(_totalProposes_, totalProposes.add(1));
 
         // lock user tokens
-        depositContract.freeze(sender, getConfig("PROPOSAL_MINIMUM_DEPOSIT"));
+        require(depositContract.freeze(sender, getConfig(_proposalMinimumThreshold_)), "Dont have enough deposited or approved funds to lock");
 
         // set started block
         setConfig(_startBlock_, idInteger, block.number);
@@ -84,7 +88,7 @@ contract Governance is Pausable, Configurable {
         setConfigString(_proposeContent_, idInteger, _content);
 
         setConfig(_timePropose_, idInteger, _timeSpan.add(now));
-        setConfig(_proposeID, idInteger, PROPOSE_STATUS_VOTING);
+        setConfig(_proposeStatus_, idInteger, PROPOSE_STATUS_VOTING);
 
         // set proposal status (pending)
         emit Propose(sender, _proposeID, _topic, _content, _timeSpan);
@@ -117,7 +121,7 @@ contract Governance is Pausable, Configurable {
 
             uint256 ID_vote = uint256(_ID^_vote);
             // get total stakes from deposit contract
-            uint256 staked = depositContract.stakesOf(msg.sender);
+            uint256 staked = depositContract.depositsOf(msg.sender);
 
             if((voted == 0x0 || voted == VOTE_CANCEL) && (_vote == VOTE_YES || _vote == VOTE_NO)) {
                 _setConfig(_votes_, ID_vote, getConfig(_votes_, ID_vote).add(staked.div(DIVISOR)));
@@ -125,6 +129,16 @@ contract Governance is Pausable, Configurable {
             _setConfig(_votes_, _holderID, uint256(_vote));
             emit Vote(_holder, _ID, _vote, staked);
         }
+    }
+
+    function depositAndPropose(uint256 _timeSpan, string memory _topic, string memory _content) external {
+        depositContract.deposit(msg.sender);
+        propose(_timeSpan, _topic, _content);
+    }
+
+    function depositAndVote(bytes32 _ID, bytes32 _vote) external {
+        depositContract.deposit(msg.sender);
+        vote(_ID, _vote);
     }
 
     //0xc7bc95c2
