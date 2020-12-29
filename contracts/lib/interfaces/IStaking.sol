@@ -10,4 +10,12 @@ interface IStaking {
     function frozenStakesOf(address staker) external view returns (uint256);
 
     function stakesOf(address staker) external view returns (uint256);
+
+    function frozenDepositsOf(address staker) external view returns (uint256);
+
+    function depositsOf(address staker) external view returns (uint256);
+
+    function deposit() external;
+
+    function deposit(address user) external;
 }
