@@ -13,6 +13,10 @@ contract("ankrETH", function(accounts) {
     pool = await GlobalPool.deployed();
     const aethOld = await AETH.deployed();
     aeth = await upgradeProxy(aethOld.address, AETH_R4);
+
+    for (let i = 0; i < 300; i++) {
+      await helpers.advanceBlock();
+    }
   });
 
   it("only operator should be able to update the ratio", async () => {
@@ -25,6 +29,9 @@ contract("ankrETH", function(accounts) {
     // get aeth balance first
     const firstBalance = Number(fromWei(await aeth.balanceOf(pool.address)));
     // stake 32
+    for (let i = 0; i < 300; i++) {
+      await helpers.advanceBlock();
+    }
     await pool.stake({ value: helpers.wei(32) });
     // push to beacon
     await helpers.pushToBeacon(pool);

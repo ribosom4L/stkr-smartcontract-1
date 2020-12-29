@@ -11,7 +11,7 @@ contract Governance is Pausable, Configurable {
     using SafeMath for uint256;
 
     event ConfigurationChanged(bytes32 indexed key, uint256 oldValue, uint256 newValue);
-    event ProposalFinished(uint64 indexed ID, bool accepted, uint256 blockNum);
+    event ProposalFinished(bytes32 indexed ID, bool accepted, uint256 blockNum);
     event Vote(address indexed holder, bytes32 indexed ID, bytes32 vote, uint256 votes);
     event Propose(address indexed proposer, bytes32 proposeID, string topic, string content, uint span);
 
@@ -60,7 +60,7 @@ contract Governance is Pausable, Configurable {
         changeConfiguration("PROVIDER_MINIMUM_ETH_TOP_UP", 0.1 ether);
         changeConfiguration("PROVIDER_MINIMUM_ETH_STAKING", 2 ether);
         changeConfiguration("REQUESTER_MINIMUM_POOL_STAKING", 500 finney);
-        changeConfiguration("EXIT_BLOCKS", 600); // 2 hours in blocks
+        changeConfiguration("EXIT_BLOCKS", 24);
 
         changeConfiguration(_spanLo_, 24 * 60 * 60 * 3); // 3 days
         changeConfiguration(_spanHi_, 24 * 60 * 60 * 7); // 7 days
