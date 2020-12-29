@@ -25,7 +25,7 @@ module.exports = async (_deployer) => {
   const ankrDeposit = await deployProxy(AnkrDeposit, [ankrAddress, pool.address, aeth.address])
   await pool.updateStakingContract(ankrDeposit.address)
 
-  if (!Boolean(await pool.isPaused(web3.utils.fromAscii('topUpANKR'))))
+  if (Boolean(await pool.isPaused(web3.utils.fromAscii('topUpANKR'))))
     await pool.togglePause(web3.utils.fromAscii('topUpANKR'))
 
   const governance = await deployProxy(Governance, [ankrDeposit.address])
