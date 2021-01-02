@@ -18,35 +18,35 @@ contract Governance is Pausable, Configurable {
     IConfig private configContract;
     IStaking private depositContract;
 
-    bytes32 internal constant _spanLo_                      = "spanLo";
-    bytes32 internal constant _spanHi_                      = "spanHi";
-    bytes32 internal constant _proposalMinimumThreshold_ 	= "proposalMinimumDepositThreshold";
+    bytes32 internal constant _spanLo_ = "spanLo";
+    bytes32 internal constant _spanHi_ = "spanHi";
+    bytes32 internal constant _proposalMinimumThreshold_ = "proposalMinimumDepositThreshold";
 
-    bytes32 internal constant _startBlock_                  = "startBlock";
+    bytes32 internal constant _startBlock_ = "startBlock";
 
-    bytes32 internal constant _proposeTopic_				= "proposeTopic";
-    bytes32 internal constant _proposeContent_				= "proposeContent";
-    bytes32 internal constant _timePropose_					= "timePropose";
-    bytes32 internal constant _proposer_                    = "proposer";
+    bytes32 internal constant _proposeTopic_ = "proposeTopic";
+    bytes32 internal constant _proposeContent_ = "proposeContent";
+    bytes32 internal constant _timePropose_ = "timePropose";
+    bytes32 internal constant _proposer_ = "proposer";
 
-    bytes32 internal constant _totalProposes_               = "proposer";
-    bytes32 internal constant _minimumVoteAcceptance_       = "minimumVoteAcceptance";
+    bytes32 internal constant _totalProposes_ = "proposer";
+    bytes32 internal constant _minimumVoteAcceptance_ = "minimumVoteAcceptance";
 
-    bytes32 internal constant _proposeID_					= "proposeID";
-    bytes32 internal constant _proposeStatus_				= "proposeStatus";
+    bytes32 internal constant _proposeID_ = "proposeID";
+    bytes32 internal constant _proposeStatus_ = "proposeStatus";
 
-    bytes32 internal constant _votes_						= "votes";
-    bytes32 internal constant _voteCount_					= "voteCount";
+    bytes32 internal constant _votes_ = "votes";
+    bytes32 internal constant _voteCount_ = "voteCount";
 
-    uint256 internal constant PROPOSE_STATUS_VOTING			= uint256(bytes32("PROPOSE_STATUS_VOTING"));
-    uint256 internal constant PROPOSE_STATUS_FAIL			= uint256(bytes32("PROPOSE_STATUS_FAIL"));
-    uint256 internal constant PROPOSE_STATUS_PASS			= uint256(bytes32("PROPOSE_STATUS_PASS"));
+    uint256 internal constant PROPOSE_STATUS_VOTING = 1;
+    uint256 internal constant PROPOSE_STATUS_FAIL = 2;
+    uint256 internal constant PROPOSE_STATUS_PASS = 3;
 
-    bytes32 internal constant VOTE_YES                      = "VOTE_YES";
-    bytes32 internal constant VOTE_NO                       = "VOTE_NO";
-    bytes32 internal constant VOTE_CANCEL                   = "VOTE_CANCEL";
+    bytes32 internal constant VOTE_YES = "VOTE_YES";
+    bytes32 internal constant VOTE_NO = "VOTE_NO";
+    bytes32 internal constant VOTE_CANCEL = "VOTE_CANCEL";
 
-    uint256 internal constant DIVISOR                       = 1 ether;
+    uint256 internal constant DIVISOR = 1 ether;
 
     function initialize(IStaking _depositContract) public initializer {
         __Ownable_init();
@@ -62,8 +62,10 @@ contract Governance is Pausable, Configurable {
         changeConfiguration("REQUESTER_MINIMUM_POOL_STAKING", 500 finney);
         changeConfiguration("EXIT_BLOCKS", 24);
 
-        changeConfiguration(_spanLo_, 24 * 60 * 60 * 3); // 3 days
-        changeConfiguration(_spanHi_, 24 * 60 * 60 * 7); // 7 days
+        changeConfiguration(_spanLo_, 24 * 60 * 60 * 3);
+        // 3 days
+        changeConfiguration(_spanHi_, 24 * 60 * 60 * 7);
+        // 7 days
     }
 
     function propose(uint256 _timeSpan, string memory _topic, string memory _content) public {
@@ -101,16 +103,16 @@ contract Governance is Pausable, Configurable {
         require(status == PROPOSE_STATUS_VOTING, "Propose status is not VOTING");
 
         address _holder = msg.sender;
-        uint256 _holderID = uint(_holder)^uint(ID);
-        if(now <= getConfig(_timePropose_, ID)) {
+        uint256 _holderID = uint(_holder) ^ uint(ID);
+        if (now <= getConfig(_timePropose_, ID)) {
             // previous vote type
             bytes32 voted = bytes32(getConfig(_votes_, _holderID));
             // previous vote count
             uint256 voteCount = getConfig(_voteCount_, _holderID);
 
-            uint256 ID_voted = uint256(_ID^voted);
+            uint256 ID_voted = uint256(_ID ^ voted);
             // if this is a cancelling operation, set vote count to 0 for user and remove votes
-            if((voted == VOTE_YES || voted == VOTE_NO) && _vote == VOTE_CANCEL) {
+            if ((voted == VOTE_YES || voted == VOTE_NO) && _vote == VOTE_CANCEL) {
                 _setConfig(_votes_, ID_voted, getConfig(_votes_, ID_voted).sub(voteCount));
                 _setConfig(_voteCount_, _holderID, 0);
 
@@ -119,11 +121,11 @@ contract Governance is Pausable, Configurable {
                 return;
             }
 
-            uint256 ID_vote = uint256(_ID^_vote);
+            uint256 ID_vote = uint256(_ID ^ _vote);
             // get total stakes from deposit contract
             uint256 staked = depositContract.depositsOf(msg.sender);
 
-            if((voted == 0x0 || voted == VOTE_CANCEL) && (_vote == VOTE_YES || _vote == VOTE_NO)) {
+            if ((voted == 0x0 || voted == VOTE_CANCEL) && (_vote == VOTE_YES || _vote == VOTE_NO)) {
                 _setConfig(_votes_, ID_vote, getConfig(_votes_, ID_vote).add(staked.div(DIVISOR)));
             }
             _setConfig(_votes_, _holderID, uint256(_vote));
@@ -142,12 +144,13 @@ contract Governance is Pausable, Configurable {
     }
 
     //0xc7bc95c2
-    function getVotes(bytes32 _ID, bytes32 _vote) public view returns(uint256) {
-        return getConfig(_votes_, uint256(_ID^_vote));
+    function getVotes(bytes32 _ID, bytes32 _vote) public view returns (uint256) {
+        return getConfig(_votes_, uint256(_ID ^ _vote));
     }
 
     event ProposalFinished(bytes32 indexed _proposeID, bool result, uint256 _yes, uint256 _no);
-    function finishProposal(bytes32 _ID) public returns(bool result) {
+
+    function finishProposal(bytes32 _ID) public returns (bool result) {
         uint256 ID = uint256(_ID);
         require(getConfig(_timePropose_, ID) <= now, "There is still time for proposal");
         require(getConfig(_proposeStatus_, ID) == PROPOSE_STATUS_VOTING, "You cannot finish proposals that already finished");
@@ -155,22 +158,35 @@ contract Governance is Pausable, Configurable {
         uint256 yes = 0;
         uint256 no = 0;
 
-        (result, yes, no) = proposalStatus(_ID);
+        (result, yes, no,,,) = proposal(_ID);
 
         _setConfig(_proposeStatus_, ID, result ? PROPOSE_STATUS_PASS : PROPOSE_STATUS_FAIL);
         emit ProposalFinished(_ID, result, yes, no);
     }
 
-    function proposalStatus(bytes32 _ID) public view returns(bool result, uint256 yes, uint256 no) {
-        yes = getConfig(_votes_, uint256(_ID^VOTE_YES));
-        no = getConfig(_votes_, uint256(_ID^VOTE_NO));
+    function proposal(bytes32 _ID) public view returns (
+        bool result,
+        uint256 yes,
+        uint256 no,
+        string memory topic,
+        string memory content,
+        uint256 status
+    ) {
+        uint256 idInteger = uint(_ID);
+        yes = getConfig(_votes_, uint256(_ID ^ VOTE_YES));
+        no = getConfig(_votes_, uint256(_ID ^ VOTE_NO));
 
         result = yes > no && yes.add(no) > getConfig(_minimumVoteAcceptance_);
+
+        topic = getConfigString(_proposeTopic_, idInteger);
+        content = getConfigString(_proposeContent_, idInteger);
+
+        status = getConfig(_proposeStatus_, idInteger);
     }
 
-    function changeConfiguration(bytes32 key, uint256 value) public  {
+    function changeConfiguration(bytes32 key, uint256 value) public {
         uint256 oldValue = config[key];
-        if(oldValue != value) {
+        if (oldValue != value) {
             config[key] = value;
             emit ConfigurationChanged(key, oldValue, value);
         }

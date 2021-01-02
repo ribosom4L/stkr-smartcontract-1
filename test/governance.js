@@ -7,11 +7,12 @@ const ANKR = artifacts.require("ANKR");
 const AnkrDeposit = artifacts.require("AnkrDeposit");
 
 contract("Governance", function(accounts) {
-  let governance, ankr, ankrDeposit;
+  let governance, ankr, ankrDeposit, proposalId;
   const ankrLimit = web3.utils.toWei(5000000 + "");
   const dayInSec = 24 * 60 * 60;
   const testTopic = "Test Topic";
   const testContent = "Test Content";
+
   before(async function() {
     governance = await Governance.deployed();
     ankr = await ANKR.deployed();
@@ -38,16 +39,26 @@ contract("Governance", function(accounts) {
     const proposal = tx.logs[0];
     assert.equal(Number(web3.utils.fromWei(vote.args.votes.toString())), 20000000);
 
-    const proposalId = proposal.args["proposeID"];
+    proposalId = proposal.args["proposeID"];
 
     await ankr.faucet({ from: accounts[1] });
 
     await ankr.approve(ankrDeposit.address, ankrLimit, { from: accounts[1] });
 
-    const txVote = await governance.depositAndVote(proposalId, web3.utils.fromAscii("VOTE_YES"), { from: accounts[1] });
+    const txVote = await governance.depositAndVote(proposalId, web3.utils.fromAscii("VOTE_NO"), { from: accounts[1] });
   });
 
-
+  it("Proposal info should be fetched correctly", async () => {
+    const data = await governance.proposal(proposalId)
+    assert.equal(data.topic, "Test Topic")
+    assert.equal(data.content, "Test Content")
+    assert.equal(Number(data.yes), 20000000)
+    assert.equal(Number(data.no), 5000000)
+    // status is voting
+    assert.equal(Number(data.status), 1)
+    // current result is true
+    assert.equal(data.result, true)
+  });
 
   async function depositAndPropose(secs, topic, content) {
     return governance.depositAndPropose(secs, topic, content);
