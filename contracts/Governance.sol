@@ -8,13 +8,13 @@ import "./lib/Configurable.sol";
 import "./Config.sol";
 import "./AnkrDeposit.sol";
 
-contract Governance is Pausable, Configurable, AnkrDeposit {
+contract Governance is Pausable, AnkrDeposit {
     using SafeMath for uint256;
 
     event ConfigurationChanged(bytes32 indexed key, uint256 oldValue, uint256 newValue);
     event Vote(address indexed holder, bytes32 indexed ID, bytes32 vote, uint256 votes);
     event Propose(address indexed proposer, bytes32 proposeID, string topic, string content, uint span);
-    event ProposalFinished(bytes32 indexed _proposeID, bool result, uint256 _yes, uint256 _no);
+    event ProposalFinished(bytes32 indexed proposeID, bool result, uint256 yes, uint256 no);
 
     IConfig private configContract;
     IStaking private depositContract;
