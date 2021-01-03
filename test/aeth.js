@@ -3,7 +3,7 @@ const helpers = require("./helpers/helpers");
 const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const GlobalPool = artifacts.require("GlobalPool");
 const AETH = artifacts.require("AETH");
-const AETH_R4 = artifacts.require("AETH_R4");
+const AETH_R4 = artifacts.require("AETH_R5");
 const { upgradeProxy, admin } = require("@openzeppelin/truffle-upgrades");
 
 contract("ankrETH", function(accounts) {
@@ -42,7 +42,7 @@ contract("ankrETH", function(accounts) {
     // update ratio x
     let lastBalance = secondBalance;
     for (let i = 0; i < 20; i++) {
-      ratio = ratio * 0.98
+      ratio = ratio * 0.998
       await aeth.updateRatio(helpers.wei(ratio), { from: accounts[1] });
       // stake 32
       await pool.stake({ value: helpers.wei(32), from: accounts[i % 10] });

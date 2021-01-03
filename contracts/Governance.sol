@@ -6,14 +6,15 @@ import "./lib/interfaces/IConfig.sol";
 import "./lib/interfaces/IStaking.sol";
 import "./lib/Configurable.sol";
 import "./Config.sol";
+import "./AnkrDeposit.sol";
 
-contract Governance is Pausable, Configurable {
+contract Governance is Pausable, Configurable, AnkrDeposit {
     using SafeMath for uint256;
 
     event ConfigurationChanged(bytes32 indexed key, uint256 oldValue, uint256 newValue);
-    event ProposalFinished(bytes32 indexed ID, bool accepted, uint256 blockNum);
     event Vote(address indexed holder, bytes32 indexed ID, bytes32 vote, uint256 votes);
     event Propose(address indexed proposer, bytes32 proposeID, string topic, string content, uint span);
+    event ProposalFinished(bytes32 indexed _proposeID, bool result, uint256 _yes, uint256 _no);
 
     IConfig private configContract;
     IStaking private depositContract;
@@ -48,10 +49,9 @@ contract Governance is Pausable, Configurable {
 
     uint256 internal constant DIVISOR = 1 ether;
 
-    function initialize(IStaking _depositContract) public initializer {
+    function initialize(address ankrContract, address globalPoolContract, address aethContract) public initializer {
         __Ownable_init();
-
-        depositContract = _depositContract;
+        deposit_init(ankrContract, globalPoolContract, aethContract);
 
         // minimum ankrs deposited needed for voting
         changeConfiguration(_proposalMinimumThreshold_, 5000000 ether);
@@ -80,7 +80,7 @@ contract Governance is Pausable, Configurable {
         setConfig(_totalProposes_, totalProposes.add(1));
 
         // lock user tokens
-        require(depositContract.freeze(sender, getConfig(_proposalMinimumThreshold_)), "Dont have enough deposited or approved funds to lock");
+        _freeze(sender, getConfig(_proposalMinimumThreshold_));
 
         // set started block
         setConfig(_startBlock_, idInteger, block.number);
@@ -98,6 +98,7 @@ contract Governance is Pausable, Configurable {
     }
 
     function vote(bytes32 _ID, bytes32 _vote) public {
+        deposit();
         uint256 ID = uint256(_ID);
         uint256 status = getConfig(_proposeStatus_, ID);
         require(status == PROPOSE_STATUS_VOTING, "Propose status is not VOTING");
@@ -123,7 +124,7 @@ contract Governance is Pausable, Configurable {
 
             uint256 ID_vote = uint256(_ID ^ _vote);
             // get total stakes from deposit contract
-            uint256 staked = depositContract.depositsOf(msg.sender);
+            uint256 staked = depositsOf(msg.sender);
 
             if ((voted == 0x0 || voted == VOTE_CANCEL) && (_vote == VOTE_YES || _vote == VOTE_NO)) {
                 _setConfig(_votes_, ID_vote, getConfig(_votes_, ID_vote).add(staked.div(DIVISOR)));
@@ -133,22 +134,10 @@ contract Governance is Pausable, Configurable {
         }
     }
 
-    function depositAndPropose(uint256 _timeSpan, string memory _topic, string memory _content) external {
-        depositContract.deposit(msg.sender);
-        propose(_timeSpan, _topic, _content);
-    }
-
-    function depositAndVote(bytes32 _ID, bytes32 _vote) external {
-        depositContract.deposit(msg.sender);
-        vote(_ID, _vote);
-    }
-
     //0xc7bc95c2
     function getVotes(bytes32 _ID, bytes32 _vote) public view returns (uint256) {
         return getConfig(_votes_, uint256(_ID ^ _vote));
     }
-
-    event ProposalFinished(bytes32 indexed _proposeID, bool result, uint256 _yes, uint256 _no);
 
     function finishProposal(bytes32 _ID) public returns (bool result) {
         uint256 ID = uint256(_ID);
@@ -158,7 +147,7 @@ contract Governance is Pausable, Configurable {
         uint256 yes = 0;
         uint256 no = 0;
 
-        (result, yes, no,,,) = proposal(_ID);
+        (result, yes, no,,,,) = proposal(_ID);
 
         _setConfig(_proposeStatus_, ID, result ? PROPOSE_STATUS_PASS : PROPOSE_STATUS_FAIL);
         emit ProposalFinished(_ID, result, yes, no);
@@ -170,7 +159,8 @@ contract Governance is Pausable, Configurable {
         uint256 no,
         string memory topic,
         string memory content,
-        uint256 status
+        uint256 status,
+        uint256 endTime
     ) {
         uint256 idInteger = uint(_ID);
         yes = getConfig(_votes_, uint256(_ID ^ VOTE_YES));
@@ -182,6 +172,8 @@ contract Governance is Pausable, Configurable {
         content = getConfigString(_proposeContent_, idInteger);
 
         status = getConfig(_proposeStatus_, idInteger);
+
+        endTime = getConfig(_timePropose_, idInteger);
     }
 
     function changeConfiguration(bytes32 key, uint256 value) public {
