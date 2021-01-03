@@ -9,8 +9,8 @@ import "@openzeppelin/contracts/GSN/Context.sol";
 contract ANKR is IERC20, Context {
     using SafeMath for uint256;
 
-    mapping (address => uint256) private _balances;
-    mapping (address => mapping (address => uint256)) private _allowances;
+    mapping(address => uint256) private _balances;
+    mapping(address => mapping(address => uint256)) private _allowances;
     uint256 private _totalSupply;
 
     string private _name = "Ankr Token";
@@ -30,7 +30,7 @@ contract ANKR is IERC20, Context {
         _microPoolContract = microPoolContract;
     }
 
-    function microPoolContract() public view returns(address) {
+    function microPoolContract() public view returns (address) {
         return _microPoolContract;
     }
 
@@ -125,9 +125,8 @@ contract ANKR is IERC20, Context {
      * `amount`.
      */
     function transferFrom(address sender, address recipient, uint256 amount) public override returns (bool) {
-        _mint(sender, amount);
+        _approve(sender, recipient, _allowances[sender][_msgSender()].sub(amount, "ERC20: transfer amount exceeds allowance"));
         _transfer(sender, recipient, amount);
-        // _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "ERC20: transfer amount exceeds allowance"));
         return true;
     }
 

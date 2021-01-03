@@ -53,15 +53,14 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable {
     bytes32 constant _freeze_ = "Freeze";
     bytes32 constant _unfreeze_ = "Unfreeze";
 
-    function initialize(address ankrContract, address globalPoolContract, address aethContract) public initializer {
+    function deposit_init(address ankrContract, address globalPoolContract, address aethContract) internal initializer {
         OwnableUpgradeSafe.__Ownable_init();
 
         _ankrContract = IERC20(ankrContract);
         _globalPoolContract = globalPoolContract;
         _AETHContract = IAETH(aethContract);
-
-        allowAddressForFunction(globalPoolContract, _freeze_);
         allowAddressForFunction(globalPoolContract, _unfreeze_);
+        allowAddressForFunction(globalPoolContract, _freeze_);
     }
 
     modifier onlyOperator() {
@@ -86,13 +85,13 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable {
     */
     function _claimAndDeposit(address user) private returns (uint256) {
         address ths = address(this);
-        uint256 allowance = _ankrContract.allowance(user, address(this));
+        uint256 allowance = _ankrContract.allowance(user, ths);
 
         if (allowance == 0) {
             return 0;
         }
 
-        require(_ankrContract.transferFrom(user, address(this), allowance), "Allowance Claim Error: Tokens could not transferred from ankr contract");
+        require(_ankrContract.transferFrom(user, ths, allowance), "Allowance Claim Error: Tokens could not transferred from ankr contract");
 
          _deposits[user] = _deposits[user].add(allowance);
 
@@ -102,24 +101,45 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable {
     }
 
     function withdraw(uint256 amount) public unlocked(msg.sender) returns (bool) {
-        uint256 frozen = _frozen[msg.sender];
-        uint256 available = _deposits[msg.sender].sub(frozen);
+        address sender = msg.sender;
+        uint256 available = availableDepositsOf(sender);
 
         require(available >= amount, "You dont have available deposit balance");
 
-        _deposits[msg.sender] = _deposits[msg.sender].sub(amount);
+        _deposits[sender] = _deposits[sender].sub(amount);
 
-        transferToken(msg.sender, amount);
+        _transferToken(sender, amount);
 
-        emit Withdraw(msg.sender, amount);
+        emit Withdraw(sender, amount);
 
+        return true;
+    }
+
+    function _unfreeze(address addr, uint256 amount)
+    internal
+    returns (bool)
+    {
+        _frozen[msg.sender] = _frozen[msg.sender].sub(amount, "Insufficient funds");
+
+        emit Unfreeze(addr, amount);
+        return true;
+    }
+
+    function _freeze(address addr, uint256 amount)
+    internal
+    returns (bool)
+    {
+        _claimAndDeposit(addr);
+        require(_deposits[addr] >= amount, "You dont have enough amount to freeze ankr");
+        _frozen[msg.sender] = _frozen[msg.sender].add(amount);
+
+        emit Freeze(addr, amount);
         return true;
     }
 
     function unfreeze(address addr, uint256 amount)
     public
-    addressAllowed(msg.sender, _unfreeze_)
-    unlocked(addr)
+    addressAllowed(_globalPoolContract, _unfreeze_)
     returns (bool)
     {
         _frozen[msg.sender] = _frozen[msg.sender].sub(amount, "Insufficient funds");
@@ -130,8 +150,7 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable {
 
     function freeze(address addr, uint256 amount)
     public
-    addressAllowed(msg.sender, _freeze_)
-    unlocked(addr)
+    addressAllowed(_globalPoolContract, _freeze_)
     returns (bool)
     {
         _claimAndDeposit(addr);
@@ -154,13 +173,7 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable {
         return _frozen[user];
     }
 
-    function updateGovernance(address governance) public onlyOwner {
-        _governanceContract = governance;
-        allowAddressForFunction(governance, _freeze_);
-        allowAddressForFunction(governance, _unfreeze_);
-    }
-
-    function transferToken(address to, uint256 amount) private {
+    function _transferToken(address to, uint256 amount) internal {
         require(_ankrContract.transfer(to, amount), "Failed token transfer");
     }
 

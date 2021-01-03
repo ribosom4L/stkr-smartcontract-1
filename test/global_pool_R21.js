@@ -271,7 +271,7 @@ contract("2020 11 30 Upgrade Global Pool", function(accounts) {
   });
 
   it("should store correct amount for providers", async () => {
-    await ankrETH.updateRatio(helpers.wei(0.5))
+    await ankrETH.updateRatio(helpers.wei(0.99))
     const availableEtherBalanceBefore = Number(web3.utils.fromWei(await pool.availableEtherBalanceOf(accounts[8])))
     await pool.topUpETH({
       from: accounts[8],

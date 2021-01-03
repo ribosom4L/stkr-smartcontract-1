@@ -22,13 +22,11 @@ module.exports = async (_deployer) => {
   pool = await upgradeProxy(pool.address, GlobalPool_R21)
 
   const aeth = await AETH.deployed()
-  const ankrDeposit = await deployProxy(AnkrDeposit, [ankrAddress, pool.address, aeth.address])
-  await pool.updateStakingContract(ankrDeposit.address)
 
   if (Boolean(await pool.isPaused(web3.utils.fromAscii('topUpANKR'))))
     await pool.togglePause(web3.utils.fromAscii('topUpANKR'))
 
-  const governance = await deployProxy(Governance, [ankrDeposit.address])
+  const governance = await deployProxy(Governance, [ankrAddress, pool.address, aeth.address])
   await pool.updateConfigContract(governance.address)
-  await ankrDeposit.updateGovernance(governance.address)
+  await pool.updateStakingContract(governance.address)
 };
