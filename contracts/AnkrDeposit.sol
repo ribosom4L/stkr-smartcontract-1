@@ -16,9 +16,11 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable, Configurable {
         uint256 value
     );
 
+    // if ends at value is zero,
     event Freeze(
         address indexed user,
-        uint256 value
+        uint256 value,
+        uint256 endsAt
     );
 
     event Unfreeze(
@@ -138,7 +140,7 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable, Configurable {
         require(depositsOf(addr) >= amount, "Ankr Deposit#_freeze: You dont have enough amount to freeze ankr");
         setConfig(_freeze_, addr, _frozenDeposits(addr).add(amount));
 
-        emit Freeze(addr, amount);
+        emit Freeze(addr, amount, 0);
         return true;
     }
 
@@ -221,7 +223,7 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable, Configurable {
         }
     }
 
-    function availableForUnlock(address user) public view returns (uint256 amount) {
+    function availableAmountForUnlock(address user) public view returns (uint256 amount) {
         uint256 userLockCount = getConfig(_userLockCount_, user);
         uint256 currentTs = block.timestamp;
         for (uint256 i = userLockCount; i > 0; i--) {
