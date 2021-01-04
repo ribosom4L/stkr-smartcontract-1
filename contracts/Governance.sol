@@ -8,13 +8,13 @@ import "./lib/Configurable.sol";
 import "./Config.sol";
 import "./AnkrDeposit.sol";
 
-contract Governance is Pausable, Configurable, AnkrDeposit {
+contract Governance is Pausable, AnkrDeposit {
     using SafeMath for uint256;
 
     event ConfigurationChanged(bytes32 indexed key, uint256 oldValue, uint256 newValue);
     event Vote(address indexed holder, bytes32 indexed ID, bytes32 vote, uint256 votes);
     event Propose(address indexed proposer, bytes32 proposeID, string topic, string content, uint span);
-    event ProposalFinished(bytes32 indexed _proposeID, bool result, uint256 _yes, uint256 _no);
+    event ProposalFinished(bytes32 indexed proposeID, bool result, uint256 yes, uint256 no);
 
     IConfig private configContract;
     IStaking private depositContract;
@@ -79,8 +79,10 @@ contract Governance is Pausable, Configurable, AnkrDeposit {
         uint256 idInteger = uint(_proposeID);
         setConfig(_totalProposes_, totalProposes.add(1));
 
+        uint256 proposalMinimum = getConfig(_proposalMinimumThreshold_);
+
         // lock user tokens
-        _freeze(sender, getConfig(_proposalMinimumThreshold_));
+        _freeze(sender, proposalMinimum);
 
         // set started block
         setConfig(_startBlock_, idInteger, block.number);
@@ -89,8 +91,13 @@ contract Governance is Pausable, Configurable, AnkrDeposit {
         setConfigString(_proposeTopic_, idInteger, _topic);
         setConfigString(_proposeContent_, idInteger, _content);
 
-        setConfig(_timePropose_, idInteger, _timeSpan.add(now));
+        uint256 endsAt = _timeSpan.add(now);
+
+        setConfig(_timePropose_, idInteger, endsAt);
         setConfig(_proposeStatus_, idInteger, PROPOSE_STATUS_VOTING);
+
+        // add new lock to user
+        _addNewLockToUser(sender, proposalMinimum, endsAt);
 
         // set proposal status (pending)
         emit Propose(sender, _proposeID, _topic, _content, _timeSpan);

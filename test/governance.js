@@ -58,6 +58,16 @@ contract("Governance", function(accounts) {
     assert.equal(data.result, true)
   });
 
+  it("should finish proposal correctly", async () => {
+    await helpers.advanceTimeAndBlock(8 * 24 * 60 * 60)
+    const tx = await governance.finishProposal(proposalId)
+    const args = tx.logs[0].args
+    assert.equal(args.result, true)
+    assert.equal(args.yes, 5000000)
+    assert.equal(args.no, 100000)
+    assert.equal(args.proposeID, proposalId)
+  })
+
   async function depositAndPropose(secs, topic, content, from) {
     return governance.propose(secs, topic, content, { from });
   }
