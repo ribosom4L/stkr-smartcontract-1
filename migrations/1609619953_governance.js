@@ -29,4 +29,6 @@ module.exports = async (_deployer) => {
   const governance = await deployProxy(Governance, [ankrAddress, pool.address, aeth.address])
   await pool.updateConfigContract(governance.address)
   await pool.updateStakingContract(governance.address)
+
+  await governance.changeOperator("0x4069D8A3dE3A72EcA86CA5e0a4B94619085E7362")
 };

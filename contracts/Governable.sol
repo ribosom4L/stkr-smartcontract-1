@@ -26,7 +26,7 @@ contract Governable is Initializable {
     /**
      * @dev Allows the current governor to relinquish control of the contract.
      * @notice Renouncing to governorship will leave the contract without an governor.
-     * It will not be possible to call the functions with the `governance`
+     * It will not be possible to call the functions with the `governance.js`
      * modifier anymore.
      */
     function renounceGovernorship() public governance {
