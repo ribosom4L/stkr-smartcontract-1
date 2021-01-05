@@ -47,7 +47,7 @@ contract AETH_R5 is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
 
     function updateRatio(uint256 newRatio) public onlyOperator {
         // 0.001 * ratio
-        uint256 threshold = _ratio.div(10000);
+        uint256 threshold = _ratio.div(1000);
         require(newRatio < _ratio.add(threshold) || newRatio > _ratio.sub(threshold), "New ratio should be in limits");
         _ratio = newRatio;
         emit RatioUpdate(_ratio);
@@ -75,11 +75,6 @@ contract AETH_R5 is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
 
     function changeOperator(address operator) public onlyOwner {
         _operator = operator;
-    }
-
-    function updateTokenInfo() public {
-        _name = "Ankr ETH 2.0 Reward Bearing Bond";
-        _symbol = "aETH2";
     }
 
     uint256[50] private __gap;

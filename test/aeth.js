@@ -3,7 +3,7 @@ const helpers = require("./helpers/helpers");
 const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const GlobalPool = artifacts.require("GlobalPool");
 const AETH = artifacts.require("AETH");
-const AETH_R4 = artifacts.require("AETH_R5");
+const AETH_R5 = artifacts.require("AETH_R5");
 const { upgradeProxy, admin } = require("@openzeppelin/truffle-upgrades");
 
 contract("ankrETH", function(accounts) {
@@ -12,7 +12,7 @@ contract("ankrETH", function(accounts) {
   before(async function() {
     pool = await GlobalPool.deployed();
     const aethOld = await AETH.deployed();
-    aeth = await upgradeProxy(aethOld.address, AETH_R4);
+    aeth = await upgradeProxy(aethOld.address, AETH_R5);
 
     for (let i = 0; i < 300; i++) {
       await helpers.advanceBlock();
@@ -55,4 +55,5 @@ contract("ankrETH", function(accounts) {
       lastBalance = thirdBalance;
     }
   });
+
 });

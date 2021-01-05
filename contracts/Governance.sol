@@ -19,29 +19,43 @@ contract Governance is Pausable, AnkrDeposit {
     IConfig private configContract;
     IStaking private depositContract;
 
-    bytes32 internal constant _spanLo_ = "spanLo";
-    bytes32 internal constant _spanHi_ = "spanHi";
-    bytes32 internal constant _proposalMinimumThreshold_ = "proposalMinimumDepositThreshold";
+    bytes32 internal constant _spanLo_ = "Gov#spanLo";
+    bytes32 internal constant _spanHi_ = "Gov#spanHi";
+    bytes32 internal constant _proposalMinimumThreshold_ = "Gov#minimumDepositThreshold";
 
-    bytes32 internal constant _startBlock_ = "startBlock";
+    bytes32 internal constant _startBlock_ = "Gov#startBlock";
 
-    bytes32 internal constant _proposeTopic_ = "proposeTopic";
-    bytes32 internal constant _proposeContent_ = "proposeContent";
-    bytes32 internal constant _timePropose_ = "timePropose";
-    bytes32 internal constant _proposer_ = "proposer";
+    bytes32 internal constant _proposeTopic_ = "Gov#proposeTopic";
+    bytes32 internal constant _proposeContent_ = "Gov#proposeContent";
 
-    bytes32 internal constant _totalProposes_ = "proposer";
-    bytes32 internal constant _minimumVoteAcceptance_ = "minimumVoteAcceptance";
+    bytes32 internal constant _proposeEndAt_ = "Gov#ProposeEndAt";
+    bytes32 internal constant _proposeStartAt_ = "Gov#ProposeStartAt";
+    bytes32 internal constant _proposeTimelock_ = "Gov#ProposeTimelock";
 
-    bytes32 internal constant _proposeID_ = "proposeID";
-    bytes32 internal constant _proposeStatus_ = "proposeStatus";
+    bytes32 internal constant _proposeCountLimit_ = "Gov#ProposeCountLimit";
 
-    bytes32 internal constant _votes_ = "votes";
-    bytes32 internal constant _voteCount_ = "voteCount";
+    bytes32 internal constant _proposerLastProposeAt_ = "Gov#ProposerLastProposeAt";
+    bytes32 internal constant _proposerProposeCountInMonth_ = "Gov#ProposeCountInMonth";
 
+    bytes32 internal constant _proposer_ = "Gov#proposer";
+    bytes32 internal constant _proposerHasActiveProposal_ = "Gov#hasActiveProposal";
+
+    bytes32 internal constant _totalProposes_ = "Gov#proposer";
+    bytes32 internal constant _minimumVoteAcceptance_ = "Gov#minimumVoteAcceptance";
+
+    bytes32 internal constant _proposeID_ = "Gov#proposeID";
+    bytes32 internal constant _proposeStatus_ = "Gov#proposeStatus";
+
+    bytes32 internal constant _votes_ = "Gov#votes";
+    bytes32 internal constant _voteCount_ = "Gov#voteCount";
+
+    uint256 internal constant PROPOSE_STATUS_WAITING = 0;
     uint256 internal constant PROPOSE_STATUS_VOTING = 1;
     uint256 internal constant PROPOSE_STATUS_FAIL = 2;
     uint256 internal constant PROPOSE_STATUS_PASS = 3;
+    uint256 internal constant PROPOSE_STATUS_CANCELED = 4;
+
+    uint256 internal constant MONTH = 2592000;
 
     bytes32 internal constant VOTE_YES = "VOTE_YES";
     bytes32 internal constant VOTE_NO = "VOTE_NO";
@@ -62,6 +76,11 @@ contract Governance is Pausable, AnkrDeposit {
         changeConfiguration("REQUESTER_MINIMUM_POOL_STAKING", 500 finney);
         changeConfiguration("EXIT_BLOCKS", 24);
 
+        changeConfiguration(_proposeCountLimit_, 2);
+
+        // 2 days
+        changeConfiguration(_proposeTimelock_, 60 * 60 * 24 * 2);
+
         changeConfiguration(_spanLo_, 24 * 60 * 60 * 3);
         // 3 days
         changeConfiguration(_spanHi_, 24 * 60 * 60 * 7);
@@ -69,75 +88,121 @@ contract Governance is Pausable, AnkrDeposit {
     }
 
     function propose(uint256 _timeSpan, string memory _topic, string memory _content) public {
-        require(_timeSpan >= getConfig(_spanLo_), "Timespan lower than limit");
-        require(_timeSpan <= getConfig(_spanHi_), "Timespan greater than limit");
+        deposit();
+        require(_timeSpan >= getConfig(_spanLo_), "Gov#propose: Timespan lower than limit");
+        require(_timeSpan <= getConfig(_spanHi_), "Gov#propose: Timespan greater than limit");
 
+        uint256 proposalMinimum = getConfig(_proposalMinimumThreshold_);
         address sender = msg.sender;
         uint256 senderInt = uint(sender);
+
+        require(getConfig(_proposerHasActiveProposal_, sender) == 0, "Gov#propose: You have an active proposal");
+
+        setConfig(_proposerHasActiveProposal_, sender, 1);
+
+        require(depositsOf(sender) >= proposalMinimum, "Gov#propose: Not enough balance");
+
+        // proposer can create 2 proposal in a month
+        uint256 lastProposeAt = getConfig(_proposerLastProposeAt_, senderInt);
+        if (now.sub(lastProposeAt) < MONTH) {
+            // get new count in this month
+            uint256 proposeCountInMonth = getConfig(_proposerProposeCountInMonth_, senderInt).add(1);
+            require(proposeCountInMonth <= getConfig(_proposeCountLimit_), "Gov#propose: Cannot create more proposals this month");
+            setConfig(_proposerProposeCountInMonth_, senderInt, proposeCountInMonth);
+        }
+        else {
+            setConfig(_proposerProposeCountInMonth_, senderInt, 1);
+        }
+        // set last propose at for proposer
+        setConfig(_proposerLastProposeAt_, senderInt, now);
+
         uint256 totalProposes = getConfig(_totalProposes_);
         bytes32 _proposeID = bytes32(senderInt ^ totalProposes ^ block.number);
         uint256 idInteger = uint(_proposeID);
+
         setConfig(_totalProposes_, totalProposes.add(1));
-
-        uint256 proposalMinimum = getConfig(_proposalMinimumThreshold_);
-
-        // lock user tokens
-        _freeze(sender, proposalMinimum);
 
         // set started block
         setConfig(_startBlock_, idInteger, block.number);
-        setConfig(_proposer_, idInteger, senderInt);
-
+        // set sender
+        setConfigAddress(_proposer_, idInteger, sender);
+        // set
         setConfigString(_proposeTopic_, idInteger, _topic);
         setConfigString(_proposeContent_, idInteger, _content);
 
-        uint256 endsAt = _timeSpan.add(now);
+        // proposal will start after #timelock# days
+        uint256 endsAt = _timeSpan.add(getConfig(_proposeTimelock_)).add(now);
 
-        setConfig(_timePropose_, idInteger, endsAt);
-        setConfig(_proposeStatus_, idInteger, PROPOSE_STATUS_VOTING);
+        setConfig(_proposeEndAt_, idInteger, endsAt);
+        setConfig(_proposeStatus_, idInteger, PROPOSE_STATUS_WAITING);
+
+        setConfig(_proposeStartAt_, idInteger, now);
 
         // add new lock to user
-        _addNewLockToUser(sender, proposalMinimum, endsAt);
+        _addNewLockToUser(sender, proposalMinimum, endsAt, senderInt ^ idInteger);
 
         // set proposal status (pending)
         emit Propose(sender, _proposeID, _topic, _content, _timeSpan);
-        vote(_proposeID, VOTE_YES);
+        __vote(_proposeID, VOTE_YES, false);
     }
 
     function vote(bytes32 _ID, bytes32 _vote) public {
         deposit();
         uint256 ID = uint256(_ID);
         uint256 status = getConfig(_proposeStatus_, ID);
-        require(status == PROPOSE_STATUS_VOTING, "Propose status is not VOTING");
+        uint256 startAt = getConfig(_proposeStartAt_, ID);
+        // if propose status is waiting and enough time passed, change status
+        if (status == PROPOSE_STATUS_WAITING && now.sub(startAt) >= getConfig(_proposeTimelock_)) {
+            setConfig(_proposeStatus_, ID, PROPOSE_STATUS_VOTING);
+            status = PROPOSE_STATUS_VOTING;
+        }
+        require(status == PROPOSE_STATUS_VOTING, "Gov#__vote: Propose status is not VOTING");
+        require(getConfigAddress(_proposer_, ID) != msg.sender, "Gov#__vote: Proposers cannot vote their own proposals") ;
 
+        __vote(_ID, _vote, true);
+    }
+
+    string public go;
+
+    function __vote(bytes32 _ID, bytes32 _vote, bool _lockTokens) internal {
+
+        uint256 ID = uint256(_ID);
         address _holder = msg.sender;
+
         uint256 _holderID = uint(_holder) ^ uint(ID);
-        if (now <= getConfig(_timePropose_, ID)) {
+        uint256 endsAt = getConfig(_proposeEndAt_, ID);
+
+        if (now < endsAt) {
             // previous vote type
             bytes32 voted = bytes32(getConfig(_votes_, _holderID));
+            require(voted == 0x0 || _vote == VOTE_CANCEL, "Gov#__vote: You already voted to this proposal");
             // previous vote count
             uint256 voteCount = getConfig(_voteCount_, _holderID);
 
             uint256 ID_voted = uint256(_ID ^ voted);
             // if this is a cancelling operation, set vote count to 0 for user and remove votes
             if ((voted == VOTE_YES || voted == VOTE_NO) && _vote == VOTE_CANCEL) {
-                _setConfig(_votes_, ID_voted, getConfig(_votes_, ID_voted).sub(voteCount));
-                _setConfig(_voteCount_, _holderID, 0);
+                setConfig(_votes_, ID_voted, getConfig(_votes_, ID_voted).sub(voteCount));
+                setConfig(_voteCount_, _holderID, 0);
 
-                _setConfig(_votes_, _holderID, uint256(_vote));
+                setConfig(_votes_, _holderID, uint256(_vote));
                 emit Vote(_holder, _ID, _vote, 0);
                 return;
             }
+            else if (_vote == VOTE_YES || _vote == VOTE_NO) {
+                uint256 ID_vote = uint256(_ID ^ _vote);
+                // get total stakes from deposit contract
+                uint256 staked = depositsOf(_holder);
 
-            uint256 ID_vote = uint256(_ID ^ _vote);
-            // get total stakes from deposit contract
-            uint256 staked = depositsOf(msg.sender);
+                // add new lock to user
+                if (_lockTokens) {
+                    _addNewLockToUser(_holder, staked, endsAt, _holderID);
+                }
 
-            if ((voted == 0x0 || voted == VOTE_CANCEL) && (_vote == VOTE_YES || _vote == VOTE_NO)) {
-                _setConfig(_votes_, ID_vote, getConfig(_votes_, ID_vote).add(staked.div(DIVISOR)));
+                setConfig(_votes_, ID_vote, getConfig(_votes_, ID_vote).add(staked.div(DIVISOR)));
+                setConfig(_votes_, _holderID, uint256(_vote));
+                emit Vote(_holder, _ID, _vote, staked);
             }
-            _setConfig(_votes_, _holderID, uint256(_vote));
-            emit Vote(_holder, _ID, _vote, staked);
         }
     }
 
@@ -146,17 +211,26 @@ contract Governance is Pausable, AnkrDeposit {
         return getConfig(_votes_, uint256(_ID ^ _vote));
     }
 
-    function finishProposal(bytes32 _ID) public returns (bool result) {
+    function finishProposal(bytes32 _ID) public {
         uint256 ID = uint256(_ID);
-        require(getConfig(_timePropose_, ID) <= now, "There is still time for proposal");
-        require(getConfig(_proposeStatus_, ID) == PROPOSE_STATUS_VOTING, "You cannot finish proposals that already finished");
+        require(getConfig(_proposeEndAt_, ID) <= now, "Gov#finishProposal: There is still time for proposal");
+        uint256 status = getConfig(_proposeStatus_, ID);
+        require(status == PROPOSE_STATUS_VOTING || status == PROPOSE_STATUS_WAITING, "Gov#finishProposal: You cannot finish proposals that already finished");
 
+        _finishProposal(_ID);
+    }
+
+    function _finishProposal(bytes32 _ID) internal returns (bool result) {
+        uint256 ID = uint256(_ID);
         uint256 yes = 0;
         uint256 no = 0;
 
-        (result, yes, no,,,,) = proposal(_ID);
+        (result, yes, no,,,,,) = proposal(_ID);
 
-        _setConfig(_proposeStatus_, ID, result ? PROPOSE_STATUS_PASS : PROPOSE_STATUS_FAIL);
+        setConfig(_proposeStatus_, ID, result ? PROPOSE_STATUS_PASS : PROPOSE_STATUS_FAIL);
+
+        setConfig(_proposerHasActiveProposal_, getConfigAddress(_proposer_, ID), 0);
+
         emit ProposalFinished(_ID, result, yes, no);
     }
 
@@ -167,6 +241,7 @@ contract Governance is Pausable, AnkrDeposit {
         string memory topic,
         string memory content,
         uint256 status,
+        uint256 startTime,
         uint256 endTime
     ) {
         uint256 idInteger = uint(_ID);
@@ -178,16 +253,34 @@ contract Governance is Pausable, AnkrDeposit {
         topic = getConfigString(_proposeTopic_, idInteger);
         content = getConfigString(_proposeContent_, idInteger);
 
-        status = getConfig(_proposeStatus_, idInteger);
+        endTime = getConfig(_proposeEndAt_, idInteger);
+        startTime = getConfig(_proposeStartAt_, idInteger);
 
-        endTime = getConfig(_timePropose_, idInteger);
+        status = getConfig(_proposeStatus_, idInteger);
+        if (status == PROPOSE_STATUS_WAITING && now.sub(getConfig(_proposeStartAt_, idInteger)) >= getConfig(_proposeTimelock_)) {
+            status = PROPOSE_STATUS_VOTING;
+        }
     }
 
-    function changeConfiguration(bytes32 key, uint256 value) public {
+    function changeConfiguration(bytes32 key, uint256 value) public onlyOperator {
         uint256 oldValue = config[key];
         if (oldValue != value) {
             config[key] = value;
             emit ConfigurationChanged(key, oldValue, value);
         }
+    }
+
+    function cancelProposal(bytes32 _ID, string memory _reason) public onlyOwner {
+        uint256 ID = uint(_ID);
+        require(getConfig(_proposeStatus_, ID) == PROPOSE_STATUS_WAITING, "Gov#cancelProposal: Only waiting proposals can be canceled");
+        address sender = msg.sender;
+        // set status cancel
+        setConfig(_proposeStatus_, ID, PROPOSE_STATUS_CANCELED);
+        // remove from propose count for month
+        setConfig(_proposerProposeCountInMonth_, ID, getConfig(_proposerProposeCountInMonth_, ID).sub(1));
+        // remove locked amount
+        setConfig(_lockTotal_, sender, getConfig(_lockTotal_, sender).sub(getConfig(_lockAmount_, uint(sender) ^ ID)));
+        // set locked amount to zero for this proposal
+        setConfig(_lockAmount_, uint(sender) ^ ID, 0);
     }
 }
