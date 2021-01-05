@@ -73,6 +73,11 @@ contract AETH_R5 is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
         return _name;
     }
 
+    function updateNameSymbol(string memory symbol, string memory name) public onlyOwner {
+        _symbol = symbol;
+        _name = name;
+    }
+
     function changeOperator(address operator) public onlyOwner {
         _operator = operator;
     }
