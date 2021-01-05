@@ -47,15 +47,16 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable, Configurable {
 
     address _operator;
 
+    mapping (address => uint256[]) public _userLocks;
+
     bytes32 constant _deposit_ = "AnkrDeposit#Deposit";
 
     bytes32 constant _freeze_ = "AnkrDeposit#Freeze";
     bytes32 constant _unfreeze_ = "AnkrDeposit#Unfreeze";
-    bytes32 constant _locks_ = "AnkrDeposit#Locks";
     bytes32 constant _lockTotal_ = "AnkrDeposit#LockTotal";
-    bytes32 constant _userLockCount_ = "AnkrDeposit#UserLockCount";
     bytes32 constant _lockEndsAt_ = "AnkrDeposit#LockEndsAt";
     bytes32 constant _lockAmount_ = "AnkrDeposit#LockAmount";
+    bytes32 constant _lockID_ = "AnkrDeposit#LockID";
 
     bytes32 constant _allowed_ = "AnkrDeposit#Allowed";
 
@@ -102,6 +103,8 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable, Configurable {
 
         setConfig(_deposit_, user, depositsOf(user).add(allowance));
 
+        cleanUserLocks(user);
+
         emit Deposit(user, allowance);
 
         return allowance;
@@ -117,6 +120,8 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable, Configurable {
 
         _transferToken(sender, amount);
 
+        cleanUserLocks(sender);
+
         emit Withdraw(sender, amount);
 
         return true;
@@ -127,6 +132,7 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable, Configurable {
     returns (bool)
     {
         setConfig(_freeze_, addr, _frozenDeposits(addr).sub(amount, "Ankr Deposit#_unfreeze: Insufficient funds"));
+        cleanUserLocks(addr);
         emit Unfreeze(addr, amount);
         return true;
     }
@@ -139,6 +145,8 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable, Configurable {
 
         require(depositsOf(addr) >= amount, "Ankr Deposit#_freeze: You dont have enough amount to freeze ankr");
         setConfig(_freeze_, addr, _frozenDeposits(addr).add(amount));
+
+        cleanUserLocks(addr);
 
         emit Freeze(addr, amount, 0);
         return true;
@@ -169,20 +177,16 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable, Configurable {
     }
 
     function frozenDepositsOf(address user) public view returns (uint256) {
-        return _frozenDeposits(user).add(_totalLockedDeposits(user));
+        return _frozenDeposits(user).add(lockedDepositsOf(user));
     }
 
     function _frozenDeposits(address user) internal view returns(uint256) {
         return getConfig(_freeze_, user);
     }
 
-    function _totalLockedDeposits(address user) internal view returns(uint256) {
-        return getConfig(_lockTotal_, user);
+    function lockedDepositsOf(address user) public view returns(uint256) {
+        return getConfig(_lockTotal_, user).sub(availableAmountForUnlock(user));
     }
-
-//    function _lockedDeposit(address user, uint256 index) internal view returns(uint256) {
-//        return getConfig(_locks_ );
-//    }
 
     function _transferToken(address to, uint256 amount) internal {
         require(_ankrContract.transfer(to, amount), "Failed token transfer");
@@ -192,46 +196,68 @@ contract AnkrDeposit is OwnableUpgradeSafe, Lockable, Configurable {
         setConfig(_allowed_ ^ topic, addr, 1);
     }
 
-    function _addNewLockToUser(address user, uint256 amount, uint256 endsAt) internal {
-        // new lock count of user
-        uint256 newCount = getConfig(_userLockCount_, user).add(1);
-        // set new lock count
-        setConfig(_userLockCount_, user, newCount);
-        // new count id key
-        uint256 key = uint(user) ^ newCount;
+    function _addNewLockToUser(address user, uint256 amount, uint256 endsAt, uint256 lockId) internal {
+        uint256 deposits = depositsOf(user);
+        uint256 lockedDeposits = lockedDepositsOf(user);
+        if (amount <= lockedDeposits) {
+            return;
+        }
+        amount = amount.sub(lockedDeposits);
+        require(amount <= deposits, "Ankr Deposit#_addNewLockToUser: Insufficient funds");
+
+        require(getConfig(_lockEndsAt_, lockId) == 0, "Ankr Deposit#_addNewLockToUser: Cannot set same lock id");
+        if (amount == 0) return;
         // set ends at property for lock
-        setConfig(_lockEndsAt_, key, endsAt);
+        setConfig(_lockEndsAt_, lockId, endsAt);
         // set amount property for lock
-        setConfig(_lockAmount_, key, amount);
-        // set user new total lock amount
+        setConfig(_lockAmount_, lockId, amount);
         setConfig(_lockTotal_, user, getConfig(_lockTotal_, user).add(amount));
+
+        // set lock id
+        _userLocks[user].push(lockId);
     }
 
-    function cleanUserLocks(address user, uint256 lockId) public {
-        uint256 userLockCount = getConfig(_userLockCount_, user);
+    function cleanUserLocks(address user) public {
+        uint256 userLockCount = _userLocks[user].length;
         uint256 currentTs = block.timestamp;
-        for (uint256 i = userLockCount; i > 0; i--) {
-            uint256 key = uint(user) ^ i;
-            if (getConfig(_lockEndsAt_, key) > currentTs) {
+
+        if (userLockCount == 0) return;
+
+        for (uint256 i = 0; i < userLockCount; i++) {
+            uint256 lockId = _userLocks[user][i];
+            if (getConfig(_lockEndsAt_, lockId) > currentTs && getConfig(_lockAmount_, lockId) != 0) {
                 continue;
             }
 
-            setConfig(_lockEndsAt_, key, 0);
-            setConfig(_userLockCount_, user, userLockCount.sub(1));
-            setConfig(_lockTotal_, user, getConfig(_lockTotal_, user).sub(getConfig(_lockAmount_, key)));
-            setConfig(_lockAmount_, key, 0);
+            // set total lock amount for user
+            setConfig(_lockTotal_, user, getConfig(_lockTotal_, user).sub(getConfig(_lockAmount_, lockId)));
+            // remove lock from array
+            _userLocks[user][i] = _userLocks[user][userLockCount.sub(1)];
+            _userLocks[user].pop();
+            //
+            userLockCount--;
+            i--;
         }
     }
 
-    function availableAmountForUnlock(address user) public view returns (uint256 amount) {
-        uint256 userLockCount = getConfig(_userLockCount_, user);
-        uint256 currentTs = block.timestamp;
-        for (uint256 i = userLockCount; i > 0; i--) {
-            uint256 key = uint(user) ^ i;
-            if (getConfig(_lockEndsAt_, key) > currentTs) {
-                continue;
-            }
-            amount = amount.add(getConfig(_lockAmount_, key));
+    function availableAmountForUnlock(address user) public view returns (uint256) {
+        uint256 userLockCount = _userLocks[user].length;
+        uint256 amount = 0;
+        if (userLockCount == 0) {
+            return amount;
         }
+
+        for (uint256 i = 0; i < userLockCount; i++) {
+            uint256 lockId = _userLocks[user][i];
+            if (getConfig(_lockEndsAt_, lockId) <= now) {
+                amount += getConfig(_lockAmount_, lockId);
+            }
+        }
+
+        return amount;
+    }
+
+    function changeOperator(address operator) public onlyOwner {
+        _operator = operator;
     }
 }
