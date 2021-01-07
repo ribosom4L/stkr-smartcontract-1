@@ -45,6 +45,10 @@ migrate: &migrate
           npx truffle migrate --network goerli
           yarn build:addresses
     - run:
+        name: "Verify Contracts"
+        command: |
+          yarn verify:goerli
+    - run:
         name: "Upload"
         command: |
           mkdir dist
