@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "compile": "truffle compile --all",
-    "migrate": "truffle compile --all; truffle migrate",
+    "migrate": "truffle compile --all && truffle migrate",
+    "verify:goerli": "truffle exec scripts/verify_contracts.js --network goerli",
+    "verify:mainnet": "truffle exec scripts/verify_contracts.js --network mainnet",
     "build:addresses": "node scripts/build_abi.js",
     "generate": "truffle compile --all && typechain --target truffle './build/**/*.json'",
     "stakers": "node scripts/get_stakers.js",
@@ -18,6 +20,7 @@
     "@openzeppelin/test-helpers": "^0.5.7",
     "chai": "^4.2.0",
     "ethers": "^5.0.9",
+    "truffle-plugin-verify": "^0.5.4",
     "truffle-typings": "^1.0.8",
     "typechain": "^4.0.0",
     "typechain-target-truffle": "^1.0.2"
