@@ -64,5 +64,11 @@ module.exports = {
         }
       }
     }
-  }
+  },
+  api_keys: {
+    etherscan: process.env.ETHERSCAN_APIKEY
+  },
+  plugins: [
+    'truffle-plugin-verify'
+  ]
 };

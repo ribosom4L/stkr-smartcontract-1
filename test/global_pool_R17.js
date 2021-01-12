@@ -4,7 +4,7 @@ const helpers = require("./helpers/helpers");
 const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const GlobalPool = artifacts.require("GlobalPool");
 const Config = artifacts.require("Config");
-const GlobalPool_R17 = artifacts.require("GlobalPool_R17");
+const GlobalPool_R22 = artifacts.require("GlobalPool_R22");
 const { upgradeProxy } = require("@openzeppelin/truffle-upgrades");
 
 const AEth = artifacts.require("AETH");
@@ -17,7 +17,7 @@ contract("2020 11 16 Upgrade Global Pool", function(accounts) {
   before(async function() {
     config = await Config.deployed();
     poolOld = await GlobalPool.deployed();
-    pool = await upgradeProxy(poolOld.address, GlobalPool_R17);
+    pool = await upgradeProxy(poolOld.address, GlobalPool_R22);
     pool.updateConfigContract(config.address);
 
     const data = fs.readFileSync(path.join(__dirname, "/helpers/depositdata"), "utf8")
@@ -109,12 +109,12 @@ contract("2020 11 16 Upgrade Global Pool", function(accounts) {
   });
 
   it("should providers cannot stake or unstake after exit for x block count", async () => {
-    await pool.providerExit({from: accounts[3]})
+    await pool.providerExit({from: accounts[0]})
     await helpers.advanceBlocks(21);
 
-    await expectRevert(pool.stake({ from: accounts[3], value: helpers.wei(2) }), "Recently exited")
+    await expectRevert(pool.stake({ from: accounts[0], value: helpers.wei(2) }), "Recently exited")
 
-    await expectRevert(pool.unstake({ from: accounts[3] }), "Recently exited")
+    await expectRevert(pool.unstake({ from: accounts[0] }), "Recently exited")
   });
 
   it("should providers able to unstake after exit approved", async () => {
