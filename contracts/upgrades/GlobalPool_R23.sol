@@ -37,7 +37,7 @@ contract GlobalPool_R23 is Lockable, Pausable {
     event ProviderExited(address indexed provider);
 
     /* rewards (AETH) */
-    event RewardClaimed(address indexed staker, uint256 amount);
+    event RewardClaimed(address indexed staker, uint256 amount, bool isAETH);
 
     mapping(address => uint256) private _pendingUserStakes;
     mapping(address => uint256) private _userStakes;
@@ -165,7 +165,8 @@ contract GlobalPool_R23 is Lockable, Pausable {
 
                 // add reward for staker
                 _aETHRewards[staker] = _aETHRewards[staker].add(sent.mul(_ratio).div(1e18));
-                _fETHRewards[staker] = _fETHRewards[staker].add(sent);
+                _fETHRewards[staker][0] = _fETHRewards[staker][0].add(sent);
+                _fETHRewards[staker][1] = _fETHRewards[staker][1].add(sent.mul(_fethMintBase).div(32 ether));
                 emit StakeConfirmed(staker, sent);
                 break;
             }
@@ -179,7 +180,8 @@ contract GlobalPool_R23 is Lockable, Pausable {
             _pendingEtherBalances[staker] = 0;
             // add reward for staker
             _aETHRewards[staker] = _aETHRewards[staker].add(userStake.mul(_ratio).div(1e18));
-            _fETHRewards[staker] = _fETHRewards[staker].add(userStake);
+            _fETHRewards[staker][0] = _fETHRewards[staker][0].add(userStake);
+            _fETHRewards[staker][1] = _fETHRewards[staker][1].add(userStake.mul(_fethMintBase).div(32 ether));
 
             emit StakeConfirmed(staker, userStake);
         }
@@ -187,7 +189,7 @@ contract GlobalPool_R23 is Lockable, Pausable {
         _lastPendingStakerPointer = i;
 
         // mint aETH
-        _aethContract.mint(address(this), uint256(32 ether).sub(_pendingProviderBalance).mul(_ratio).div(1e18));
+//        _aethContract.mint(address(this), uint256(32 ether).sub(_pendingProviderBalance).mul(_ratio).div(1e18));
 
         // send funds to deposit contract
         IDepositContract(_depositContract).deposit{value : 32 ether}(pubkey, withdrawal_credentials, signature, deposit_data_root);
@@ -229,7 +231,7 @@ contract GlobalPool_R23 is Lockable, Pausable {
         emit ProviderToppedUpEth(msg.sender, msg.value);
     }
 
-    function topUpANKR(uint256 amount) public whenNotPaused("topUpANKR") notExitRecently(msg.sender) payable {
+    function topUpANKR(uint256 amount) public whenNotPaused("topUpANKR") notExitRecently(msg.sender) {
         require(_configContract.getConfig("PROVIDER_MINIMUM_ANKR_STAKING") <= amount, "Value must be greater than minimum amount");
         require(_stakingContract.freeze(msg.sender, amount), "Not enough allowance or balance");
 
@@ -244,30 +246,25 @@ contract GlobalPool_R23 is Lockable, Pausable {
 
     function providerExit() public {
         int256 available = availableEtherBalanceOf(msg.sender);
+        address staker = msg.sender;
         require(available > 0, "Provider balance should be positive for exit");
-        _exits[msg.sender] = block.number;
+        _exits[staker] = block.number;
 
-        _etherBalances[msg.sender] = 0;
-        _slashings[msg.sender] = 0;
+        _etherBalances[staker] = 0;
+        _slashings[staker] = 0;
 
-        _aethContract.mint(msg.sender, uint256(available));
+        _aETHRewards[staker] = _aETHRewards[staker].add(uint256(available));
 
         emit ProviderExited(msg.sender);
     }
 
     function claim() public whenNotPaused("claim") notExitRecently(msg.sender) {
-        _claim(msg.sender);
-    }
-
-    function claimFor(address staker) public whenNotPaused("claim") notExitRecently(staker) {
-        _claim(staker);
+        claimAETH();
     }
 
     function claimableRewardOf(address staker) public view returns (uint256) {
-        uint256 blocked = _etherBalances[staker];
-        uint256 reward = _rewards[staker].sub(_claims[staker]);
-
-        return blocked >= reward ? 0 : reward.sub(blocked);
+        // for backwards compatibility
+        return claimableAETHRewardOf(staker);
     }
 
     function claimableAETHRewardOf(address staker) public view returns (uint256) {
@@ -277,49 +274,41 @@ contract GlobalPool_R23 is Lockable, Pausable {
         return blocked >= reward ? 0 : reward.sub(blocked);
     }
 
-    function claimableFETHRewardOf(address staker) public view returns (uint256) {
+    function claimableAETHFRewardOf(address staker) public view returns (uint256) {
         uint256 blocked = _etherBalances[staker];
-        uint256 reward = _fETHRewards[staker];
+        uint256 reward = _fETHRewards[staker][0];
 
         return blocked >= reward ? 0 : reward.sub(blocked);
     }
 
-    function _claimAETH(address staker) private {
+    function claimAETH() public {
+        address staker = msg.sender;
         uint256 claimable = claimableAETHRewardOf(staker);
         require(claimable > 0, "claimable reward zero");
 
-        _fETHRewards[staker] = 0;
+        _fETHRewards[staker][0] = 0;
+        _fETHRewards[staker][1] = 0;
         _aETHRewards[staker] = 0;
-
-
 
         _aethContract.mint(staker, claimable);
 
-        emit RewardClaimed(staker, claimable);
+        emit RewardClaimed(staker, claimable, true);
     }
 
-    function _claimFETH(address staker) private {
-        uint256 claimable = claimableFETHRewardOf(staker);
+    event aaa(uint256 share, uint256 claimable);
+    function claimFETH() public {
+        address staker = msg.sender;
+        uint256 claimable = claimableAETHFRewardOf(staker);
+        uint256 shares = _fETHRewards[staker][1];
         require(claimable > 0, "claimable reward zero");
 
-        _fETHRewards[staker] = 0;
+        _fETHRewards[staker][0] = 0;
+        _fETHRewards[staker][1] = 0;
         _aETHRewards[staker] = 0;
 
-        // TODO: f eth mint
-        _aethContract.transfer(staker, claimable);
-
-        emit RewardClaimed(staker, claimable);
-    }
-
-    function _claim(address staker) private {
-        uint256 claimable = claimableRewardOf(staker);
-        require(claimable > 0, "claimable reward zero");
-
-        _claims[staker] = _claims[staker].add(claimable);
-
-        _aethContract.transfer(staker, claimable);
-
-        emit RewardClaimed(staker, claimable);
+        _fethContract.mint(staker, shares, claimable);
+        emit aaa(shares, claimable);
+        emit RewardClaimed(staker, claimable, false);
     }
 
     function unstake() public whenNotPaused("unstake") payable unlocked(msg.sender) notExitRecently(msg.sender) {
@@ -422,6 +411,16 @@ contract GlobalPool_R23 is Lockable, Pausable {
         return _depositContract;
     }
 
+    function updateFETHRewards(uint256 _totalRewards) public onlyOperator {
+        if (_totalRewards == 0) {
+            _fethMintBase = 1 ether;
+            return;
+        }
+
+        uint256 totalSent = _fethContract.updateReward(_totalRewards);
+        _fethMintBase = totalSent.mul(1 ether).div(_totalRewards.add(totalSent));
+    }
+
     uint256[50] private __gap;
 
     uint256 private _lastPendingStakerPointer;
@@ -432,8 +431,10 @@ contract GlobalPool_R23 is Lockable, Pausable {
 
     address private _operator;
 
-    mapping (address => uint256) private _fETHRewards;
+    mapping (address => uint256[2]) private _fETHRewards;
     mapping (address => uint256) private _aETHRewards;
 
     IFETH private _fethContract;
+
+    uint256 private _fethMintBase;
 }

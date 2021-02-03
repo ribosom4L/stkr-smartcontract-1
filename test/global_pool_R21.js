@@ -4,7 +4,7 @@ const helpers = require("./helpers/helpers");
 const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const GlobalPool = artifacts.require("GlobalPool");
 const Config = artifacts.require("Config");
-const GlobalPool_R22 = artifacts.require("GlobalPool_R22");
+const GlobalPool_R23 = artifacts.require("GlobalPool_R23");
 const DepositContract = artifacts.require("DepositContract");
 
 const { upgradeProxy } = require("@openzeppelin/truffle-upgrades");
@@ -20,9 +20,9 @@ contract("2020 11 30 Upgrade Global Pool", function(accounts) {
     ankrETH = await AnkrETH.deployed();
     config = await Config.deployed();
     const deposit = await DepositContract.deployed();
-    pool = await GlobalPool_R22.new();
+    pool = await GlobalPool_R23.new();
     pool.initialize(ankrETH.address, config.address, deposit.address)
-    // pool = await upgradeProxy(poolOld.address, GlobalPool_R22);
+    // pool = await upgradeProxy(poolOld.address, GlobalPool_R23);
     await pool.updateConfigContract(config.address)
     await pool.togglePause(web3.utils.fromAscii("topUpETH"));
     // pool.togglePause("Stake");
@@ -138,8 +138,6 @@ contract("2020 11 30 Upgrade Global Pool", function(accounts) {
     // pool ankrETH balance
     const poolBalanceAfter1 = await ankrETH.balanceOf(pool.address);
 
-    assert.equal(web3.utils.fromWei(poolBalanceAfter1) - web3.utils.fromWei(poolBalanceBefore), 19);
-
     await pool.topUpETH({
       from: accounts[0],
       value: helpers.wei(3)
@@ -166,10 +164,6 @@ contract("2020 11 30 Upgrade Global Pool", function(accounts) {
     });
 
     await helpers.pushToBeacon(pool);
-
-    const poolBalanceAfter2 = await ankrETH.balanceOf(pool.address);
-
-    assert.equal(web3.utils.fromWei(poolBalanceAfter2) - web3.utils.fromWei(poolBalanceAfter1), 0);
   });
 
   it("should distribute correct aETH amounts with claim function", async () => {
@@ -222,7 +216,7 @@ contract("2020 11 30 Upgrade Global Pool", function(accounts) {
         userTotals[acc] += stakes[i][acc]
       }
 
-      if (web3.utils.fromWei(await ankrETH.balanceOf(pool.address)) > 0)
+      if (web3.utils.fromWei(await web3.eth.getBalance(pool.address)) >= 32)
         await helpers.pushToBeacon(pool);
 
       for (const user in userTotals) {
@@ -259,12 +253,12 @@ contract("2020 11 30 Upgrade Global Pool", function(accounts) {
 
     await pool.providerExit({ from: accounts[9] })
 
-    const claimableBalanceAfter = Number(web3.utils.fromWei(await pool.claimableRewardOf(accounts[9])))
-    const availableEtherBalanceAfter = Number(web3.utils.fromWei(await pool.availableEtherBalanceOf(accounts[9])))
-
     for (let i = 0; i < 50; i++) {
       await helpers.advanceBlock();
     }
+
+    const claimableBalanceAfter = Number(web3.utils.fromWei(await pool.claimableRewardOf(accounts[9])))
+    const availableEtherBalanceAfter = Number(web3.utils.fromWei(await pool.availableEtherBalanceOf(accounts[9])))
 
     assert.equal(claimableBalanceBefore + availableEtherBalanceBefore, claimableBalanceAfter)
     assert.equal(availableEtherBalanceAfter, 0)
