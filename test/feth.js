@@ -59,6 +59,10 @@ contract("fETH Token", function(accounts) {
     assert.equal(Number(fromWei(await feth.totalSupply())), 64)
     assert.equal(Number(fromWei(await feth.balanceOf(accounts[5]))), 2)
 
+    assert.equal(Number(await feth.balanceOf(accounts[1])), web3.utils.toWei("3"))
+    assert.equal(Number(await feth.balanceOf(accounts[2])), web3.utils.toWei("6"))
+    assert.equal(Number(await feth.balanceOf(accounts[3])), web3.utils.toWei("9"))
+
     await pool.updateFETHRewards(web3.utils.toWei("0.2"))
 
     assert.equal(Number(fromWei(await feth.balanceOf(accounts[1]))), 3 + 0.2 * 3 / 64)
