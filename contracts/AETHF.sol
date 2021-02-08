@@ -102,7 +102,7 @@ contract AETHF is OwnableUpgradeSafe, IERC20, Lockable {
     }
 
     function name() public view returns (string memory) {
-        return "aETHF";
+        return "fETH";
     }
 
     function decimals() public view returns (uint8) {

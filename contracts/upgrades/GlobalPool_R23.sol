@@ -295,7 +295,6 @@ contract GlobalPool_R23 is Lockable, Pausable {
         emit RewardClaimed(staker, claimable, true);
     }
 
-    event aaa(uint256 share, uint256 claimable);
     function claimFETH() public {
         address staker = msg.sender;
         uint256 claimable = claimableAETHFRewardOf(staker);
@@ -307,7 +306,6 @@ contract GlobalPool_R23 is Lockable, Pausable {
         _aETHRewards[staker] = 0;
 
         _fethContract.mint(staker, shares, claimable);
-        emit aaa(shares, claimable);
         emit RewardClaimed(staker, claimable, false);
     }
 
