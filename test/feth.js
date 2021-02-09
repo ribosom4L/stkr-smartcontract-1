@@ -2,7 +2,7 @@ const { fromWei } = require("@openzeppelin/cli/lib/utils/units");
 const helpers = require("./helpers/helpers");
 const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const GlobalPool = artifacts.require("GlobalPool");
-const GlobalPool_R23 = artifacts.require("GlobalPool_R23");
+const GlobalPool_R24 = artifacts.require("GlobalPool_R24");
 const AETHF = artifacts.require("AETHF");
 const { upgradeProxy, admin } = require("@openzeppelin/truffle-upgrades");
 
@@ -12,7 +12,7 @@ contract("fETH Token", function(accounts) {
   before(async function() {
     pool = await GlobalPool.deployed();
     feth = await AETHF.deployed();
-    pool = await upgradeProxy(pool.address, GlobalPool_R23);
+    pool = await upgradeProxy(pool.address, GlobalPool_R24);
 
     for (let i = 0; i < 300; i++) {
       await helpers.advanceBlock();
