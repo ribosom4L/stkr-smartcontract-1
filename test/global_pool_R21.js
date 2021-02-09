@@ -4,7 +4,7 @@ const helpers = require("./helpers/helpers");
 const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const GlobalPool = artifacts.require("GlobalPool");
 const Config = artifacts.require("Config");
-const GlobalPool_R23 = artifacts.require("GlobalPool_R23");
+const GlobalPool_R24 = artifacts.require("GlobalPool_R24");
 const DepositContract = artifacts.require("DepositContract");
 
 const { upgradeProxy } = require("@openzeppelin/truffle-upgrades");
@@ -20,9 +20,9 @@ contract("2020 11 30 Upgrade Global Pool", function(accounts) {
     ankrETH = await AnkrETH.deployed();
     config = await Config.deployed();
     const deposit = await DepositContract.deployed();
-    pool = await GlobalPool_R23.new();
+    pool = await GlobalPool_R24.new();
     pool.initialize(ankrETH.address, config.address, deposit.address)
-    // pool = await upgradeProxy(poolOld.address, GlobalPool_R23);
+    // pool = await upgradeProxy(poolOld.address, GlobalPool_R24);
     await pool.updateConfigContract(config.address)
     await pool.togglePause(web3.utils.fromAscii("topUpETH"));
     // pool.togglePause("Stake");

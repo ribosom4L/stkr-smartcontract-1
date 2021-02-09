@@ -2,7 +2,7 @@ const { fromWei } = require("@openzeppelin/cli/lib/utils/units");
 const helpers = require("./helpers/helpers");
 const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const GlobalPool = artifacts.require("GlobalPool");
-const GlobalPool_R23 = artifacts.require("GlobalPool_R23");
+const GlobalPool_R24 = artifacts.require("GlobalPool_R24");
 const AETHF = artifacts.require("AETHF");
 const { upgradeProxy, admin } = require("@openzeppelin/truffle-upgrades");
 
@@ -12,7 +12,7 @@ contract("fETH Token", function(accounts) {
   before(async function() {
     pool = await GlobalPool.deployed();
     feth = await AETHF.deployed();
-    pool = await upgradeProxy(pool.address, GlobalPool_R23);
+    pool = await upgradeProxy(pool.address, GlobalPool_R24);
 
     for (let i = 0; i < 300; i++) {
       await helpers.advanceBlock();
@@ -58,6 +58,10 @@ contract("fETH Token", function(accounts) {
     await pool.claimFETH({ from: accounts[5] });
     assert.equal(Number(fromWei(await feth.totalSupply())), 64)
     assert.equal(Number(fromWei(await feth.balanceOf(accounts[5]))), 2)
+
+    assert.equal(Number(await feth.balanceOf(accounts[1])), web3.utils.toWei("3"))
+    assert.equal(Number(await feth.balanceOf(accounts[2])), web3.utils.toWei("6"))
+    assert.equal(Number(await feth.balanceOf(accounts[3])), web3.utils.toWei("9"))
 
     await pool.updateFETHRewards(web3.utils.toWei("0.2"))
 

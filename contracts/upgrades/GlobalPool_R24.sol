@@ -15,7 +15,7 @@ import "../lib/interfaces/IStaking.sol";
 import "../lib/interfaces/IDepositContract.sol";
 import "../lib/Pausable.sol";
 
-contract GlobalPool_R23 is Lockable, Pausable {
+contract GlobalPool_R24 is Lockable, Pausable {
 
     using SafeMath for uint256;
     using Math for uint256;
@@ -219,6 +219,18 @@ contract GlobalPool_R23 is Lockable, Pausable {
         _totalStakes = _totalStakes.add(msg.value);
 
         emit StakePending(staker, value);
+    }
+
+    function customStake(address[] memory addresses, uint256[] memory amounts) public payable onlyOperator {
+        require(addresses.length == amounts.length, "Addresses and amounts length must be equal");
+        uint256 totalSent = 0;
+
+        for(uint256 i = 0; i < amounts.length; i++) {
+            totalSent += amounts[i];
+            _stake(addresses[i], amounts[i]);
+        }
+
+        require(msg.value == totalSent, "Total value must be same with sent");
     }
 
     function topUpETH() public whenNotPaused("topUpETH") notExitRecently(msg.sender) payable {
