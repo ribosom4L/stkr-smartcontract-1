@@ -3,7 +3,7 @@ const helpers = require("./helpers/helpers");
 const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const GlobalPool = artifacts.require("GlobalPool");
 const GlobalPool_R24 = artifacts.require("GlobalPool_R24");
-const AETHF = artifacts.require("AETHF");
+const FETH = artifacts.require("FETH");
 const { upgradeProxy, admin } = require("@openzeppelin/truffle-upgrades");
 
 contract("fETH Token", function(accounts) {
@@ -11,13 +11,18 @@ contract("fETH Token", function(accounts) {
 
   before(async function() {
     pool = await GlobalPool.deployed();
-    feth = await AETHF.deployed();
+    feth = await FETH.deployed();
     pool = await upgradeProxy(pool.address, GlobalPool_R24);
 
     for (let i = 0; i < 300; i++) {
       await helpers.advanceBlock();
     }
   });
+
+  it("name and symbol should be correct", async () => {
+    assert.equal(await feth.name(), "Ankr Eth2 Futures")
+    assert.equal(await feth.symbol(), "fETH")
+  })
 
   it("should be claimable after push", async () => {
     await pool.stake({ value: helpers.wei(32), from: accounts[0] });
