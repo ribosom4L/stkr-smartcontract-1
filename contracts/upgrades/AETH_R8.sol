@@ -7,7 +7,7 @@ import "../lib/openzeppelin/ERC20UpgradeSafe.sol";
 import "../lib/Lockable.sol";
 import "../lib/Pausable.sol";
 
-contract AETH_R8 is ERC20UpgradeSafe, Lockable, Pausable {
+contract AETH_R8 is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
     using SafeMath for uint256;
 
     event RatioUpdate(uint256 newRatio);
@@ -95,4 +95,19 @@ contract AETH_R8 is ERC20UpgradeSafe, Lockable, Pausable {
     uint256[50] private __gap;
 
     address private _operator;
+
+    mapping (bytes32 => bool) internal _paused;
+
+    modifier whenNotPaused(bytes32 action) {
+        require(!_paused[action], "This action currently paused");
+        _;
+    }
+
+    function togglePause(bytes32 action) public onlyOwner {
+        _paused[action] = !_paused[action];
+    }
+
+    function isPaused(bytes32 action) public view returns(bool) {
+        return _paused[action];
+    }
 }
