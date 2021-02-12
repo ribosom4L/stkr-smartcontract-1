@@ -2,7 +2,7 @@ const { fromWei } = require("@openzeppelin/cli/lib/utils/units");
 const helpers = require("./helpers/helpers");
 const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const GlobalPool = artifacts.require("GlobalPool");
-const GlobalPool_R24 = artifacts.require("GlobalPool_R24");
+const GlobalPool_R25 = artifacts.require("GlobalPool_R25");
 const AETH = artifacts.require("AETH");
 const AETH_R8 = artifacts.require("AETH_R8");
 const { upgradeProxy, admin } = require("@openzeppelin/truffle-upgrades");
@@ -14,7 +14,7 @@ contract("aETH", function(accounts) {
     pool = await GlobalPool.deployed();
     const aethOld = await AETH.deployed();
     aeth = await upgradeProxy(aethOld.address, AETH_R8);
-    pool = await upgradeProxy(pool.address, GlobalPool_R24)
+    pool = await upgradeProxy(pool.address, GlobalPool_R25)
 
     for (let i = 0; i < 300; i++) {
       await helpers.advanceBlock();
@@ -57,6 +57,10 @@ contract("aETH", function(accounts) {
       await helpers.pushToBeacon(pool);
 
       await pool.claimAETH({ from: acc })
+
+      assert.equal(Number(await pool.claimableRewardOf(acc)), 0)
+
+      await expectRevert(pool.claimAETH({ from: acc }), "claimable reward zero")
 
       // get aeth balance
       const lastBalance = Number(fromWei(await aeth.balanceOf(acc)));

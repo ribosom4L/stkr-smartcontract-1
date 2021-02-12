@@ -15,7 +15,7 @@ import "../lib/interfaces/IStaking.sol";
 import "../lib/interfaces/IDepositContract.sol";
 import "../lib/Pausable.sol";
 
-contract GlobalPool_R24 is Lockable, Pausable {
+contract GlobalPool_R25 is Lockable, Pausable {
 
     using SafeMath for uint256;
     using Math for uint256;
@@ -301,7 +301,10 @@ contract GlobalPool_R24 is Lockable, Pausable {
         _fETHRewards[staker][0] = 0;
         _fETHRewards[staker][1] = 0;
         _aETHRewards[staker] = 0;
-        _claims[staker] = _claims[staker].add(claimable);
+        uint256 oldReward = _rewards[staker].sub(_claims[staker]);
+        if (oldReward > 0) {
+            _claims[staker] = _claims[staker].add(oldReward);
+        }
 
         _aethContract.mint(staker, claimable);
 
