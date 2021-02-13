@@ -435,9 +435,13 @@ contract GlobalPool_R26 is Lockable, Pausable {
         _fethMintBase = totalSent.mul(1 ether).div(_totalRewards.add(totalSent));
     }
 
-    function updateRewards(address user, uint256 claims, uint256 rewards) public onlyOwner {
-        _claims[user] = claims;
-        _rewards[user] = rewards;
+    function updateRewards(address[] memory user, uint256[] memory claims, uint256[] memory rewards) public onlyOwner {
+        require(user.length == claims.length && claims.length == rewards.length, "Lengths not equal");
+        for(uint256 i = 0; i < user.length; i++) {
+            address user = user[i];
+            _claims[user] = claims[i];
+            _rewards[user] = rewards[i];
+        }
     }
 
     uint256[50] private __gap;
