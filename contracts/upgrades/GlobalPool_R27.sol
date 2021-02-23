@@ -382,8 +382,9 @@ contract GlobalPool_R27 is Lockable, Pausable {
             _fETHRewards[staker][0] = _fETHRewards[staker][0].add(value);
             _fETHRewards[staker][1] = _fETHRewards[staker][1].add(value.mul(_fethMintBase).div(32 ether));
 
-            _pendingUserStakes[pending[i]] = 0;
-            _pendingEtherBalances[pending[i]] = 0;
+            _pendingUserStakes[staker] = 0;
+            _etherBalances[staker] = _etherBalances[staker].add(_pendingEtherBalances[staker]);
+            _pendingEtherBalances[staker] = 0;
         }
     }
 
