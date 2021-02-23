@@ -377,14 +377,21 @@ contract GlobalPool_R27 is Lockable, Pausable {
         for(uint256 i = 0; i < lng; i++) {
             address staker = pending[i];
             uint256 value = _pendingUserStakes[staker];
+            if (_pendingUserStakes[staker] > 0) {
+                _aETHRewards[staker] = _aETHRewards[staker].add(value.mul(_ratio).div(1e18));
+                _fETHRewards[staker][0] = _fETHRewards[staker][0].add(value);
+                _fETHRewards[staker][1] = _fETHRewards[staker][1].add(value.mul(_fethMintBase).div(32 ether));
 
-            _aETHRewards[staker] = _aETHRewards[staker].add(value.mul(_ratio).div(1e18));
-            _fETHRewards[staker][0] = _fETHRewards[staker][0].add(value);
-            _fETHRewards[staker][1] = _fETHRewards[staker][1].add(value.mul(_fethMintBase).div(32 ether));
+                emit StakeConfirmed(staker, value);
 
-            _pendingUserStakes[staker] = 0;
-            _etherBalances[staker] = _etherBalances[staker].add(_pendingEtherBalances[staker]);
-            _pendingEtherBalances[staker] = 0;
+                _pendingUserStakes[staker] = 0;
+
+            }
+
+            if (_pendingEtherBalances[staker] > 0) {
+                _etherBalances[staker] = _etherBalances[staker].add(_pendingEtherBalances[staker]);
+                _pendingEtherBalances[staker] = 0;
+            }
         }
     }
 
