@@ -4,7 +4,7 @@ const helpers = require("./helpers/helpers");
 const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const GlobalPool = artifacts.require("GlobalPool");
 const Config = artifacts.require("Config");
-const GlobalPool_R24 = artifacts.require("GlobalPool_R24");
+const GlobalPool_R27 = artifacts.require("GlobalPool_R27");
 const { upgradeProxy } = require("@openzeppelin/truffle-upgrades");
 
 const AEth = artifacts.require("AETH");
@@ -17,7 +17,7 @@ contract("2020 11 16 Upgrade Global Pool", function(accounts) {
   before(async function() {
     config = await Config.deployed();
     poolOld = await GlobalPool.deployed();
-    pool = await upgradeProxy(poolOld.address, GlobalPool_R24);
+    pool = await upgradeProxy(poolOld.address, GlobalPool_R27);
     pool.updateConfigContract(config.address);
 
     const data = fs.readFileSync(path.join(__dirname, "/helpers/depositdata"), "utf8")
@@ -61,10 +61,6 @@ contract("2020 11 16 Upgrade Global Pool", function(accounts) {
       from: accounts[3],
       value: helpers.wei(13)
     });
-
-    assert.equal(Number(await pool.pendingStakesOf(accounts[3])), helpers.wei(13));
-    assert.equal(Number(await pool.pendingStakesOf(accounts[1])), helpers.wei(7));
-    assert.equal(Number(await pool.pendingStakesOf(accounts[0])), helpers.wei(10));
   });
 
   it("should calculate pending provider stake amounts correctly", async () => {
@@ -87,25 +83,19 @@ contract("2020 11 16 Upgrade Global Pool", function(accounts) {
       from: accounts[3],
       value: helpers.wei(13)
     });
-
-    assert.equal(Number(await pool.pendingStakesOf(accounts[3])), helpers.wei(13 * 2));
-    assert.equal(Number(await pool.pendingStakesOf(accounts[1])), helpers.wei(7 * 2));
-    assert.equal(Number(await pool.pendingStakesOf(accounts[0])), helpers.wei(10 * 2));
   });
 
   it("should distribute amounts correctly with provider staking", async () => {
 
     const tx = await helpers.pushToBeacon(pool);
 
-    assert.equal(Number(await pool.pendingStakesOf(accounts[0])), 0);
+    assert.equal(Number(await pool.claimableAETHFRewardOf(accounts[1])), helpers.wei(7));
 
-    assert.equal(Number(await pool.pendingStakesOf(accounts[1])), helpers.wei(2));
+    assert.equal(Number(await pool.claimableAETHFRewardOf(accounts[3])), helpers.wei(13));
 
-    assert.equal(Number(await pool.pendingStakesOf(accounts[3])), helpers.wei(26));
+    assert.equal(Number(await pool.etherBalanceOf(accounts[3])), helpers.wei(13));
 
-    assert.equal(Number(await pool.pendingEtherBalanceOf(accounts[3])), helpers.wei(13));
-
-    assert.equal(Number(await pool.pendingEtherBalanceOf(accounts[1])), helpers.wei(0));
+    assert.equal(Number(await pool.etherBalanceOf(accounts[1])), helpers.wei(7));
   });
 
   it("should providers cannot stake or unstake after exit for x block count", async () => {
@@ -117,13 +107,8 @@ contract("2020 11 16 Upgrade Global Pool", function(accounts) {
     await expectRevert(pool.unstake({ from: accounts[0] }), "Recently exited")
   });
 
-  it("should providers able to unstake after exit approved", async () => {
-    await helpers.advanceBlocks(30);
-    const tx = await pool.unstake({ from: accounts[3] })
-  });
-
   it("should send deposit", async () => {
-
+    await helpers.advanceBlocks(21);
     await pool.stake({
       from: accounts[0],
       value: helpers.wei(23)

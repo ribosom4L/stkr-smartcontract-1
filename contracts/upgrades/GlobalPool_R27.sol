@@ -15,7 +15,7 @@ import "../lib/interfaces/IStaking.sol";
 import "../lib/interfaces/IDepositContract.sol";
 import "../lib/Pausable.sol";
 
-contract GlobalPool_R26 is Lockable, Pausable {
+contract GlobalPool_R27 is Lockable, Pausable {
 
     using SafeMath for uint256;
     using Math for uint256;
@@ -117,108 +117,15 @@ contract GlobalPool_R26 is Lockable, Pausable {
         bytes calldata signature,
         bytes32 deposit_data_root) private {
 
-        require(_pendingAmount >= 32 ether, "pending ethers not enough");
-        // substract 32 ether from pending amount
-        _pendingAmount = _pendingAmount.sub(32 ether);
+        require(address(this).balance >= 32 ether, "pending ethers not enough");
 
-        uint256 _amount = 0;
-        uint256 _pendingProviderBalance = 0;
-
-        uint256 _ratio = _aethContract.ratio();
-
-        uint256 i = _lastPendingStakerPointer > 0 ? _lastPendingStakerPointer.sub(1) : 0;
-
-        while (_amount < 32 ether) {
-            address staker = _pendingStakers[i];
-            i++;
-            uint256 userStake = _pendingUserStakes[staker];
-            // if user dont have any stake...
-            if (userStake == 0) continue;
-
-            uint256 providerStake = _pendingEtherBalances[staker];
-
-            _amount = _amount.add(userStake);
-
-            // if amount bigger then 32 ethereum, give back remaining user amount to pending
-            if (_amount > 32 ether) {
-                i--;
-                uint256 remained = _amount.sub(32 ether);
-                uint256 sent = userStake.sub(remained);
-                // set pending user stakes to zero
-                _pendingUserStakes[staker] = remained;
-
-                if (providerStake > 0) {
-                    // get new pending ether
-                    uint256 newPendingEther = providerStake > sent ? providerStake.sub(sent) : 0;
-                    uint256 userProviderStake = _pendingEtherBalances[staker].sub(newPendingEther);
-
-                    // calculate ether balance for user
-                    // which is old balance plus, old pending ether minus new pending ether
-                    _etherBalances[staker] = _etherBalances[staker].add(userProviderStake);
-
-                    // add provider stake to pending provider balance
-                    _pendingProviderBalance = _pendingProviderBalance.add(userProviderStake);
-
-                    // set new pending ether balance
-                    _pendingEtherBalances[staker] = newPendingEther;
-                }
-
-                // add reward for staker
-                _aETHRewards[staker] = _aETHRewards[staker].add(sent.mul(_ratio).div(1e18));
-                _fETHRewards[staker][0] = _fETHRewards[staker][0].add(sent);
-                _fETHRewards[staker][1] = _fETHRewards[staker][1].add(sent.mul(_fethMintBase).div(32 ether));
-                emit StakeConfirmed(staker, sent);
-                break;
-            }
-            // set pending user stakes to zero
-            _pendingUserStakes[staker] = 0;
-            _etherBalances[staker] = _etherBalances[staker].add(_pendingEtherBalances[staker]);
-
-            // add provider stake to pending provider balance
-            _pendingProviderBalance = _pendingProviderBalance.add(providerStake);
-
-            _pendingEtherBalances[staker] = 0;
-            // add reward for staker
-            _aETHRewards[staker] = _aETHRewards[staker].add(userStake.mul(_ratio).div(1e18));
-            _fETHRewards[staker][0] = _fETHRewards[staker][0].add(userStake);
-            _fETHRewards[staker][1] = _fETHRewards[staker][1].add(userStake.mul(_fethMintBase).div(32 ether));
-
-            emit StakeConfirmed(staker, userStake);
-        }
-
-        _lastPendingStakerPointer = i;
-
-        // mint aETH
-        //        _aethContract.mint(address(this), uint256(32 ether).sub(_pendingProviderBalance).mul(_ratio).div(1e18));
-
-        // send funds to deposit contract
         IDepositContract(_depositContract).deposit{value : 32 ether}(pubkey, withdrawal_credentials, signature, deposit_data_root);
 
         emit PoolOnGoing(pubkey);
     }
 
     function stake() public whenNotPaused("stake") notExitRecently(msg.sender) unlocked(msg.sender) payable {
-        _stake(msg.sender, msg.value);
-    }
-
-    function _stake(address staker, uint256 value) private {
-        uint256 minimumStaking = _configContract.getConfig("REQUESTER_MINIMUM_POOL_STAKING");
-
-        require(value >= minimumStaking, "Value must be greater than zero");
-        require(value % minimumStaking == 0, "Value must be multiple of minimum staking amount");
-
-        if (_pendingUserStakes[staker] == 0) {
-            _pendingStakers.push(staker);
-        }
-
-        _pendingUserStakes[staker] = _pendingUserStakes[staker].add(value);
-        _pendingAmount = _pendingAmount.add(value);
-
-        _userStakes[staker] = _userStakes[staker].add(value);
-
-        _totalStakes = _totalStakes.add(msg.value);
-
-        emit StakePending(staker, value);
+        _stake(msg.sender, msg.value, true);
     }
 
     function customStake(address[] memory addresses, uint256[] memory amounts) public payable onlyOperator {
@@ -227,18 +134,37 @@ contract GlobalPool_R26 is Lockable, Pausable {
 
         for(uint256 i = 0; i < amounts.length; i++) {
             totalSent += amounts[i];
-            _stake(addresses[i], amounts[i]);
+            _stake(addresses[i], amounts[i], false);
         }
 
         require(msg.value == totalSent, "Total value must be same with sent");
     }
 
+    function _stake(address staker, uint256 value, bool payRewards) private {
+        uint256 minimumStaking = _configContract.getConfig("REQUESTER_MINIMUM_POOL_STAKING");
+
+        require(value >= minimumStaking, "Value must be greater than zero");
+        require(value % minimumStaking == 0, "Value must be multiple of minimum staking amount");
+
+        _userStakes[staker] = _userStakes[staker].add(value);
+        _totalStakes = _totalStakes.add(msg.value);
+
+        uint256 _ratio = _aethContract.ratio();
+        if (payRewards) {
+            _aETHRewards[staker] = _aETHRewards[staker].add(value.mul(_ratio).div(1e18));
+            _fETHRewards[staker][0] = _fETHRewards[staker][0].add(value);
+            _fETHRewards[staker][1] = _fETHRewards[staker][1].add(value.mul(_fethMintBase).div(32 ether));
+        }
+        emit StakePending(staker, value);
+        emit StakeConfirmed(staker, value);
+    }
+
     function topUpETH() public whenNotPaused("topUpETH") notExitRecently(msg.sender) payable {
         require(_configContract.getConfig("PROVIDER_MINIMUM_ETH_STAKING") <= msg.value, "Value must be greater than minimum amount");
-        _pendingEtherBalances[msg.sender] = _pendingEtherBalances[msg.sender].add(msg.value);
+        _etherBalances[msg.sender] = _etherBalances[msg.sender].add(msg.value);
         //           _etherBalances[msg.sender] = _etherBalances[msg.sender].add(msg.value);
 
-        _stake(msg.sender, msg.value);
+        _stake(msg.sender, msg.value, false);
 
         emit ProviderToppedUpEth(msg.sender, msg.value);
     }
@@ -281,16 +207,17 @@ contract GlobalPool_R26 is Lockable, Pausable {
 
     function claimableAETHRewardOf(address staker) public view returns (uint256) {
         uint256 blocked = _etherBalances[staker];
-        uint256 reward = _rewards[staker].sub(_claims[staker]).add(_aETHRewards[staker]);
+        uint256 reward = _rewards[staker].sub(_claims[staker]);
+        reward = blocked >= reward ? 0 : reward.sub(blocked);
 
-        return blocked >= reward ? 0 : reward.sub(blocked);
+        return _aETHRewards[staker].sub(reward);
     }
 
     function claimableAETHFRewardOf(address staker) public view returns (uint256) {
         uint256 blocked = _etherBalances[staker];
         uint256 reward = _fETHRewards[staker][0];
 
-        return blocked >= reward ? 0 : reward.sub(blocked);
+        return reward;
     }
 
     function claimAETH() whenNotPaused("claim") public {
@@ -307,7 +234,6 @@ contract GlobalPool_R26 is Lockable, Pausable {
         }
 
         _aethContract.mint(staker, claimable);
-
         emit RewardClaimed(staker, claimable, true);
     }
 
@@ -441,6 +367,31 @@ contract GlobalPool_R26 is Lockable, Pausable {
             address user = user[i];
             _claims[user] = claims[i];
             _rewards[user] = rewards[i];
+        }
+    }
+
+    function syncPendingStakers() public {
+        address[] memory pending = _pendingStakers;
+        uint256 lng = pending.length;
+        uint256 _ratio = _aethContract.ratio();
+        for(uint256 i = 0; i < lng; i++) {
+            address staker = pending[i];
+            uint256 value = _pendingUserStakes[staker];
+            if (_pendingUserStakes[staker] > 0) {
+                _aETHRewards[staker] = _aETHRewards[staker].add(value.mul(_ratio).div(1e18));
+                _fETHRewards[staker][0] = _fETHRewards[staker][0].add(value);
+                _fETHRewards[staker][1] = _fETHRewards[staker][1].add(value.mul(_fethMintBase).div(32 ether));
+
+                emit StakeConfirmed(staker, value);
+
+                _pendingUserStakes[staker] = 0;
+
+            }
+
+            if (_pendingEtherBalances[staker] > 0) {
+                _etherBalances[staker] = _etherBalances[staker].add(_pendingEtherBalances[staker]);
+                _pendingEtherBalances[staker] = 0;
+            }
         }
     }
 
