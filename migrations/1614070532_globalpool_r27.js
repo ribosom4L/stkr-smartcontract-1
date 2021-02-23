@@ -6,5 +6,7 @@ const GlobalPool_R27 = artifacts.require("GlobalPool_R27");
 
 module.exports = async function(deployer, accounts) {
   const existing = await GlobalPool.deployed();
-  await upgradeProxy(existing.address, GlobalPool_R27, { deployer });
+  const upgraded = await upgradeProxy(existing.address, GlobalPool_R27, { deployer });
+
+  await upgraded.syncPendingStakers();
 };

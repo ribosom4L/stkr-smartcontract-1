@@ -15,7 +15,7 @@ import "../lib/interfaces/IStaking.sol";
 import "../lib/interfaces/IDepositContract.sol";
 import "../lib/Pausable.sol";
 
-contract GlobalPool_R26 is Lockable, Pausable {
+contract GlobalPool_R27 is Lockable, Pausable {
 
     using SafeMath for uint256;
     using Math for uint256;
@@ -161,7 +161,7 @@ contract GlobalPool_R26 is Lockable, Pausable {
 
     function topUpETH() public whenNotPaused("topUpETH") notExitRecently(msg.sender) payable {
         require(_configContract.getConfig("PROVIDER_MINIMUM_ETH_STAKING") <= msg.value, "Value must be greater than minimum amount");
-        _pendingEtherBalances[msg.sender] = _pendingEtherBalances[msg.sender].add(msg.value);
+        _etherBalances[msg.sender] = _etherBalances[msg.sender].add(msg.value);
         //           _etherBalances[msg.sender] = _etherBalances[msg.sender].add(msg.value);
 
         _stake(msg.sender, msg.value, false);
@@ -207,16 +207,17 @@ contract GlobalPool_R26 is Lockable, Pausable {
 
     function claimableAETHRewardOf(address staker) public view returns (uint256) {
         uint256 blocked = _etherBalances[staker];
-        uint256 reward = _rewards[staker].sub(_claims[staker]).add(_aETHRewards[staker]);
+        uint256 reward = _rewards[staker].sub(_claims[staker]);
+        reward = blocked >= reward ? 0 : reward.sub(blocked);
 
-        return blocked >= reward ? 0 : reward.sub(blocked);
+        return _aETHRewards[staker].sub(reward);
     }
 
     function claimableAETHFRewardOf(address staker) public view returns (uint256) {
         uint256 blocked = _etherBalances[staker];
         uint256 reward = _fETHRewards[staker][0];
 
-        return blocked >= reward ? 0 : reward.sub(blocked);
+        return reward;
     }
 
     function claimAETH() whenNotPaused("claim") public {
@@ -366,6 +367,23 @@ contract GlobalPool_R26 is Lockable, Pausable {
             address user = user[i];
             _claims[user] = claims[i];
             _rewards[user] = rewards[i];
+        }
+    }
+
+    function syncPendingStakers() public {
+        address[] memory pending = _pendingStakers;
+        uint256 lng = pending.length;
+        uint256 _ratio = _aethContract.ratio();
+        for(uint256 i = 0; i < lng; i++) {
+            address staker = pending[i];
+            uint256 value = _pendingUserStakes[staker];
+
+            _aETHRewards[staker] = _aETHRewards[staker].add(value.mul(_ratio).div(1e18));
+            _fETHRewards[staker][0] = _fETHRewards[staker][0].add(value);
+            _fETHRewards[staker][1] = _fETHRewards[staker][1].add(value.mul(_fethMintBase).div(32 ether));
+
+            _pendingUserStakes[pending[i]] = 0;
+            _pendingEtherBalances[pending[i]] = 0;
         }
     }
 
