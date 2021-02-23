@@ -125,26 +125,7 @@ contract GlobalPool_R26 is Lockable, Pausable {
     }
 
     function stake() public whenNotPaused("stake") notExitRecently(msg.sender) unlocked(msg.sender) payable {
-        _stake(msg.sender, msg.value);
-    }
-
-    function _stake(address staker, uint256 value) private {
-        uint256 minimumStaking = _configContract.getConfig("REQUESTER_MINIMUM_POOL_STAKING");
-
-        require(value >= minimumStaking, "Value must be greater than zero");
-        require(value % minimumStaking == 0, "Value must be multiple of minimum staking amount");
-
-        _userStakes[staker] = _userStakes[staker].add(value);
-
-        _totalStakes = _totalStakes.add(msg.value);
-
-        uint256 _ratio = _aethContract.ratio();
-
-        _aETHRewards[staker] = _aETHRewards[staker].add(value.mul(_ratio).div(1e18));
-        _fETHRewards[staker][0] = _fETHRewards[staker][0].add(value);
-        _fETHRewards[staker][1] = _fETHRewards[staker][1].add(value.mul(_fethMintBase).div(32 ether));
-
-        emit StakePending(staker, value);
+        _stake(msg.sender, msg.value, true);
     }
 
     function customStake(address[] memory addresses, uint256[] memory amounts) public payable onlyOperator {
@@ -153,10 +134,29 @@ contract GlobalPool_R26 is Lockable, Pausable {
 
         for(uint256 i = 0; i < amounts.length; i++) {
             totalSent += amounts[i];
-            _stake(addresses[i], amounts[i]);
+            _stake(addresses[i], amounts[i], false);
         }
 
         require(msg.value == totalSent, "Total value must be same with sent");
+    }
+
+    function _stake(address staker, uint256 value, bool payRewards) private {
+        uint256 minimumStaking = _configContract.getConfig("REQUESTER_MINIMUM_POOL_STAKING");
+
+        require(value >= minimumStaking, "Value must be greater than zero");
+        require(value % minimumStaking == 0, "Value must be multiple of minimum staking amount");
+
+        _userStakes[staker] = _userStakes[staker].add(value);
+        _totalStakes = _totalStakes.add(msg.value);
+
+        uint256 _ratio = _aethContract.ratio();
+        if (payRewards) {
+            _aETHRewards[staker] = _aETHRewards[staker].add(value.mul(_ratio).div(1e18));
+            _fETHRewards[staker][0] = _fETHRewards[staker][0].add(value);
+            _fETHRewards[staker][1] = _fETHRewards[staker][1].add(value.mul(_fethMintBase).div(32 ether));
+        }
+        emit StakePending(staker, value);
+        emit StakeConfirmed(staker, value);
     }
 
     function topUpETH() public whenNotPaused("topUpETH") notExitRecently(msg.sender) payable {
@@ -164,7 +164,7 @@ contract GlobalPool_R26 is Lockable, Pausable {
         _pendingEtherBalances[msg.sender] = _pendingEtherBalances[msg.sender].add(msg.value);
         //           _etherBalances[msg.sender] = _etherBalances[msg.sender].add(msg.value);
 
-        _stake(msg.sender, msg.value);
+        _stake(msg.sender, msg.value, false);
 
         emit ProviderToppedUpEth(msg.sender, msg.value);
     }
@@ -233,7 +233,6 @@ contract GlobalPool_R26 is Lockable, Pausable {
         }
 
         _aethContract.mint(staker, claimable);
-
         emit RewardClaimed(staker, claimable, true);
     }
 
