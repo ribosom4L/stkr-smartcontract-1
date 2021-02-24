@@ -2,7 +2,7 @@ const { fromWei } = require("@openzeppelin/cli/lib/utils/units");
 const helpers = require("./helpers/helpers");
 const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const GlobalPool = artifacts.require("GlobalPool");
-const GlobalPool_R24 = artifacts.require("GlobalPool_R24");
+const GlobalPool_R27 = artifacts.require("GlobalPool_R27");
 const Governance = artifacts.require("Governance")
 const { upgradeProxy } = require("@openzeppelin/truffle-upgrades");
 const Ankr = artifacts.require("ANKR")
@@ -13,7 +13,7 @@ contract("Ankr Deposit", (accounts) => {
 
   before(async function() {
     const poolOld = await GlobalPool.deployed();
-    pool = await upgradeProxy(poolOld.address, GlobalPool_R24);
+    pool = await upgradeProxy(poolOld.address, GlobalPool_R27);
     governance = await Governance.deployed()
     ankr = await Ankr.deployed();
   });
