@@ -24,8 +24,6 @@ contract AETH_R10 is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
     // if ratio is 0.9, this variable should be  9e17
     uint256 private _ratio;
 
-    address private _bscBridgeContract;
-
     modifier onlyOperator() {
         require(msg.sender == owner() || msg.sender == _operator, "Operator: not allowed");
         _;
@@ -87,12 +85,6 @@ contract AETH_R10 is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
         return true;
     }
 
-    uint256[50] private __gap;
-
-    address private _operator;
-
-    mapping (bytes32 => bool) internal _paused;
-
     modifier whenNotPaused(bytes32 action) {
         require(!_paused[action], "This action currently paused");
         _;
@@ -109,4 +101,12 @@ contract AETH_R10 is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
     function setBscBridgeContract(address _bscBridge) public onlyOperator {
         _bscBridgeContract = _bscBridge;
     }
+
+    uint256[50] private __gap;
+
+    address private _operator;
+
+    mapping (bytes32 => bool) internal _paused;
+
+    address private _bscBridgeContract;
 }
