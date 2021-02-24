@@ -54,12 +54,12 @@ contract AETH_R9 is OwnableUpgradeSafe, ERC20UpgradeSafe, Lockable {
     }
 
     function burn(address account, uint256 amount) external {
-        require(msg.sender == _operator || msg.sender == owner() || msg.sender == _globalPoolContract, 'Not allowed');
+        require(msg.sender == _operator || msg.sender == owner() || msg.sender == address(_globalPoolContract), 'Not allowed');
         _burn(account, amount);
     }
 
-    function mint(address account, uint256 amount) external {
-        require(msg.sender == _operator || msg.sender == owner() || msg.sender == _globalPoolContract, 'Not allowed');
+    function mint(address account, uint256 amount) external returns(uint256 _amount) {
+        require(msg.sender == _operator || msg.sender == owner() || msg.sender == address(_globalPoolContract), 'Not allowed');
         _mint(account, amount);
     }
 
