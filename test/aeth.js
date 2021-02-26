@@ -2,9 +2,9 @@ const { fromWei } = require("@openzeppelin/cli/lib/utils/units");
 const helpers = require("./helpers/helpers");
 const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const GlobalPool = artifacts.require("GlobalPool");
-const GlobalPool_R27 = artifacts.require("GlobalPool_R27");
+const GlobalPool_R28 = artifacts.require("GlobalPool_R28");
 const AETH = artifacts.require("AETH");
-const AETH_R8 = artifacts.require("AETH_R8");
+const AETH_R10 = artifacts.require("AETH_R10");
 const { upgradeProxy, admin } = require("@openzeppelin/truffle-upgrades");
 
 contract("aETH", function(accounts) {
@@ -13,8 +13,8 @@ contract("aETH", function(accounts) {
   before(async function() {
     pool = await GlobalPool.deployed();
     const aethOld = await AETH.deployed();
-    aeth = await upgradeProxy(aethOld.address, AETH_R8);
-    pool = await upgradeProxy(pool.address, GlobalPool_R27)
+    aeth = await upgradeProxy(aethOld.address, AETH_R10);
+    pool = await upgradeProxy(pool.address, GlobalPool_R28)
 
     for (let i = 0; i < 300; i++) {
       await helpers.advanceBlock();
