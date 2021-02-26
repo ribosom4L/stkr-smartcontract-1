@@ -2,13 +2,15 @@
 pragma solidity 0.6.11;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "../lib/Lockable.sol";
-import "../lib/interfaces/IFETHPool.sol";
+import "../lib/Ownable.sol";
 
+interface IPool {
+    function updateFETHRewards(uint256 _mintBase) external;
+}
 
-contract FETH_R1 is OwnableUpgradeSafe, IERC20, Lockable {
+contract FETH_R1 is Ownable, IERC20, Lockable {
     using SafeMath for uint256;
 
     string private _name;
@@ -29,6 +31,10 @@ contract FETH_R1 is OwnableUpgradeSafe, IERC20, Lockable {
     uint256 private _totalDeposit;
 
     address private _operator;
+
+    address private _bscBridgeContract;
+
+    uint256 _balanceRatio;
 
     //
     modifier onlyPool() {
@@ -59,6 +65,25 @@ contract FETH_R1 is OwnableUpgradeSafe, IERC20, Lockable {
         emit Transfer(address(0), account, sentAmount);
     }
 
+    function mint(address account, uint256 amount) external {
+        require(msg.sender == address(_bscBridgeContract) || msg.sender == owner(), 'Not allowed');
+        uint256 shares = sharesOfEth(amount);
+        _shares[account] = _shares[account].add(shares);
+        _totalShares = _totalShares.add(shares);
+        _totalSent = _totalSent.add(amount);
+
+        emit Transfer(address(0), account, amount);
+    }
+
+    function burn(address account, uint256 amount) external {
+        require(msg.sender == address(_bscBridgeContract) || msg.sender == owner(), 'Not allowed');
+        uint256 shares = sharesOfEth(amount);
+        _shares[account] = _shares[account].sub(shares);
+        _totalShares = _totalShares.sub(shares);
+
+        emit Transfer(address(0), account, amount);
+    }
+
     function updateReward(uint256 newReward) public onlyPool returns(uint256) {
         _totalRewards = newReward;
 
@@ -70,7 +95,7 @@ contract FETH_R1 is OwnableUpgradeSafe, IERC20, Lockable {
     }
 
     function balanceOf(address account) public view override returns (uint256) {
-        return totalSupply().mul(_shares[account]).div(_totalShares);
+        return _shares[account].mul(_balanceRatio).div(1 ether);
     }
 
     function sharesOf(address account) public view returns (uint256) {
@@ -135,5 +160,14 @@ contract FETH_R1 is OwnableUpgradeSafe, IERC20, Lockable {
 
     function totalShares() public view returns(uint256) {
         return _totalShares;
+    }
+
+    function setBscBridgeContract(address _bscBridge) public onlyOwner {
+        _bscBridgeContract = _bscBridge;
+    }
+
+    function setBalanceRatio(uint256 ratio) external onlyOperator {
+        _balanceRatio = ratio;
+        IPool(_globalPoolContract).updateFETHRewards(uint256(1 ether).div(_balanceRatio));
     }
 }

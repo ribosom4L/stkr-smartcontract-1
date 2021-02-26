@@ -308,14 +308,9 @@ contract GlobalPool_R28 is Lockable, Pausable {
         return _depositContract;
     }
 
-    function updateFETHRewards(uint256 _totalRewards) public onlyOperator {
-        if (_totalRewards == 0) {
-            _fethMintBase = 1 ether;
-            return;
-        }
-
-        uint256 totalSent = _fethContract.updateReward(_totalRewards);
-        _fethMintBase = totalSent.mul(1 ether).div(totalSent);
+    function updateFETHRewards(uint256 _mintBase) external {
+        require(msg.sender == address(_fethContract), "Not allowed");
+        _fethMintBase = _mintBase;
     }
 
     uint256[50] private __gap;

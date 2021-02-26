@@ -4,6 +4,7 @@ const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const GlobalPool = artifacts.require("GlobalPool");
 const GlobalPool_R28 = artifacts.require("GlobalPool_R28");
 const FETH = artifacts.require("FETH");
+const FETH_R1 = artifacts.require("FETH_R1");
 const { upgradeProxy, admin } = require("@openzeppelin/truffle-upgrades");
 
 contract("fETH Token", function(accounts) {
@@ -12,8 +13,8 @@ contract("fETH Token", function(accounts) {
   before(async function() {
     pool = await GlobalPool.deployed();
     feth = await FETH.deployed();
+    feth = await upgradeProxy(feth.address, FETH_R1)
     pool = await upgradeProxy(pool.address, GlobalPool_R28);
-
     for (let i = 0; i < 300; i++) {
       await helpers.advanceBlock();
     }
@@ -68,7 +69,7 @@ contract("fETH Token", function(accounts) {
     assert.equal(Number(await feth.balanceOf(accounts[2])), web3.utils.toWei("6"))
     assert.equal(Number(await feth.balanceOf(accounts[3])), web3.utils.toWei("9"))
 
-    await pool.updateFETHRewards(web3.utils.toWei("0.2"))
+    await feth.setBalanceRatio(web3.utils.toWei("5"))
 
     assert.equal(Number(fromWei(await feth.balanceOf(accounts[1]))), 3 + 0.2 * 3 / 64)
     assert.equal(Number(fromWei(await feth.balanceOf(accounts[2]))), 6 + 0.2 * 6 / 64)
@@ -79,7 +80,7 @@ contract("fETH Token", function(accounts) {
     assert.equal(Number(fromWei(await feth.totalSupply())), 64.2)
 
 
-    await pool.updateFETHRewards(web3.utils.toWei("10"))
+    await pool.setBalanceRatio(web3.utils.toWei("10"))
 
     assert.equal(Number(fromWei(await feth.balanceOf(accounts[1]))), 3 + 10 * 3 / 64)
     assert.equal(Number(fromWei(await feth.balanceOf(accounts[2]))), 6 + 10 * 6 / 64)
