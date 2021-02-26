@@ -4,7 +4,7 @@ const helpers = require("./helpers/helpers");
 const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const GlobalPool = artifacts.require("GlobalPool");
 const Config = artifacts.require("Config");
-const GlobalPool_R28 = artifacts.require("GlobalPool_R28");
+const GlobalPool_R29 = artifacts.require("GlobalPool_R29");
 const { upgradeProxy } = require("@openzeppelin/truffle-upgrades");
 
 const AEth = artifacts.require("AETH");
@@ -17,7 +17,7 @@ contract("2020 11 16 Upgrade Global Pool", function(accounts) {
   before(async function() {
     config = await Config.deployed();
     poolOld = await GlobalPool.deployed();
-    pool = await upgradeProxy(poolOld.address, GlobalPool_R28);
+    pool = await upgradeProxy(poolOld.address, GlobalPool_R29);
     pool.updateConfigContract(config.address);
 
     const data = fs.readFileSync(path.join(__dirname, "/helpers/depositdata"), "utf8")
