@@ -81,13 +81,7 @@ contract FETH_R1 is Ownable, IERC20, Lockable {
         _shares[account] = _shares[account].sub(shares);
         _totalShares = _totalShares.sub(shares);
 
-        emit Transfer(address(0), account, amount);
-    }
-
-    function updateReward(uint256 newReward) public onlyPool returns(uint256) {
-        _totalRewards = newReward;
-
-        return _totalSent;
+        emit Transfer(account, address(0), amount);
     }
 
     function totalSupply() public view override returns (uint256) {
@@ -166,8 +160,13 @@ contract FETH_R1 is Ownable, IERC20, Lockable {
         _bscBridgeContract = _bscBridge;
     }
 
-    function setBalanceRatio(uint256 ratio) external onlyOperator {
+    function setBalanceRatio(uint256 ratio, uint256 rewards) external onlyOperator {
         _balanceRatio = ratio;
-        IPool(_globalPoolContract).updateFETHRewards(uint256(1 ether).div(_balanceRatio));
+        _totalRewards = rewards;
+        IPool(_globalPoolContract).updateFETHRewards(1e18 * 1e18 / _balanceRatio);
+    }
+
+    function ratio() external view returns(uint256) {
+        return _balanceRatio;
     }
 }

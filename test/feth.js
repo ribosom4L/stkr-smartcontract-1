@@ -69,26 +69,40 @@ contract("fETH Token", function(accounts) {
     assert.equal(Number(await feth.balanceOf(accounts[2])), web3.utils.toWei("6"))
     assert.equal(Number(await feth.balanceOf(accounts[3])), web3.utils.toWei("9"))
 
-    await feth.setBalanceRatio(web3.utils.toWei("5"))
-
-    assert.equal(Number(fromWei(await feth.balanceOf(accounts[1]))), 3 + 0.2 * 3 / 64)
-    assert.equal(Number(fromWei(await feth.balanceOf(accounts[2]))), 6 + 0.2 * 6 / 64)
-    assert.equal(Number(fromWei(await feth.balanceOf(accounts[3]))), 9 + 0.2 * 9 / 64)
-    assert.equal(Number(fromWei(await feth.balanceOf(accounts[4]))), 12 + 0.2 * 12 / 64)
-    assert.equal(Number(fromWei(await feth.balanceOf(accounts[5]))), 2 + 0.2 * 2 / 64)
-
-    assert.equal(Number(fromWei(await feth.totalSupply())), 64.2)
+    let rewards = 2
+    // total sent: 64
+    // rewards: 2
+    // balance ratio: 1.0625
+    let ratio = 66 / 64;
+    let tx1 = await feth.setBalanceRatio(web3.utils.toWei(ratio.toString()), web3.utils.toWei("2"))
 
 
-    await pool.setBalanceRatio(web3.utils.toWei("10"))
+    assert.equal(Number(fromWei(await feth.balanceOf(accounts[1]))), 3 * ratio)
+    assert.equal(Number(fromWei(await feth.balanceOf(accounts[2]))), 6 * ratio)
+    assert.equal(Number(fromWei(await feth.balanceOf(accounts[3]))), 9 * ratio)
+    assert.equal(Number(fromWei(await feth.balanceOf(accounts[4]))), 12 * ratio)
+    assert.equal(Number(fromWei(await feth.balanceOf(accounts[5]))), 2 * ratio)
 
-    assert.equal(Number(fromWei(await feth.balanceOf(accounts[1]))), 3 + 10 * 3 / 64)
-    assert.equal(Number(fromWei(await feth.balanceOf(accounts[2]))), 6 + 10 * 6 / 64)
-    assert.equal(Number(fromWei(await feth.balanceOf(accounts[3]))), 9 + 10 * 9 / 64)
-    assert.equal(Number(fromWei(await feth.balanceOf(accounts[4]))), 12 + 10 * 12 / 64)
-    assert.equal(Number(fromWei(await feth.balanceOf(accounts[5]))), 2 + 10 * 2 / 64)
+    assert.equal(Number(fromWei(await feth.totalSupply())), 66)
 
-    assert.equal(Number(fromWei(await feth.totalSupply())), 74)
+    // total sent: 64
+    // rewards: 10
+    // balance ratio: 1.0625
+    ratio = 74 / 64;
+    tx1 = await feth.setBalanceRatio(web3.utils.toWei(ratio.toString()), web3.utils.toWei("10"))
+
+    assert.equal(Number(fromWei(await feth.balanceOf(accounts[1]))), 3 * ratio)
+    assert.equal(Number(fromWei(await feth.balanceOf(accounts[2]))), 6 * ratio)
+    assert.equal(Number(fromWei(await feth.balanceOf(accounts[3]))), 9 * ratio)
+    assert.equal(Number(fromWei(await feth.balanceOf(accounts[4]))), 12 * ratio)
+    assert.equal(Number(fromWei(await feth.balanceOf(accounts[5]))), 2 * ratio)
+
+    await pool.stake({ value: helpers.wei(10), from: accounts[6] });
+    const tx = await pool.claimFETH({ from: accounts[6] });
+
+    assert.equal(Number(fromWei(await feth.balanceOf(accounts[6]))), 10)
+
+    assert.equal(Number(fromWei(await feth.totalSupply())), 84)
 
   });
 });

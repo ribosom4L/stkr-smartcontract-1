@@ -153,7 +153,7 @@ contract GlobalPool_R28 is Lockable, Pausable {
         if (payRewards) {
             _aETHRewards[staker] = _aETHRewards[staker].add(value.mul(_ratio).div(1e18));
             _fETHRewards[staker][0] = _fETHRewards[staker][0].add(value);
-            _fETHRewards[staker][1] = _fETHRewards[staker][1].add(value.mul(_fethMintBase).div(32 ether));
+            _fETHRewards[staker][1] = _fETHRewards[staker][1].add(value.mul(_fethMintBase).div(1 ether));
         }
         emit StakePending(staker, value);
         emit StakeConfirmed(staker, value);
@@ -311,6 +311,10 @@ contract GlobalPool_R28 is Lockable, Pausable {
     function updateFETHRewards(uint256 _mintBase) external {
         require(msg.sender == address(_fethContract), "Not allowed");
         _fethMintBase = _mintBase;
+    }
+
+    function mintBase() external view returns(uint256) {
+        return _fethMintBase;
     }
 
     uint256[50] private __gap;
