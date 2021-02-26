@@ -5,7 +5,7 @@ const FETH = artifacts.require("FETH");
 const FETH_R1 = artifacts.require("FETH_R1");
 
 const GlobalPool = artifacts.require("GlobalPool");
-const GlobalPool_R28 = artifacts.require("GlobalPool_R28");
+const GlobalPool_R29 = artifacts.require("GlobalPool_R29");
 
 
 module.exports = async function(deployer, network, accounts) {
@@ -27,7 +27,7 @@ module.exports = async function(deployer, network, accounts) {
     }
   }
   let pool = await GlobalPool.deployed();
-  const poolUpgraded = await upgradeProxy(pool.address, GlobalPool_R28, { deployer });
+  const poolUpgraded = await upgradeProxy(pool.address, GlobalPool_R29, { deployer });
 
   let feth = await FETH.deployed();
   const upgraded = await upgradeProxy(feth.address, FETH_R1, { deployer });
